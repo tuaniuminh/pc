@@ -381,25 +381,26 @@ function setupEventHandlers() {
         }
     });
 
-    // 7. Interactive Phase Schedule selectors
-    const phaseBtns = document.querySelectorAll('.phase-btn');
-    const phaseContents = document.querySelectorAll('.phase-schedule-content');
+    // 7. Điều khiển gập/mở Accordion cho Lộ trình dọc (Roadmap)
+    const roadmapItems = document.querySelectorAll('.roadmap-item');
     
-    phaseBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const targetPhase = btn.getAttribute('data-phase');
-            
-            phaseBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            phaseContents.forEach(content => {
-                if (content.id === `phase-content-${targetPhase}`) {
-                    content.classList.add('active');
-                } else {
-                    content.classList.remove('active');
+    roadmapItems.forEach(item => {
+        const header = item.querySelector('.roadmap-header');
+        if (header) {
+            header.addEventListener('click', () => {
+                const isActive = item.classList.contains('active');
+                
+                // Đóng tất cả các giai đoạn khác
+                roadmapItems.forEach(otherItem => {
+                    otherItem.classList.remove('active');
+                });
+                
+                // Mở giai đoạn được nhấp nếu trước đó nó chưa mở
+                if (!isActive) {
+                    item.classList.add('active');
                 }
             });
-        });
+        }
     });
 
     // 8. "Bắt đầu bài tập này" click handlers
@@ -923,6 +924,86 @@ function loadData() {
     }
 }
 
+// --- HELPER FUNCTIONS FOR STATS TAB ---
+function updateBadges() {
+    const badges = {
+        'badge-first-workout': state.totalSessions >= 1,
+        'badge-streak-3': state.streak >= 3,
+        'badge-streak-7': state.streak >= 7,
+        'badge-sessions-10': state.totalSessions >= 10,
+        'badge-sessions-30': state.totalSessions >= 30,
+        'badge-level-8': state.history.some(log => log.level === 'reflexMixed')
+    };
+    
+    for (const [badgeId, isUnlocked] of Object.entries(badges)) {
+        const el = document.getElementById(badgeId);
+        if (el) {
+            if (isUnlocked) {
+                el.classList.remove('locked');
+            } else {
+                el.classList.add('locked');
+            }
+        }
+    }
+}
+
+function renderWeeklyCalendar() {
+    const today = new Date();
+    const currentDayOfWeek = today.getDay(); // 0 = CN, 1 = T2, ..., 6 = T7
+    
+    const dayCards = document.querySelectorAll('.calendar-day');
+    dayCards.forEach(card => {
+        const dayVal = parseInt(card.getAttribute('data-day'));
+        
+        // Đánh dấu ngày hôm nay bằng viền/hiệu ứng pulse
+        if (dayVal === currentDayOfWeek) {
+            card.classList.add('today');
+        } else {
+            card.classList.remove('today');
+        }
+        
+        // Reset trạng thái hoàn thành
+        card.classList.remove('completed');
+        const statusEl = card.querySelector('.day-status');
+        if (statusEl) {
+            statusEl.textContent = '';
+        }
+    });
+    
+    // Tìm ngày Thứ 2 đầu tuần và Chủ Nhật cuối tuần hiện tại
+    const now = new Date();
+    const day = now.getDay();
+    const diffToMonday = now.getDate() - day + (day === 0 ? -6 : 1); // Trừ lùi về thứ 2
+    
+    const monday = new Date(now.setDate(diffToMonday));
+    monday.setHours(0, 0, 0, 0);
+    
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+    
+    // Tìm các thứ trong tuần hiện tại có lịch sử tập
+    const completedDays = new Set();
+    state.history.forEach(log => {
+        const logDate = new Date(log.timestamp);
+        if (logDate >= monday && logDate <= sunday) {
+            completedDays.add(logDate.getDay());
+        }
+    });
+    
+    // Cập nhật giao diện dấu tích ✓ cho các thứ đã tập
+    dayCards.forEach(card => {
+        const dayVal = parseInt(card.getAttribute('data-day'));
+        if (completedDays.has(dayVal)) {
+            card.classList.add('completed');
+            const statusEl = card.querySelector('.day-status');
+            if (statusEl) {
+                statusEl.textContent = '✓';
+            }
+        }
+    });
+}
+
 function renderStats() {
     // 1. Sidebar Stats
     elements.sidebarStreak.innerHTML = `<span class="emoji">🔥</span> ${state.streak} ngày`;
@@ -935,14 +1016,35 @@ function renderStats() {
         elements.statsTotalReps.textContent = `${state.totalRepsCompleted} lượt`;
     }
 
+    // Cập nhật Lịch hoạt động và Huy hiệu
+    renderWeeklyCalendar();
+    updateBadges();
+
     // 3. Render History Table Log
     if (elements.historyLogBody) {
         if (state.history.length === 0) {
             elements.historyLogBody.innerHTML = `
                 <tr>
-                    <td colspan="4" class="no-data">Chưa có lịch sử luyện tập. Hãy bắt đầu hiệp tập đầu tiên của bạn!</td>
+                    <td colspan="4" class="no-data">
+                        <div class="empty-history-visual" style="padding: 2.5rem 1rem; text-align: center;">
+                            <div class="empty-icon" style="font-size: 2.8rem; margin-bottom: 0.75rem;">📊</div>
+                            <h4 style="color: var(--color-text-primary); margin-bottom: 0.5rem; font-size: 1.15rem; font-weight: 700; letter-spacing: -0.2px;">Chưa Có Nhật Ký Luyện Tập</h4>
+                            <p style="color: var(--color-text-secondary); max-width: 440px; margin: 0 auto 1.5rem auto; font-size: 0.85rem; line-height: 1.6; font-family: var(--font-secondary);">
+                                Trang "Tiến độ" này tự động ghi nhận chuỗi ngày tập liên tục (Streak), tổng số hiệp đã tập hoàn chỉnh và lịch hoạt động tuần. Hãy chọn một cấp độ ở tab <strong>Luyện tập</strong> và thực hiện trọn vẹn đến khi kết thúc hiệp, dữ liệu của bạn sẽ ngay lập tức được lưu trữ và hiển thị tại đây.
+                            </p>
+                            <button class="btn btn-primary btn-sm btn-go-practice" style="max-width: 200px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0, 245, 212, 0.25);">Bắt đầu hiệp tập ngay</button>
+                        </div>
+                    </td>
                 </tr>
             `;
+            setTimeout(() => {
+                const btn = document.querySelector('.btn-go-practice');
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        switchTab('practice');
+                    });
+                }
+            }, 50);
             return;
         }
 

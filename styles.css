@@ -1396,8 +1396,50 @@ body {
     }
     
     .schedule-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        padding-left: 1.5rem;
+        gap: 1.5rem;
+    }
+    .schedule-grid::before {
+        content: "";
+        position: absolute;
+        left: 6px;
+        top: 10px;
+        bottom: 10px;
+        width: 2px;
+        background: linear-gradient(180deg, var(--color-primary), var(--color-secondary), var(--color-accent));
+        opacity: 0.25;
+    }
+    .schedule-card {
+        position: relative;
+        overflow: visible !important;
+        margin-bottom: 0;
+    }
+    .schedule-card::before {
+        content: "";
+        position: absolute;
+        left: -1.5rem;
+        top: 20px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 3px solid var(--bg-dark);
+        transform: translateX(-50%);
+        z-index: 5;
+    }
+    .schedule-card:nth-child(1)::before {
+        background-color: #f59e0b;
+        box-shadow: 0 0 8px rgba(245, 158, 11, 0.7);
+    }
+    .schedule-card:nth-child(2)::before {
+        background-color: #06b6d4;
+        box-shadow: 0 0 8px rgba(6, 182, 212, 0.7);
+    }
+    .schedule-card:nth-child(3)::before {
+        background-color: #6366f1;
+        box-shadow: 0 0 8px rgba(99, 102, 241, 0.7);
     }
     
     /* Visualizer Orb Adjustments */
@@ -1591,4 +1633,462 @@ body {
     border-radius: 10px !important;
     width: 100%;
 }
+
+/* --- ACCORDION ROADMAP TIMELINE --- */
+.roadmap-timeline {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-left: 2rem;
+    margin-top: 2rem;
+}
+
+.roadmap-timeline::before {
+    content: "";
+    position: absolute;
+    left: 17px;
+    top: 20px;
+    bottom: 20px;
+    width: 2px;
+    background: linear-gradient(180deg, var(--color-primary), var(--color-secondary), var(--color-accent), var(--color-success));
+    opacity: 0.15;
+    z-index: 1;
+}
+
+.roadmap-item {
+    position: relative;
+    z-index: 2;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+}
+
+.roadmap-item:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: var(--bg-card-hover);
+}
+
+.roadmap-item.active {
+    border-color: var(--border-active);
+    background: rgba(0, 245, 212, 0.02);
+    box-shadow: 0 4px 25px rgba(0, 245, 212, 0.04);
+}
+
+.roadmap-header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.roadmap-badge-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.roadmap-item.active .roadmap-badge-num {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--bg-dark);
+    box-shadow: 0 0 15px rgba(0, 245, 212, 0.4);
+}
+
+.roadmap-header-title {
+    flex: 1;
+}
+
+.roadmap-header-title h4 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.phase-week {
+    font-size: 0.725rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    background: rgba(0, 245, 212, 0.1);
+    border: 1px solid rgba(0, 245, 212, 0.2);
+    padding: 0.15rem 0.5rem;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.roadmap-item.active .phase-week {
+    background: var(--color-primary);
+    color: var(--bg-dark);
+    border-color: transparent;
+}
+
+.roadmap-header-title p {
+    font-size: 0.825rem;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+    font-family: var(--font-secondary);
+}
+
+.roadmap-arrow {
+    color: var(--color-text-muted);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.roadmap-item:hover .roadmap-arrow {
+    color: var(--color-text-primary);
+}
+
+.roadmap-item.active .roadmap-arrow {
+    transform: rotate(180deg);
+    color: var(--color-primary);
+}
+
+.roadmap-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), padding 0.4s ease;
+    padding: 0 1.5rem;
+}
+
+.roadmap-item.active .roadmap-body {
+    max-height: 2000px; /* Large enough to fit contents */
+    padding: 0 1.5rem 1.75rem 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* --- STATS OVERVIEW PANEL & EXPLAINER --- */
+.stats-overview-panel {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stats-explainer-card, .weekly-calendar-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 1.75rem;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-sm);
+}
+
+.stats-explainer-card h4, .weekly-calendar-card h4 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--color-text-primary);
+    letter-spacing: -0.2px;
+}
+
+.explainer-item {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.explainer-item:not(:last-child) {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.explainer-icon {
+    font-size: 1.35rem;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+.explainer-text {
+    font-size: 0.825rem;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+    font-family: var(--font-secondary);
+}
+
+.explainer-text strong {
+    color: var(--color-text-primary);
+}
+
+/* --- WEEKLY ACTIVITY CALENDAR --- */
+.calendar-desc {
+    font-size: 0.775rem;
+    color: var(--color-text-muted);
+    font-family: var(--font-secondary);
+    line-height: 1.4;
+    margin-bottom: 1.25rem;
+}
+
+.weekly-calendar {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.4rem;
+}
+
+.calendar-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.day-name {
+    font-size: 0.725rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+}
+
+.day-status {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px dashed rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.01);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    font-size: 0.8rem;
+    color: transparent;
+}
+
+.calendar-day.completed .day-status {
+    background: rgba(0, 245, 212, 0.1);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    border-style: solid;
+    box-shadow: 0 0 10px rgba(0, 245, 212, 0.25);
+    text-shadow: 0 0 5px rgba(0, 245, 212, 0.5);
+}
+
+.calendar-day.today .day-status {
+    border-color: var(--color-secondary);
+    border-style: solid;
+    animation: calendarPulse 2s infinite;
+}
+
+@keyframes calendarPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    }
+}
+
+/* --- ACHIEVEMENT BADGES PANEL --- */
+.badges-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 2rem;
+    margin-bottom: 2.5rem;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.badges-panel h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.panel-desc {
+    font-size: 0.825rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 1.5rem;
+    font-family: var(--font-secondary);
+}
+
+.badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1.25rem;
+}
+
+.badge-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 1.25rem 1rem;
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.badge-item.locked {
+    opacity: 0.4;
+    filter: grayscale(1);
+    background: rgba(255, 255, 255, 0.005);
+}
+
+.badge-icon {
+    font-size: 2rem;
+    margin-bottom: 0.6rem;
+    transition: transform 0.3s ease;
+}
+
+.badge-item:not(.locked):hover {
+    transform: translateY(-4px);
+}
+
+.badge-item:not(.locked):hover .badge-icon {
+    transform: scale(1.2) rotate(5deg);
+}
+
+.badge-name {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.badge-desc {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    line-height: 1.3;
+    font-family: var(--font-secondary);
+}
+
+/* Custom glow effects for unlocked badges */
+#badge-first-workout:not(.locked) {
+    border-color: rgba(16, 185, 129, 0.3);
+    background: radial-gradient(circle at top, rgba(16, 185, 129, 0.06), transparent 70%);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.05);
+}
+#badge-streak-3:not(.locked) {
+    border-color: rgba(245, 158, 11, 0.3);
+    background: radial-gradient(circle at top, rgba(245, 158, 11, 0.06), transparent 70%);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.05);
+}
+#badge-streak-7:not(.locked) {
+    border-color: rgba(59, 130, 246, 0.3);
+    background: radial-gradient(circle at top, rgba(59, 130, 246, 0.06), transparent 70%);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.05);
+}
+#badge-sessions-10:not(.locked) {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: radial-gradient(circle at top, rgba(239, 68, 68, 0.06), transparent 70%);
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.05);
+}
+#badge-sessions-30:not(.locked) {
+    border-color: rgba(217, 119, 6, 0.3);
+    background: radial-gradient(circle at top, rgba(217, 119, 6, 0.06), transparent 70%);
+    box-shadow: 0 8px 25px rgba(217, 119, 6, 0.05);
+}
+#badge-level-8:not(.locked) {
+    border-color: rgba(139, 92, 246, 0.3);
+    background: radial-gradient(circle at top, rgba(139, 92, 246, 0.06), transparent 70%);
+    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.05);
+}
+
+/* --- MOBILE RESPONSIVE UPDATES --- */
+@media (max-width: 768px) {
+    .roadmap-timeline {
+        padding-left: 1.25rem;
+    }
+    
+    .roadmap-timeline::before {
+        left: 14px;
+    }
+    
+    .roadmap-header {
+        padding: 1.25rem 1rem;
+        gap: 0.75rem;
+    }
+    
+    .roadmap-badge-num {
+        width: 28px;
+        height: 28px;
+        font-size: 0.85rem;
+    }
+    
+    .roadmap-header-title h4 {
+        font-size: 0.95rem;
+    }
+    
+    .roadmap-body {
+        padding: 0 1rem;
+    }
+    
+    .roadmap-item.active .roadmap-body {
+        padding: 0 1rem 1.25rem 1rem;
+    }
+    
+    .stats-overview-panel {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .weekly-calendar {
+        gap: 0.2rem;
+    }
+    
+    .day-status {
+        width: 28px;
+        height: 28px;
+        font-size: 0.7rem;
+    }
+    
+    .badges-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+    
+    .badge-item {
+        padding: 1rem 0.5rem;
+    }
+    
+    .badge-icon {
+        font-size: 1.75rem;
+    }
+    
+    .badge-name {
+        font-size: 0.8rem;
+    }
+    
+    .badge-desc {
+        font-size: 0.65rem;
+    }
+}
+
 
