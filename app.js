@@ -1191,6 +1191,7 @@ function clearAllData() {
 
 // --- SUPABASE CLOUD MANAGEMENT ---
 let supabaseClient = null;
+let currentAuthMode = 'login';
 
 function initSupabaseConnection() {
     // Tích hợp sẵn thông tin kết nối mặc định của bạn
