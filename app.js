@@ -1,0 +1,937 @@
+/**
+ * PC Flex - Pubococcygeus Muscle Trainer
+ * JavaScript Core Logic & Audio Synthesizer
+ */
+
+// --- STATE MANAGEMENT ---
+const state = {
+    currentTab: 'practice',
+    currentLibSubtab: 'overview',
+    workoutState: 'idle', // idle, squeezing, relaxing, completed
+    selectedLevel: 'beginner',
+    timerInterval: null,
+    timeRemaining: 0,
+    currentRep: 0,
+    totalReps: 10,
+    squeezeDuration: 3,
+    relaxDuration: 3,
+    isMutedSFX: false,
+    isMutedBGM: true,
+    history: [],
+    streak: 0,
+    totalSessions: 0,
+    totalRepsCompleted: 0
+};
+
+// --- WORKOUT CONFIGURATIONS ---
+const levelConfigs = {
+    beginner: { squeeze: 3, relax: 3, reps: 10 },
+    intermediate: { squeeze: 5, relax: 5, reps: 12 },
+    advanced: { squeeze: 10, relax: 10, reps: 10 },
+    fastFlicks: { squeeze: 1, relax: 1, reps: 20 },
+    ladder: { squeeze: 9, relax: 8, reps: 8 },
+    mixed: { squeeze: 8, relax: 8, reps: 11 },
+    pyramidMixed: { squeeze: 3, relax: 3, reps: 10 },
+    reflexMixed: { squeeze: 10, relax: 5, reps: 12 }
+};
+
+// --- AUDIO CONTROLLER (Web Audio API Synthesizer) ---
+class AudioController {
+    constructor() {
+        this.audioCtx = null;
+        this.bgmSourceNode = null;
+        this.bgmLfo = null;
+        this.bgmGain = null;
+    }
+
+    init() {
+        if (this.audioCtx) return;
+        
+        // Lazy-init AudioContext to satisfy browser autoplay policies
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+            this.audioCtx = new AudioContextClass();
+        }
+    }
+
+    resumeContext() {
+        this.init();
+        if (this.audioCtx && this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume();
+        }
+    }
+
+    // Play Squeeze Sound (High-pitched pure chime - C5 + G5)
+    playSqueezeSFX() {
+        if (state.isMutedSFX) return;
+        this.resumeContext();
+        if (!this.audioCtx) return;
+
+        const now = this.audioCtx.currentTime;
+        
+        // Additive synthesizers for a crystal-clear bell chime
+        const osc1 = this.audioCtx.createOscillator();
+        const osc2 = this.audioCtx.createOscillator();
+        const gainNode = this.audioCtx.createGain();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(523.25, now); // C5
+
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(783.99, now); // G5 (harmonic purity)
+
+        gainNode.gain.setValueAtTime(0, now);
+        // Fast attack
+        gainNode.gain.linearRampToValueAtTime(0.55, now + 0.03);
+        // Smooth decaying release
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+
+        osc1.connect(gainNode);
+        osc2.connect(gainNode);
+        gainNode.connect(this.audioCtx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        
+        osc1.stop(now + 1.2);
+        osc2.stop(now + 1.2);
+    }
+
+    // Play Relax Sound (Warmer, soft low chime - G3 + E4)
+    playRelaxSFX() {
+        if (state.isMutedSFX) return;
+        this.resumeContext();
+        if (!this.audioCtx) return;
+
+        const now = this.audioCtx.currentTime;
+        
+        const osc1 = this.audioCtx.createOscillator();
+        const osc2 = this.audioCtx.createOscillator();
+        const gainNode = this.audioCtx.createGain();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(329.63, now); // E4
+
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(196.00, now); // G3 (Deep, relaxing base)
+
+        gainNode.gain.setValueAtTime(0, now);
+        // Softer, slower attack
+        gainNode.gain.linearRampToValueAtTime(0.60, now + 0.15);
+        // Long decay
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
+
+        osc1.connect(gainNode);
+        osc2.connect(gainNode);
+        gainNode.connect(this.audioCtx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        
+        osc1.stop(now + 1.5);
+        osc2.stop(now + 1.5);
+    }
+
+    // Play Completion Sound (A beautiful C major arpeggio)
+    playCompletionSFX() {
+        if (state.isMutedSFX) return;
+        this.resumeContext();
+        if (!this.audioCtx) return;
+
+        const now = this.audioCtx.currentTime;
+        const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+        
+        notes.forEach((freq, index) => {
+            const osc = this.audioCtx.createOscillator();
+            const gainNode = this.audioCtx.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + index * 0.12);
+            
+            gainNode.gain.setValueAtTime(0, now + index * 0.12);
+            gainNode.gain.linearRampToValueAtTime(0.45, now + index * 0.12 + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.12 + 1.0);
+            
+            osc.connect(gainNode);
+            gainNode.connect(this.audioCtx.destination);
+            
+            osc.start(now + index * 0.12);
+            osc.stop(now + index * 0.12 + 1.0);
+        });
+    }
+
+    // Synthesize Soothing Ocean/Wind Wave Soundscape for meditation
+    startBGM() {
+        this.resumeContext();
+        if (!this.audioCtx) return;
+
+        if (this.bgmSourceNode) return; // Already running
+
+        const now = this.audioCtx.currentTime;
+
+        // 1. Generate White Noise Buffer
+        const sampleRate = this.audioCtx.sampleRate;
+        const bufferSize = 2 * sampleRate; // 2 seconds buffer
+        const noiseBuffer = this.audioCtx.createBuffer(1, bufferSize, sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+
+        // 2. Setup Noise Source Loop
+        this.bgmSourceNode = this.audioCtx.createBufferSource();
+        this.bgmSourceNode.buffer = noiseBuffer;
+        this.bgmSourceNode.loop = true;
+
+        // 3. Low Pass Filter to make white noise sound like soft wind/ocean wave
+        const filter = this.audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(400, now); // Base frequency (deep wind)
+        filter.Q.setValueAtTime(1.0, now);
+
+        // 4. LFO (Low-Frequency Oscillator) to modulate filter frequency (breathing effect)
+        this.bgmLfo = this.audioCtx.createOscillator();
+        this.bgmLfo.type = 'sine';
+        this.bgmLfo.frequency.setValueAtTime(0.12, now); // ~8 seconds per cycle
+
+        // LFO Gain controls how wide the filter frequency sweep is
+        const lfoGain = this.audioCtx.createGain();
+        lfoGain.gain.setValueAtTime(250, now); // Sweep +/- 250Hz around 400Hz
+
+        // 5. Volume Control Node
+        this.bgmGain = this.audioCtx.createGain();
+        this.bgmGain.gain.setValueAtTime(0, now);
+        // Fade in smoothly
+        this.bgmGain.gain.linearRampToValueAtTime(0.16, now + 2.0); 
+
+        // 6. Connect the Synthesizer Nodes
+        this.bgmLfo.connect(lfoGain);
+        lfoGain.connect(filter.frequency); // Modulates the cutoff frequency dynamically
+        
+        this.bgmSourceNode.connect(filter);
+        filter.connect(this.bgmGain);
+        this.bgmGain.connect(this.audioCtx.destination);
+
+        // Start synthesizers
+        this.bgmSourceNode.start(now);
+        this.bgmLfo.start(now);
+    }
+
+    stopBGM() {
+        if (!this.audioCtx) return;
+        const now = this.audioCtx.currentTime;
+
+        if (this.bgmSourceNode && this.bgmGain) {
+            // Fade out smoothly before stopping to avoid audio click/pop
+            this.bgmGain.gain.setValueAtTime(this.bgmGain.gain.value, now);
+            this.bgmGain.gain.linearRampToValueAtTime(0, now + 1.0);
+            
+            const source = this.bgmSourceNode;
+            const lfo = this.bgmLfo;
+            
+            setTimeout(() => {
+                try {
+                    source.stop();
+                    lfo.stop();
+                } catch(e) {}
+            }, 1050);
+
+            this.bgmSourceNode = null;
+            this.bgmLfo = null;
+            this.bgmGain = null;
+        }
+    }
+}
+
+const audioController = new AudioController();
+
+// --- DOM ELEMENTS ---
+const elements = {
+    // Navigation Tabs
+    navItems: document.querySelectorAll('.nav-item'),
+    sections: document.querySelectorAll('.content-section'),
+    
+    // Library Tabs
+    libTabBtns: document.querySelectorAll('.lib-tab-btn'),
+    libPanes: document.querySelectorAll('.lib-content-pane'),
+
+    // Workout Elements
+    orb: document.getElementById('visualizer-orb'),
+    orbAction: document.getElementById('orb-action'),
+    orbTimer: document.getElementById('orb-timer'),
+    orbSubText: document.getElementById('orb-sub-text'),
+    repDisplay: document.getElementById('current-rep-display'),
+    progressBar: document.getElementById('session-progress-fill'),
+    btnStart: document.getElementById('btn-start'),
+    btnReset: document.getElementById('btn-reset'),
+    textStart: document.getElementById('text-start'),
+    iconStart: document.getElementById('icon-start'),
+    
+    // Level Configs
+    levelItems: document.querySelectorAll('.level-item'),
+    customPanel: document.getElementById('custom-controls-panel'),
+    customSqueezeInput: document.getElementById('custom-squeeze'),
+    customRelaxInput: document.getElementById('custom-relax'),
+    customRepsInput: document.getElementById('custom-reps'),
+
+    // Sound Controls
+    btnToggleSFX: document.getElementById('btn-toggle-sfx'),
+    btnToggleBGM: document.getElementById('btn-toggle-bgm'),
+    iconSFX: document.getElementById('icon-sfx'),
+    iconBGM: document.getElementById('icon-bgm'),
+
+    // Stats Elements
+    sidebarStreak: document.getElementById('sidebar-streak'),
+    sidebarTotalSessions: document.getElementById('sidebar-total-sessions'),
+    statsStreak: document.getElementById('stats-streak'),
+    statsTotalSessions: document.getElementById('stats-total-sessions'),
+    statsTotalReps: document.getElementById('stats-total-reps'),
+    historyLogBody: document.getElementById('history-log-body'),
+    btnClearData: document.getElementById('btn-clear-data')
+};
+
+// --- INITIALIZE THE APP ---
+function initApp() {
+    loadData();
+    setupEventHandlers();
+    updateUIConfigs();
+    renderStats();
+}
+
+// --- SETUP EVENT HANDLERS ---
+function setupEventHandlers() {
+    // 1. Sidebar tab switching
+    elements.navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const targetTab = item.getAttribute('data-tab');
+            switchTab(targetTab);
+        });
+    });
+
+    // 2. Library subtab switching
+    elements.libTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetSubtab = btn.getAttribute('data-subtab');
+            switchLibrarySubtab(targetSubtab);
+        });
+    });
+
+    // 3. Level selection
+    elements.levelItems.forEach(item => {
+        item.addEventListener('click', () => {
+            if (state.workoutState !== 'idle') return; // Prevent change mid-workout
+            
+            elements.levelItems.forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            state.selectedLevel = item.getAttribute('data-level');
+            
+            updateUIConfigs();
+        });
+    });
+
+    // Custom input updates
+    const customInputs = [elements.customSqueezeInput, elements.customRelaxInput, elements.customRepsInput];
+    customInputs.forEach(input => {
+        input.addEventListener('change', () => {
+            if (state.selectedLevel === 'custom') {
+                updateUIConfigs();
+            }
+        });
+    });
+
+    // 4. Sound toggles
+    elements.btnToggleSFX.addEventListener('click', () => {
+        state.isMutedSFX = !state.isMutedSFX;
+        audioController.resumeContext();
+        updateSoundButtons();
+    });
+
+    elements.btnToggleBGM.addEventListener('click', () => {
+        state.isMutedBGM = !state.isMutedBGM;
+        audioController.resumeContext();
+        
+        if (state.isMutedBGM) {
+            audioController.stopBGM();
+        } else {
+            audioController.startBGM();
+        }
+        updateSoundButtons();
+    });
+
+    // 5. Workout controls
+    elements.btnStart.addEventListener('click', () => {
+        // Resume Audio context on first click interaction
+        audioController.resumeContext();
+        
+        if (state.workoutState === 'idle') {
+            startWorkout();
+        } else if (state.workoutState === 'squeezing' || state.workoutState === 'relaxing') {
+            pauseWorkout();
+        }
+    });
+
+    elements.btnReset.addEventListener('click', () => {
+        resetWorkout();
+    });
+
+    // 6. Stats clearing
+    elements.btnClearData.addEventListener('click', () => {
+        if (confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử luyện tập và chuỗi ngày tập?')) {
+            clearAllData();
+        }
+    });
+}
+
+// --- TAB SWITCHING LOGIC ---
+function switchTab(tabName) {
+    state.currentTab = tabName;
+    
+    // Update menu items active state
+    elements.navItems.forEach(item => {
+        if (item.getAttribute('data-tab') === tabName) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
+
+    // Update section active state
+    elements.sections.forEach(sec => {
+        if (sec.id === `tab-${tabName}`) {
+            sec.classList.add('active');
+        } else {
+            sec.classList.remove('active');
+        }
+    });
+}
+
+function switchLibrarySubtab(subtabName) {
+    state.currentLibSubtab = subtabName;
+
+    elements.libTabBtns.forEach(btn => {
+        if (btn.getAttribute('data-subtab') === subtabName) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    elements.libPanes.forEach(pane => {
+        if (pane.id === `lib-${subtabName}`) {
+            pane.classList.add('active');
+        } else {
+            pane.classList.remove('active');
+        }
+    });
+}
+
+// --- WORKOUT CONFIGURATION MANAGEMENT ---
+function updateUIConfigs() {
+    if (state.selectedLevel === 'custom') {
+        elements.customPanel.style.display = 'block';
+        state.squeezeDuration = Math.max(1, parseInt(elements.customSqueezeInput.value) || 5);
+        state.relaxDuration = Math.max(1, parseInt(elements.customRelaxInput.value) || 5);
+        state.totalReps = Math.max(1, parseInt(elements.customRepsInput.value) || 10);
+    } else {
+        elements.customPanel.style.display = 'none';
+        const config = levelConfigs[state.selectedLevel];
+        state.squeezeDuration = config.squeeze;
+        state.relaxDuration = config.relax;
+        state.totalReps = config.reps;
+    }
+
+    // Reset visual display elements
+    elements.repDisplay.textContent = `0 / ${state.totalReps}`;
+    elements.progressBar.style.width = '0%';
+    elements.orbTimer.textContent = String(state.squeezeDuration).padStart(2, '0');
+    elements.orbAction.textContent = 'SẴN SÀNG';
+    
+    if (state.selectedLevel === 'mixed') {
+        elements.orbSubText.textContent = 'Bấm Bắt đầu để tập Cấp độ Hỗn hợp Lâm Sàng (11 lượt)';
+    } else if (state.selectedLevel === 'pyramidMixed') {
+        elements.orbSubText.textContent = 'Bấm Bắt đầu để tập Hỗn hợp Kim Tự Tháp (10 lượt)';
+    } else if (state.selectedLevel === 'reflexMixed') {
+        elements.orbSubText.textContent = 'Bấm Bắt đầu để tập Hỗn hợp Phản Xạ Sinh Lý (12 lượt)';
+    } else {
+        elements.orbSubText.textContent = `Bấm Bắt đầu để tập (${state.squeezeDuration}s siết - ${state.relaxDuration}s thả)`;
+    }
+    
+    // Clear classes on orb
+    elements.orb.classList.remove('squeezing', 'relaxing', 'completed');
+}
+
+function updateSoundButtons() {
+    // SFX button
+    if (state.isMutedSFX) {
+        elements.btnToggleSFX.classList.add('muted');
+        elements.btnToggleSFX.querySelector('span').textContent = 'Tắt âm';
+        elements.iconSFX.innerHTML = `
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <line x1="23" y1="9" x2="17" y2="15"/>
+            <line x1="17" y1="9" x2="23" y2="15"/>
+        `;
+    } else {
+        elements.btnToggleSFX.classList.remove('muted');
+        elements.btnToggleSFX.querySelector('span').textContent = 'Âm báo';
+        elements.iconSFX.innerHTML = `
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        `;
+    }
+
+    // BGM button
+    if (state.isMutedBGM) {
+        elements.btnToggleBGM.classList.add('muted');
+        elements.btnToggleBGM.querySelector('span').textContent = 'Tắt nhạc';
+        elements.iconBGM.innerHTML = `
+            <path d="M9 18V5l12-2v13"/>
+            <circle cx="6" cy="18" r="3"/>
+            <circle cx="18" cy="16" r="3"/>
+            <line x1="3" y1="3" x2="21" y2="21"/>
+        `;
+    } else {
+        elements.btnToggleBGM.classList.remove('muted');
+        elements.btnToggleBGM.querySelector('span').textContent = 'Nhạc nền';
+        elements.iconBGM.innerHTML = `
+            <path d="M9 18V5l12-2v13"/>
+            <circle cx="6" cy="18" r="3"/>
+            <circle cx="18" cy="16" r="3"/>
+        `;
+    }
+}
+
+// --- WORKOUT GAME LOOP / WORKFLOW ---
+function startWorkout() {
+    state.workoutState = 'squeezing';
+    state.currentRep = 1;
+    state.timeRemaining = state.squeezeDuration;
+    
+    // Toggle buttons state
+    elements.btnReset.disabled = false;
+    elements.btnStart.classList.remove('btn-primary');
+    elements.btnStart.classList.add('btn-secondary');
+    elements.textStart.textContent = 'Tạm dừng';
+    elements.iconStart.innerHTML = `
+        <rect x="6" y="4" width="4" height="16"/>
+        <rect x="14" y="4" width="4" height="16"/>
+    `;
+    
+    // Adjust levels selection access
+    elements.levelItems.forEach(item => item.style.pointerEvents = 'none');
+    
+    // Trigger Squeeze phase
+    enterSqueezePhase();
+    
+    // Start interval
+    state.timerInterval = setInterval(tick, 1000);
+}
+
+function pauseWorkout() {
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+    
+    // Save current active state before pausing
+    const oldState = state.workoutState;
+    state.workoutState = 'paused_' + oldState;
+    
+    // Change UI state
+    elements.textStart.textContent = 'Tiếp tục';
+    elements.iconStart.innerHTML = `
+        <polygon points="5 3 19 12 5 21 5 3"/>
+    `;
+    elements.orbSubText.textContent = 'Đang tạm dừng bài tập';
+}
+
+function resumeWorkout() {
+    // Restore state from paused state
+    const originalState = state.workoutState.replace('paused_', '');
+    state.workoutState = originalState;
+    
+    // Change UI state
+    elements.textStart.textContent = 'Tạm dừng';
+    elements.iconStart.innerHTML = `
+        <rect x="6" y="4" width="4" height="16"/>
+        <rect x="14" y="4" width="4" height="16"/>
+    `;
+    
+    if (state.workoutState === 'squeezing') {
+        elements.orbSubText.textContent = 'Giữ cơ PC co thắt';
+    } else {
+        elements.orbSubText.textContent = 'Thả lỏng toàn thân, hít thở đều';
+    }
+
+    state.timerInterval = setInterval(tick, 1000);
+}
+
+// Switch pause / resume on clicking same button
+elements.btnStart.addEventListener('click', () => {
+    if (state.workoutState.startsWith('paused_')) {
+        resumeWorkout();
+    }
+});
+
+function resetWorkout() {
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+    state.workoutState = 'idle';
+    
+    // Restore Level select availability
+    elements.levelItems.forEach(item => item.style.pointerEvents = 'auto');
+    
+    // Restore Start/Reset button
+    elements.btnReset.disabled = true;
+    elements.btnStart.classList.add('btn-primary');
+    elements.btnStart.classList.remove('btn-secondary');
+    elements.textStart.textContent = 'Bắt đầu';
+    elements.iconStart.innerHTML = `
+        <polygon points="5 3 19 12 5 21 5 3"/>
+    `;
+
+    updateUIConfigs();
+}
+
+// Tick core timer loop
+function tick() {
+    state.timeRemaining--;
+    
+    if (state.timeRemaining < 0) {
+        // Toggle Phase Squeeze -> Relax or next rep
+        if (state.workoutState === 'squeezing') {
+            enterRelaxPhase();
+        } else if (state.workoutState === 'relaxing') {
+            if (state.currentRep >= state.totalReps) {
+                finishWorkout();
+            } else {
+                state.currentRep++;
+                enterSqueezePhase();
+            }
+        }
+    } else {
+        elements.orbTimer.textContent = String(state.timeRemaining).padStart(2, '0');
+        
+        // Dynamic subtext updates for Ladder levels during tick
+        if (state.workoutState === 'squeezing' && state.selectedLevel === 'ladder') {
+            if (state.timeRemaining > 6) {
+                elements.orbSubText.textContent = 'Siết nhẹ 30% lực';
+            } else if (state.timeRemaining <= 6 && state.timeRemaining > 3) {
+                elements.orbSubText.textContent = 'Siết trung bình 60% lực';
+            } else {
+                elements.orbSubText.textContent = 'Siết tối đa 100% lực!';
+            }
+        }
+    }
+}
+
+function enterSqueezePhase() {
+    state.workoutState = 'squeezing';
+    
+    // Dynamic duration logic for custom levels
+    if (state.selectedLevel === 'mixed') {
+        // Mixed logic: Reps 1-3 & 9-11 are slow (8s), Reps 4-8 are fast flicks (1s)
+        if ((state.currentRep >= 1 && state.currentRep <= 3) || (state.currentRep >= 9 && state.currentRep <= 11)) {
+            state.squeezeDuration = 8;
+            state.relaxDuration = 8;
+        } else {
+            state.squeezeDuration = 1;
+            state.relaxDuration = 1;
+        }
+    } else if (state.selectedLevel === 'ladder') {
+        state.squeezeDuration = 9;
+        state.relaxDuration = 8;
+    } else if (state.selectedLevel === 'pyramidMixed') {
+        const squeezeMap = { 1: 3, 2: 1, 3: 6, 4: 1, 5: 9, 6: 1, 7: 12, 8: 1, 9: 6, 10: 3 };
+        state.squeezeDuration = squeezeMap[state.currentRep] || 3;
+    } else if (state.selectedLevel === 'reflexMixed') {
+        if (state.currentRep <= 4) {
+            state.squeezeDuration = 10;
+        } else if (state.currentRep <= 8) {
+            state.squeezeDuration = 1;
+        } else {
+            state.squeezeDuration = 5;
+        }
+    }
+
+    state.timeRemaining = state.squeezeDuration;
+    
+    // UI Visual changes
+    elements.orb.classList.remove('relaxing');
+    elements.orb.classList.add('squeezing');
+    elements.orbAction.textContent = 'SIẾT CƠ';
+    
+    // Update subtext
+    if (state.selectedLevel === 'ladder') {
+        elements.orbSubText.textContent = 'Siết nhẹ 30% lực';
+    } else if (state.selectedLevel === 'mixed') {
+        if (state.squeezeDuration === 8) {
+            elements.orbSubText.textContent = 'Nhịp chậm: Siết sâu & giữ';
+        } else {
+            elements.orbSubText.textContent = 'Nhịp nhanh: Nhấp nhanh cơ PC';
+        }
+    } else if (state.selectedLevel === 'pyramidMixed') {
+        if (state.squeezeDuration === 12) {
+            elements.orbSubText.textContent = 'Đỉnh tháp: Siết tối đa 12 giây!';
+        } else if (state.squeezeDuration === 1) {
+            elements.orbSubText.textContent = 'Nhịp nhanh: Co thắt nhanh 1s';
+        } else {
+            elements.orbSubText.textContent = `Kim tự tháp: Siết sâu ${state.squeezeDuration}s`;
+        }
+    } else if (state.selectedLevel === 'reflexMixed') {
+        if (state.squeezeDuration === 10) {
+            elements.orbSubText.textContent = 'Sức bền: Giữ co thắt 10 giây';
+        } else if (state.squeezeDuration === 1) {
+            elements.orbSubText.textContent = 'Phản xạ: Nhấp nhanh liên tục 1s';
+        } else {
+            elements.orbSubText.textContent = 'Phục hồi: Giữ trung bình 5 giây';
+        }
+    } else {
+        elements.orbSubText.textContent = 'Co thắt cơ PC chặt nhất có thể';
+    }
+    
+    elements.orbTimer.textContent = String(state.timeRemaining).padStart(2, '0');
+    
+    updateProgressDisplays();
+    audioController.playSqueezeSFX();
+}
+
+function enterRelaxPhase() {
+    state.workoutState = 'relaxing';
+    
+    // Dynamic relax duration logic for mixed level
+    if (state.selectedLevel === 'mixed') {
+        if ((state.currentRep >= 1 && state.currentRep <= 3) || (state.currentRep >= 9 && state.currentRep <= 11)) {
+            state.relaxDuration = 8;
+        } else {
+            state.relaxDuration = 1;
+        }
+    } else if (state.selectedLevel === 'ladder') {
+        state.relaxDuration = 8;
+    } else if (state.selectedLevel === 'pyramidMixed') {
+        const relaxMap = { 1: 3, 2: 1, 3: 6, 4: 1, 5: 9, 6: 1, 7: 10, 8: 1, 9: 6, 10: 3 };
+        state.relaxDuration = relaxMap[state.currentRep] || 3;
+    } else if (state.selectedLevel === 'reflexMixed') {
+        if (state.currentRep <= 4) {
+            state.relaxDuration = 5;
+        } else if (state.currentRep <= 8) {
+            state.relaxDuration = 1;
+        } else {
+            state.relaxDuration = 3;
+        }
+    }
+
+    state.timeRemaining = state.relaxDuration;
+    
+    // UI Visual changes
+    elements.orb.classList.remove('squeezing');
+    elements.orb.classList.add('relaxing');
+    elements.orbAction.textContent = 'THẢ LỎNG';
+    
+    if (state.selectedLevel === 'mixed' && state.relaxDuration === 1) {
+        elements.orbSubText.textContent = 'Thả nhanh';
+    } else if (state.selectedLevel === 'pyramidMixed' && state.relaxDuration === 1) {
+        elements.orbSubText.textContent = 'Thả nhanh';
+    } else if (state.selectedLevel === 'reflexMixed' && state.relaxDuration === 1) {
+        elements.orbSubText.textContent = 'Thả nhanh';
+    } else {
+        elements.orbSubText.textContent = 'Thả lỏng cơ sàn chậu hoàn toàn';
+    }
+    
+    elements.orbTimer.textContent = String(state.timeRemaining).padStart(2, '0');
+    
+    audioController.playRelaxSFX();
+}
+
+function updateProgressDisplays() {
+    elements.repDisplay.textContent = `${state.currentRep} / ${state.totalReps}`;
+    const percent = ((state.currentRep - 1) / state.totalReps) * 100;
+    elements.progressBar.style.width = `${percent}%`;
+}
+
+function finishWorkout() {
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+    state.workoutState = 'completed';
+    
+    // Visual indicators
+    elements.orb.classList.remove('squeezing', 'relaxing');
+    elements.orb.classList.add('completed');
+    elements.orbAction.textContent = 'HOÀN THÀNH';
+    elements.orbTimer.textContent = '✓';
+    elements.orbSubText.textContent = 'Tuyệt vời! Bạn đã hoàn thành hiệp tập.';
+    
+    // Progress bar full
+    elements.progressBar.style.width = '100%';
+    elements.repDisplay.textContent = `${state.totalReps} / ${state.totalReps}`;
+    
+    // Update controllers
+    elements.btnStart.disabled = true;
+    audioController.playCompletionSFX();
+
+    // Save statistics & log
+    saveWorkoutLog();
+}
+
+// --- DATA PERSISTENCE & STATISTICS ---
+function saveWorkoutLog() {
+    const logEntry = {
+        id: 'session_' + Date.now(),
+        timestamp: new Date().toISOString(),
+        level: state.selectedLevel,
+        config: {
+            squeeze: state.squeezeDuration,
+            relax: state.relaxDuration,
+            reps: state.totalReps
+        },
+        completed: true
+    };
+    
+    state.history.unshift(logEntry); // Add to the front
+    
+    // Calculate Streak & Totals
+    state.totalSessions += 1;
+    state.totalRepsCompleted += state.totalReps;
+    
+    calculateStreak();
+    saveData();
+    renderStats();
+}
+
+function calculateStreak() {
+    if (state.history.length === 0) {
+        state.streak = 0;
+        return;
+    }
+
+    const todayStr = new Date().toDateString();
+    let currentStreak = 0;
+    let checkDate = new Date();
+    
+    // Deduplicate history dates to daily exercises
+    const exerciseDates = new Set();
+    state.history.forEach(log => {
+        const d = new Date(log.timestamp).toDateString();
+        exerciseDates.add(d);
+    });
+    
+    // Check if the user worked out today
+    let hasTrainedToday = exerciseDates.has(todayStr);
+    
+    if (hasTrainedToday) {
+        currentStreak = 1;
+        checkDate.setDate(checkDate.getDate() - 1); // Move to yesterday
+    } else {
+        // Check if worked out yesterday
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (exerciseDates.has(yesterday.toDateString())) {
+            currentStreak = 1;
+            checkDate = yesterday;
+            checkDate.setDate(checkDate.getDate() - 1); // Move day before yesterday
+        } else {
+            // Broken streak
+            state.streak = 0;
+            return;
+        }
+    }
+    
+    // Work backward
+    while (true) {
+        const targetDateStr = checkDate.toDateString();
+        if (exerciseDates.has(targetDateStr)) {
+            currentStreak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+            break;
+        }
+    }
+
+    state.streak = currentStreak;
+}
+
+function saveData() {
+    localStorage.setItem('pc_flex_history', JSON.stringify(state.history));
+    localStorage.setItem('pc_flex_streak', state.streak);
+    localStorage.setItem('pc_flex_total_sessions', state.totalSessions);
+    localStorage.setItem('pc_flex_total_reps', state.totalRepsCompleted);
+}
+
+function loadData() {
+    try {
+        state.history = JSON.parse(localStorage.getItem('pc_flex_history')) || [];
+        state.streak = parseInt(localStorage.getItem('pc_flex_streak')) || 0;
+        state.totalSessions = parseInt(localStorage.getItem('pc_flex_total_sessions')) || 0;
+        state.totalRepsCompleted = parseInt(localStorage.getItem('pc_flex_total_reps')) || 0;
+        
+        // Recalculate streak on load to ensure it resets if a day was missed
+        calculateStreak();
+    } catch(e) {
+        console.error("Lỗi khi tải dữ liệu từ localStorage", e);
+    }
+}
+
+function renderStats() {
+    // 1. Sidebar Stats
+    elements.sidebarStreak.innerHTML = `<span class="emoji">🔥</span> ${state.streak} ngày`;
+    elements.sidebarTotalSessions.textContent = `${state.totalSessions} hiệp`;
+
+    // 2. Stats Dashboard Tab
+    if (elements.statsStreak) {
+        elements.statsStreak.textContent = `${state.streak} ngày`;
+        elements.statsTotalSessions.textContent = `${state.totalSessions} hiệp`;
+        elements.statsTotalReps.textContent = `${state.totalRepsCompleted} lượt`;
+    }
+
+    // 3. Render History Table Log
+    if (elements.historyLogBody) {
+        if (state.history.length === 0) {
+            elements.historyLogBody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="no-data">Chưa có lịch sử luyện tập. Hãy bắt đầu hiệp tập đầu tiên của bạn!</td>
+                </tr>
+            `;
+            return;
+        }
+
+        elements.historyLogBody.innerHTML = state.history.slice(0, 10).map(log => {
+            const date = new Date(log.timestamp);
+            const timeStr = `${date.toLocaleDateString('vi-VN')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+            
+            let levelLabel = '';
+            switch(log.level) {
+                case 'beginner': levelLabel = 'Sơ cấp (C1)'; break;
+                case 'intermediate': levelLabel = 'Trung cấp (C2)'; break;
+                case 'advanced': levelLabel = 'Nâng cao (C3)'; break;
+                case 'fastFlicks': levelLabel = 'Nhấp nhanh (C4)'; break;
+                case 'ladder': levelLabel = 'Nấc thang (C5)'; break;
+                case 'mixed': levelLabel = 'Hỗn hợp (C6)'; break;
+                case 'pyramidMixed': levelLabel = 'Hỗn hợp (C7)'; break;
+                case 'reflexMixed': levelLabel = 'Hỗn hợp (C8)'; break;
+                default: levelLabel = 'Tự do';
+            }
+
+            return `
+                <tr>
+                    <td>${timeStr}</td>
+                    <td><span class="badge badge-level">${levelLabel}</span></td>
+                    <td>Siết: ${log.config.squeeze}s | Thả: ${log.config.relax}s | Lượt: ${log.config.reps}</td>
+                    <td><span class="badge badge-success">Hoàn thành</span></td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+function clearAllData() {
+    localStorage.clear();
+    state.history = [];
+    state.streak = 0;
+    state.totalSessions = 0;
+    state.totalRepsCompleted = 0;
+    
+    renderStats();
+    updateUIConfigs();
+}
+
+// --- START APP ON DOCUMENT LOAD ---
+document.addEventListener('DOMContentLoaded', () => {
+    initApp();
+});

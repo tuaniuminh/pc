@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PC Flex - Giáo Trình & Ứng Dụng Luyện Tập Cơ PC Nam Giới</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10S2 17.523 2 12A10 10 0 0 1 12 2z"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                </div>
+                <h2>PC <span>Flex</span></h2>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="practice" id="btn-tab-practice">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                    <span>Luyện Tập</span>
+                </button>
+                <button class="nav-item" data-tab="library" id="btn-tab-library">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    </svg>
+                    <span>Giáo Trình Y Khoa</span>
+                </button>
+                <button class="nav-item" data-tab="stats" id="btn-tab-stats">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"/>
+                        <line x1="12" y1="20" x2="12" y2="4"/>
+                        <line x1="6" y1="20" x2="6" y2="14"/>
+                    </svg>
+                    <span>Tiến Độ</span>
+                </button>
+            </nav>
+
+            <div class="user-quick-stats">
+                <div class="quick-stat-item">
+                    <span class="label">Chuỗi ngày tập (Streak)</span>
+                    <span class="value" id="sidebar-streak"><span class="emoji">🔥</span> 0 ngày</span>
+                </div>
+                <div class="quick-stat-item">
+                    <span class="label">Tổng hiệp đã tập</span>
+                    <span class="value" id="sidebar-total-sessions">0 hiệp</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- SECTION: PRACTICE -->
+            <section id="tab-practice" class="content-section active">
+                <div class="header-section">
+                    <h1>Rèn Luyện Mỗi Ngày</h1>
+                    <p class="subtitle">Chọn cấp độ phù hợp và làm theo chỉ dẫn của vòng tròn sinh học.</p>
+                </div>
+
+                <div class="practice-grid">
+                    <!-- Left: Trainer Circle & Main Controls -->
+                    <div class="trainer-card">
+                        <!-- Sound Settings Quick Toggle -->
+                        <div class="sound-quick-controls">
+                            <button class="sound-btn" id="btn-toggle-sfx" title="Bật/Tắt âm thanh hướng dẫn">
+                                <svg id="icon-sfx" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                                </svg>
+                                <span>Âm báo</span>
+                            </button>
+                            <button class="sound-btn" id="btn-toggle-bgm" title="Bật/Tắt nhạc nền thiền">
+                                <svg id="icon-bgm" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9 18V5l12-2v13"/>
+                                    <circle cx="6" cy="18" r="3"/>
+                                    <circle cx="18" cy="16" r="3"/>
+                                </svg>
+                                <span>Nhạc nền</span>
+                            </button>
+                        </div>
+
+                        <!-- Central Visualizer Circle -->
+                        <div class="orb-container">
+                            <div class="visualizer-orb" id="visualizer-orb">
+                                <div class="orb-glow"></div>
+                                <div class="orb-content">
+                                    <span class="orb-action" id="orb-action">SẴN SÀNG</span>
+                                    <span class="orb-timer" id="orb-timer">00</span>
+                                    <span class="orb-sub-text" id="orb-sub-text">Bấm Bắt đầu để tập</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar & Details -->
+                        <div class="progress-details">
+                            <div class="rep-counter">
+                                <span class="label">Lượt tập:</span>
+                                <span class="value" id="current-rep-display">0 / 0</span>
+                            </div>
+                            <div class="session-progress-bar">
+                                <div class="progress-fill" id="session-progress-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Action Controls -->
+                        <div class="action-controls">
+                            <button class="btn btn-secondary" id="btn-reset" disabled>
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M23 4v6h-6"/>
+                                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                                </svg>
+                                Đặt lại
+                            </button>
+                            <button class="btn btn-primary" id="btn-start">
+                                <svg id="icon-start" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="5 3 19 12 5 21 5 3"/>
+                                </svg>
+                                <span id="text-start">Bắt đầu</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right: Workout Levels Selector -->
+                    <div class="config-card">
+                        <h3>Cấu Hình Bài Tập</h3>
+                        <p class="config-desc">Chọn bài tập được lập trình sẵn hoặc tùy chỉnh theo ý muốn của bạn.</p>
+                        
+                        <div class="levels-list">
+                            <!-- Beginner Level -->
+                            <div class="level-item active" data-level="beginner">
+                                <div class="level-icon level-beg">1</div>
+                                <div class="level-info">
+                                    <span class="level-name">Cấp độ 1: Đánh Thức (Sơ cấp)</span>
+                                    <span class="level-meta">Siết: 3s | Thả: 3s | 10 Lượt (Tổng: 1 phút)</span>
+                                </div>
+                            </div>
+
+                            <!-- Intermediate Level -->
+                            <div class="level-item" data-level="intermediate">
+                                <div class="level-icon level-int">2</div>
+                                <div class="level-info">
+                                    <span class="level-name">Cấp độ 2: Sức Bền (Trung cấp)</span>
+                                    <span class="level-meta">Siết: 5s | Thả: 5s | 12 Lượt (Tổng: 2 phút)</span>
+                                </div>
+                            </div>
+
+                            <!-- Advanced Level -->
+                            <div class="level-item" data-level="advanced">
+                                <div class="level-icon level-adv">3</div>
+                                <div class="level-info">
+                                    <span class="level-name">Cấp độ 3: Sức Mạnh (Nâng cao)</span>
+                                    <span class="level-meta">Siết: 10s | Thả: 10s | 10 Lượt (Tổng: 3 phút 20 giây)</span>
+                                </div>
+                            </div>
+
+                            <!-- Fast Flicks Level -->
+                            <div class="level-item" data-level="fastFlicks">
+                                <div class="level-icon level-adv" style="background: rgba(239, 68, 68, 0.1); color: #f87171; border-color: rgba(239, 68, 68, 0.2);">4</div>
+                                <div class="level-info">
+                                    <span class="level-name">Cấp độ 4: Nhấp Nháy Nhanh (Phản Xạ)</span>
+                                    <span class="level-meta">Siết: 1s | Thả: 1s | 20 Lượt (Tổng: 40 giây)</span>
+                                </div>
+                            </div>
+
+                            <!-- Ladder Level -->
+                            <div class="level-item" data-level="ladder">
+                                <div class="level-icon level-adv" style="background: rgba(16, 185, 129, 0.1); color: #34d399; border-color: rgba(16, 185, 129, 0.2);">5</div>
+                                <div class="level-info">
+                                    <span class="level-name">Cấp độ 5: Co Thắt Nấc Thang (Kiểm Soát)</span>
+                                    <span class="level-meta">Siết tăng dần: 9s | Thả: 8s | 8 Lượt</span>
+                                </div>
+                            </div>
+
+                            <!-- Mixed Level -->
+                            <div class="level-item" data-level="mixed">
+                                <div class="level-icon level-adv" style="background: rgba(139, 92, 246, 0.1); color: #c084fc; border-color: rgba(139, 92, 246, 0.2);">6</div>
+                                <div class="level-info">
+                                    <span class="level-name">Cấp độ 6: Hỗn Hợp Lâm Sàng (Bậc Thầy)</span>
+                                    <span class="level-meta">Xen kẽ Siết lâu & Nhấp nhanh | 11 Lượt</span>
+                                </div>
+                            </div>
+
+                            <!-- Pyramid Mixed Level -->
+                            <div class="level-item" data-level="pyramidMixed">
+                                <div class="level-icon level-adv" style="background: rgba(245, 158, 11, 0.1); color: #fbbf24; border-color: rgba(245, 158, 11, 0.2);">7</div>
+                                <div class="level-info">
+                                    <span class="level-name">Cấp độ 7: Hỗn Hợp Kim Tự Tháp (Thử Thách)</span>
+                                    <span class="level-meta">Siết tăng dần (3s -> 12s) xen kẽ Nhấp nhanh | 10 Lượt</span>
+                                </div>
+                            </div>
+
+                            <!-- Reflex Mixed Level -->
+                            <div class="level-item" data-level="reflexMixed">
+                                <div class="level-icon level-adv" style="background: rgba(236, 72, 153, 0.1); color: #f472b6; border-color: rgba(236, 72, 153, 0.2);">8</div>
+                                <div class="level-info">
+                                    <span class="level-name">Cấp độ 8: Phản Xạ Sinh Lý (Vượt Giới Hạn)</span>
+                                    <span class="level-meta">Siết lâu xen kẽ Nhấp nhanh phản xạ | 12 Lượt</span>
+                                </div>
+                            </div>
+
+                            <!-- Custom Level -->
+                            <div class="level-item" data-level="custom">
+                                <div class="level-icon level-cus">C</div>
+                                <div class="level-info">
+                                    <span class="level-name">Tùy Chỉnh (Tự Do)</span>
+                                    <span class="level-meta">Tự cài đặt thời gian và số lượt tập</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Custom Level Controls Panel -->
+                        <div class="custom-controls-panel" id="custom-controls-panel" style="display: none;">
+                            <div class="input-grid">
+                                <div class="input-group">
+                                    <label for="custom-squeeze">Thời gian Siết (giây)</label>
+                                    <input type="number" id="custom-squeeze" min="1" max="60" value="5">
+                                </div>
+                                <div class="input-group">
+                                    <label for="custom-relax">Thời gian Thả (giây)</label>
+                                    <input type="number" id="custom-relax" min="1" max="60" value="5">
+                                </div>
+                                <div class="input-group">
+                                    <label for="custom-reps">Số lượt (Reps)</label>
+                                    <input type="number" id="custom-reps" min="1" max="100" value="10">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health Warning Notice -->
+                <div class="health-alert-box">
+                    <div class="alert-icon">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                    </div>
+                    <div class="alert-content">
+                        <strong>Lời khuyên y khoa:</strong> Hãy hít thở sâu, đều đặn trong suốt bài tập. Tuyệt đối không nín thở, không gồng cơ bụng, mông hay đùi. Thả lỏng toàn bộ cơ thể và tập trung duy nhất vào cơ sàn chậu (cơ PC).
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- SECTION: MEDICAL LIBRARY -->
+            <section id="tab-library" class="content-section">
+                <div class="header-section">
+                    <h1>Giáo Trình Tập Luyện Cơ PC Chuẩn Y Khoa</h1>
+                    <p class="subtitle">Tìm hiểu kiến thức cốt lõi, cơ chế sinh học và lộ trình tập luyện tốt nhất cho sức khỏe nam giới.</p>
+                </div>
+
+                <div class="library-container">
+                    <!-- Tab Buttons for Library Subsections -->
+                    <div class="library-tabs">
+                        <button class="lib-tab-btn active" data-subtab="overview">Tổng Quan Cơ PC</button>
+                        <button class="lib-tab-btn" data-subtab="how-to-find">Cách Xác Định Cơ</button>
+                        <button class="lib-tab-btn" data-subtab="syllabus">Giáo Trình 4 Cấp Độ</button>
+                        <button class="lib-tab-btn" data-subtab="faq">Giải Đáp Thắc Mắc</button>
+                    </div>
+
+                    <!-- Subtab: Overview -->
+                    <div class="lib-content-pane active" id="lib-overview">
+                        <div class="pane-grid">
+                            <div class="pane-text">
+                                <h3>Cơ PC là gì?</h3>
+                                <p><strong>Cơ PC (Pubococcygeus)</strong>, hay còn gọi là cơ mu cụt, là nhóm cơ chạy dọc từ xương mu đến xương cụt. Nó đóng vai trò làm bệ đỡ cho toàn bộ hệ thống các cơ quan vùng sàn chậu bao gồm bàng quang, ruột và tuyến tiền liệt.</p>
+                                
+                                <h3>Lợi ích vượt trội khi luyện tập cơ PC</h3>
+                                <ul class="benefits-list">
+                                    <li>
+                                        <strong>Kiểm soát xuất tinh:</strong> Tăng cường cơ PC giúp bạn làm chủ phản xạ phóng tinh, kéo dài thời gian quan hệ tình dục một cách tự nhiên.
+                                    </li>
+                                    <li>
+                                        <strong>Cải thiện độ cương cứng:</strong> Cơ PC khỏe mạnh giúp giữ máu ở thể hang lâu hơn, làm tăng độ cứng và kéo dài thời gian cương cứng.
+                                    </li>
+                                    <li>
+                                        <strong>Ngăn ngừa các bệnh lý sàn chậu:</strong> Phòng ngừa sớm chứng tiểu són, tiểu đêm nhiều lần và bảo vệ chức năng của tuyến tiền liệt khi về già.
+                                    </li>
+                                    <li>
+                                        <strong>Tăng khoái cảm:</strong> Giúp gia tăng mức độ nhạy cảm và cường độ của cảm giác cực khoái ở nam giới.
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="pane-visual">
+                                <div class="pelvic-floor-illustration">
+                                    <div class="ill-circle"></div>
+                                    <div class="ill-label">VÙNG SÀN CHẬU (PELVIC FLOOR)</div>
+                                    <div class="ill-desc">Tập trung co thắt dải cơ nâng đỡ vùng xương mu đến xương cụt.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subtab: How to Find -->
+                    <div class="lib-content-pane" id="lib-how-to-find">
+                        <h3>3 Cách Đơn Giản Để Xác Định Chính Xác Cơ PC</h3>
+                        <p>Xác định đúng cơ PC là yếu tố quyết định 90% sự thành bại của bài tập. Tránh tập sai cơ dẫn đến mỏi cơ đùi hay tăng áp lực ổ bụng.</p>
+                        
+                        <div class="steps-grid">
+                            <div class="step-card">
+                                <div class="step-num">01</div>
+                                <h4>Ngắt Dòng Nước Tiểu</h4>
+                                <p>Khi bạn đang đi tiểu, hãy cố gắng chủ động chặn dòng tiểu lại. Nhóm cơ co bóp giúp dừng dòng nước tiểu chính là cơ PC. <em>(Lưu ý: Chỉ thực hiện cách này để nhận biết cơ, không áp dụng thường xuyên khi đi tiểu vì có thể gây hại cho bàng quang)</em>.</p>
+                            </div>
+                            <div class="step-card">
+                                <div class="step-num">02</div>
+                                <h4>Nhịn Trung Tiện (Nín Đánh Hơi)</h4>
+                                <p>Hãy cố gắng co thắt hậu môn như thể bạn đang cố gắng giữ không cho khí ga thoát ra ngoài. Bạn sẽ cảm nhận một dải cơ từ hậu môn co thắt kéo nhẹ lên phía trước dương vật. Đó chính là cơ sàn chậu.</p>
+                            </div>
+                            <div class="step-card">
+                                <div class="step-num">03</div>
+                                <h4>Kiểm Tra Bằng Gương Hoặc Chạm Nhẹ</h4>
+                                <p>Đứng trước gương, siết cơ PC của bạn. Nếu bạn thấy dương vật hơi co rút lại và tinh hoàn co nhẹ hướng lên trên mà bụng, mông không gồng cứng, bạn đã làm đúng.</p>
+                            </div>
+                        </div>
+
+                        <div class="warning-box">
+                            <h5>⚠️ Sai lầm cực kỳ phổ biến cần tránh:</h5>
+                            <ul>
+                                <li>Không co thắt cơ mông, đùi hoặc gồng cứng cơ bụng dưới. Hãy đặt tay lên bụng, nếu thấy bụng phình lên hoặc gồng cứng là bạn đã dùng sai cơ bụng.</li>
+                                <li>Không nín thở. Việc nín thở làm tăng áp lực ổ bụng, ép ngược xuống sàn chậu và làm yếu cơ PC nhanh hơn.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Subtab: Syllabus -->
+                    <div class="lib-content-pane" id="lib-syllabus">
+                        <h3>Lộ Trình Tập Luyện Cơ PC Của Bác Sĩ Nam Khoa</h3>
+                        <p>Để đạt hiệu quả tốt nhất và bền vững, hãy tuân thủ lộ trình luyện tập tăng dần đều theo thời gian:</p>
+                        
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="time-badge">Tuần 1 - 2</div>
+                                <div class="time-content">
+                                    <h4>Giai đoạn 1: Đánh Thức & Cảm Nhận</h4>
+                                    <p>Tập trung tập bài tập <strong>Cấp độ 1 (Dễ)</strong> trên ứng dụng. Siết nhẹ 3 giây và thả lỏng 3 giây. Đảm bảo cảm nhận được sự co rút ở vùng cơ dưới tinh hoàn. Tập đều đặn 3 lần mỗi ngày.</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="time-badge">Tuần 3 - 6</div>
+                                <div class="time-content">
+                                    <h4>Giai đoạn 2: Phát Triển Sức Bền</h4>
+                                    <p>Nâng lên bài tập <strong>Cấp độ 2 (Trung bình)</strong>. Tăng thời gian co giữ lên 5 giây. Ngoài ra, hãy tập thêm các bài tập siết-nhả nhanh (co bóp cơ PC nhanh liên tục 20 lần trong 1 phút) để rèn luyện sợi cơ co nhanh.</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="time-badge">Tuần 7 - 10</div>
+                                <div class="time-content">
+                                    <h4>Giai đoạn 3: Nâng Cao Sức Mạnh</h4>
+                                    <p>Thực hiện bài tập <strong>Cấp độ 3 (Khó)</strong>. Siết mạnh tối đa cơ PC và giữ trong 10 giây. Thử tập bài tập "nấc thang": Siết nhẹ 30% -> Siết 60% -> Siết tối đa -> Nhả từ từ.</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="time-badge">Tuần 11+</div>
+                                <div class="time-content">
+                                    <h4>Giai đoạn 4: Phản Xạ Tự Nhiên & Duy Trì</h4>
+                                    <p>Bạn không cần phải nhìn màn hình nhiều nữa. Hãy biến việc siết cơ PC thành một thói quen hàng ngày khi lái xe, xếp hàng hoặc làm việc. Tập luyện duy trì 3-4 lần một tuần để giữ vững phong độ.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subtab: FAQ -->
+                    <div class="lib-content-pane" id="lib-faq">
+                        <h3>Câu Hỏi Thường Gặp (Q&A)</h3>
+                        
+                        <div class="faq-list">
+                            <div class="faq-item">
+                                <h5>Q: Tập cơ PC bao lâu thì thấy hiệu quả rõ rệt?</h5>
+                                <p>A: Thông thường, nếu bạn luyện tập đúng kỹ thuật và đều đặn 2-3 hiệp/ngày, bạn sẽ cảm nhận được sự cải thiện về khả năng kiểm soát xuất tinh và độ cứng sau khoảng 4 đến 6 tuần.</p>
+                            </div>
+                            <div class="faq-item">
+                                <h5>Q: Tôi bị mỏi lưng dưới và bụng sau khi tập, có bình thường không?</h5>
+                                <p>A: Không bình thường. Điều này có nghĩa là bạn đang gồng sai cơ bụng và cơ thắt lưng thay vì cơ sàn chậu. Hãy giảm cường độ, tập tư thế nằm ngửa co gối và đảm bảo đặt tay lên bụng cảm thấy bụng mềm hoàn toàn trong lúc tập.</p>
+                            </div>
+                            <div class="faq-item">
+                                <h5>Q: Nên tập cơ PC vào lúc nào trong ngày?</h5>
+                                <p>A: Bạn có thể tập bất cứ lúc nào! Tốt nhất là thiết lập thói quen tập sau khi ngủ dậy vào buổi sáng, lúc nghỉ trưa và trước khi đi ngủ buổi tối. Ứng dụng này sẽ lưu tiến độ để bạn dễ dàng theo dõi.</p>
+                            </div>
+                            <div class="faq-item">
+                                <h5>Q: Có nên tập cơ PC khi đang cương cứng không?</h5>
+                                <p>A: Có thể tập khi cương cứng để nâng cao độ khó (vì lúc này việc cảm nhận và giữ dòng máu trong thể hang sẽ rõ ràng hơn). Tuy nhiên đối với người mới bắt đầu, hãy tập lúc dương vật mềm để nắm vững cơ chế co bóp cơ trước.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- SECTION: PROGRESS / STATS -->
+            <section id="tab-stats" class="content-section">
+                <div class="header-section">
+                    <h1>Tiến Độ Tập Luyện</h1>
+                    <p class="subtitle">Theo dõi hành trình kiên trì rèn luyện sức mạnh nam giới của bạn.</p>
+                </div>
+
+                <div class="stats-grid">
+                    <!-- Stat Card: Streak -->
+                    <div class="stat-card streak-card">
+                        <div class="stat-icon">🔥</div>
+                        <div class="stat-value" id="stats-streak">0 ngày</div>
+                        <div class="stat-label">Chuỗi ngày tập liên tục</div>
+                        <p class="stat-desc">Tập luyện hàng ngày để giữ lửa phong độ ổn định.</p>
+                    </div>
+
+                    <!-- Stat Card: Total Sessions -->
+                    <div class="stat-card">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-value" id="stats-total-sessions">0 hiệp</div>
+                        <div class="stat-label">Tổng hiệp đã hoàn thành</div>
+                        <p class="stat-desc">Tổng số lần bạn đã hoàn thành trọn vẹn một hiệp tập.</p>
+                    </div>
+
+                    <!-- Stat Card: Total Cycles -->
+                    <div class="stat-card">
+                        <div class="stat-icon">⚡</div>
+                        <div class="stat-value" id="stats-total-reps">0 lượt</div>
+                        <div class="stat-label">Tổng số lượt siết/thả</div>
+                        <p class="stat-desc">Số lần cơ PC của bạn được vận động co thắt cơ sàn chậu.</p>
+                    </div>
+                </div>
+
+                <!-- History Log Table Card -->
+                <div class="history-card">
+                    <div class="history-header">
+                        <h3>Lịch Sử Tập Luyện Gần Đây</h3>
+                        <button class="btn btn-secondary-danger" id="btn-clear-data">Xóa dữ liệu</button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Thời Gian</th>
+                                    <th>Cấp Độ</th>
+                                    <th>Cấu Hình (Siết / Thả / Lượt)</th>
+                                    <th>Trạng Thái</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-log-body">
+                                <tr>
+                                    <td colspan="4" class="no-data">Chưa có lịch sử luyện tập. Hãy bắt đầu hiệp tập đầu tiên của bạn!</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Script connection -->
+    <script src="app.js"></script>
+</body>
+</html>
