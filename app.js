@@ -380,6 +380,61 @@ function setupEventHandlers() {
             clearAllData();
         }
     });
+
+    // 7. Interactive Phase Schedule selectors
+    const phaseBtns = document.querySelectorAll('.phase-btn');
+    const phaseContents = document.querySelectorAll('.phase-schedule-content');
+    
+    phaseBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetPhase = btn.getAttribute('data-phase');
+            
+            phaseBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            phaseContents.forEach(content => {
+                if (content.id === `phase-content-${targetPhase}`) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+        });
+    });
+
+    // 8. "Bắt đầu bài tập này" click handlers
+    const selectWorkoutBtns = document.querySelectorAll('.btn-select-workout');
+    selectWorkoutBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetLevel = btn.getAttribute('data-target-level');
+            
+            // Set level
+            state.selectedLevel = targetLevel;
+            
+            // Update config cards UI active class
+            elements.levelItems.forEach(item => {
+                if (item.getAttribute('data-level') === targetLevel) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+            
+            // Update UI Configurations
+            updateUIConfigs();
+            
+            // Switch back to Practice tab
+            switchTab('practice');
+            
+            // Smooth scroll to orb container
+            setTimeout(() => {
+                const orb = document.getElementById('visualizer-orb');
+                if (orb) {
+                    orb.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 300);
+        });
+    });
 }
 
 // --- TAB SWITCHING LOGIC ---
