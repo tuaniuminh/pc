@@ -447,27 +447,29 @@ function setupEventHandlers() {
         });
     });
 
-    // 9. Lắng nghe sự kiện click nút Đăng nhập / Đồng bộ Cloud
-    if (elements.btnCloudSync) {
-        elements.btnCloudSync.addEventListener('click', () => {
+    // 9. Event delegation cho tất cả sự kiện tương tác trong Auth Modal và Cloud Sync
+    document.addEventListener('click', (e) => {
+        // Mở Auth Modal
+        const cloudSyncBtn = e.target.closest('#btn-cloud-sync');
+        if (cloudSyncBtn) {
             openAuthModal();
-        });
-    }
+            return;
+        }
 
-    if (elements.btnCloseAuthModal) {
-        elements.btnCloseAuthModal.addEventListener('click', () => {
+        // Đóng Auth Modal
+        const closeAuthBtn = e.target.closest('#btn-close-auth-modal');
+        if (closeAuthBtn) {
             closeAuthModal();
-        });
-    }
+            return;
+        }
 
-    // Tab switching in Auth Modal
-    const authTabBtns = document.querySelectorAll('.auth-tab-btn');
-    authTabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const targetTab = btn.getAttribute('data-auth-tab');
-            
-            authTabBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+        // Chuyển đổi tab cấu hình/đăng nhập trong modal
+        const authTabBtn = e.target.closest('.auth-tab-btn');
+        if (authTabBtn) {
+            const targetTab = authTabBtn.getAttribute('data-auth-tab');
+            const siblingTabBtns = document.querySelectorAll('.auth-tab-btn');
+            siblingTabBtns.forEach(b => b.classList.remove('active'));
+            authTabBtn.classList.add('active');
             
             document.querySelectorAll('.auth-tab-content').forEach(content => {
                 if (content.id === `auth-tab-${targetTab}`) {
@@ -476,12 +478,12 @@ function setupEventHandlers() {
                     content.classList.remove('active');
                 }
             });
-        });
-    });
+            return;
+        }
 
-    // Save Supabase Configuration
-    if (elements.btnSaveSupabaseConfig) {
-        elements.btnSaveSupabaseConfig.addEventListener('click', () => {
+        // Lưu cấu hình Supabase
+        const saveConfigBtn = e.target.closest('#btn-save-supabase-config');
+        if (saveConfigBtn) {
             const url = document.getElementById('input-supabase-url').value.trim();
             const key = document.getElementById('input-supabase-key').value.trim();
             
@@ -495,18 +497,19 @@ function setupEventHandlers() {
             
             if (initSupabaseConnection()) {
                 alert("Cấu hình Supabase thành công! Giờ bạn có thể đăng nhập hoặc đăng ký tài khoản.");
-                // Switch to login tab automatically
-                document.querySelector('.auth-tab-btn[data-auth-tab="login"]').click();
+                const loginTabBtn = document.querySelector('.auth-tab-btn[data-auth-tab="login"]');
+                if (loginTabBtn) loginTabBtn.click();
             } else {
                 alert("Lưu thất bại. Vui lòng kiểm tra lại tính chính xác của URL và Key.");
             }
-        });
-    }
+            return;
+        }
 
-    // Toggle Login / Register mode
-    if (elements.linkToggleAuthMode) {
-        elements.linkToggleAuthMode.addEventListener('click', () => {
-            const submitBtn = elements.btnSubmitAuth;
+        // Chuyển đổi Đăng Nhập / Đăng Ký
+        const toggleLink = e.target.closest('#link-toggle-auth-mode');
+        if (toggleLink) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('btn-submit-auth');
             const authTitle = document.getElementById('auth-title');
             const authDesc = document.getElementById('auth-desc');
             
@@ -514,31 +517,32 @@ function setupEventHandlers() {
                 currentAuthMode = 'register';
                 if (authTitle) authTitle.textContent = 'Đăng Ký Tài Khoản';
                 if (authDesc) authDesc.textContent = 'Tạo tài khoản mới để bắt đầu sao lưu tiến độ lên cơ sở dữ liệu Supabase của bạn.';
-                elements.linkToggleAuthMode.textContent = 'Đã có tài khoản? Đăng nhập ngay';
+                toggleLink.textContent = 'Đã có tài khoản? Đăng nhập ngay';
                 if (submitBtn) submitBtn.textContent = 'Đăng Ký';
             } else {
                 currentAuthMode = 'login';
                 if (authTitle) authTitle.textContent = 'Đăng Nhập Đồng Bộ';
                 if (authDesc) authDesc.textContent = 'Đăng nhập tài khoản để đồng bộ hóa lịch sử luyện tập và Streak trực tuyến.';
-                elements.linkToggleAuthMode.textContent = 'Chưa có tài khoản? Đăng ký ngay';
+                toggleLink.textContent = 'Chưa có tài khoản? Đăng ký ngay';
                 if (submitBtn) submitBtn.textContent = 'Đăng Nhập';
             }
-        });
-    }
+            return;
+        }
 
-    // Submit Auth (Login or Register)
-    if (elements.btnSubmitAuth) {
-        elements.btnSubmitAuth.addEventListener('click', () => {
+        // Xác nhận gửi form Auth (Đăng nhập / Đăng ký)
+        const submitAuthBtn = e.target.closest('#btn-submit-auth');
+        if (submitAuthBtn) {
             handleAuthSubmit();
-        });
-    }
+            return;
+        }
 
-    // Logout Cloud
-    if (elements.btnAuthLogout) {
-        elements.btnAuthLogout.addEventListener('click', () => {
+        // Đăng xuất Cloud
+        const logoutBtn = e.target.closest('#btn-auth-logout');
+        if (logoutBtn) {
             handleLogout();
-        });
-    }
+            return;
+        }
+    });
 }
 
 // --- TAB SWITCHING LOGIC ---
