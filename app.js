@@ -1195,8 +1195,20 @@ function clearAllData() {
 let supabaseClient = null;
 
 function initSupabaseConnection() {
-    const url = localStorage.getItem('supabase_url');
-    const key = localStorage.getItem('supabase_key');
+    // Tích hợp sẵn thông tin kết nối mặc định của bạn
+    const defaultUrl = 'https://rwmhivfwjusezxedjtgw.supabase.co';
+    const defaultKey = 'sb_publishable_sOm6SWd3dIIerce97LHXNw_OVCroPTr';
+    
+    let url = localStorage.getItem('supabase_url');
+    let key = localStorage.getItem('supabase_key');
+    
+    // Nếu chưa có cấu hình trong LocalStorage, tự động thiết lập cấu hình mặc định
+    if (!url || !key) {
+        url = defaultUrl;
+        key = defaultKey;
+        localStorage.setItem('supabase_url', url);
+        localStorage.setItem('supabase_key', key);
+    }
     
     const warningEl = document.getElementById('auth-connection-warning');
     const emailInput = document.getElementById('input-auth-email');
@@ -1207,7 +1219,9 @@ function initSupabaseConnection() {
     if (url && key) {
         try {
             if (window.supabase) {
-                supabaseClient = window.supabase.createClient(url, key);
+                // Đảm bảo URL kết nối được làm sạch (bỏ đuôi /rest/v1/ nếu có)
+                const cleanUrl = url.replace(/\/rest\/v1\/?$/, '');
+                supabaseClient = window.supabase.createClient(cleanUrl, key);
                 
                 // Mở khóa form đăng nhập
                 if (warningEl) warningEl.style.display = 'none';
@@ -1219,7 +1233,7 @@ function initSupabaseConnection() {
                     toggleLink.style.opacity = '1';
                 }
                 
-                // Gán giá trị vào input config
+                // Gán giá trị vào input config để hiển thị
                 const configUrl = document.getElementById('input-supabase-url');
                 const configKey = document.getElementById('input-supabase-key');
                 if (configUrl) configUrl.value = url;
