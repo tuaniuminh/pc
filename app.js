@@ -287,7 +287,16 @@ const elements = {
     statsTotalSessions: document.getElementById('stats-total-sessions'),
     statsTotalReps: document.getElementById('stats-total-reps'),
     historyLogBody: document.getElementById('history-log-body'),
-    btnClearData: document.getElementById('btn-clear-data')
+    btnClearData: document.getElementById('btn-clear-data'),
+    
+    // Supabase DOM Elements
+    btnCloudSync: document.getElementById('btn-cloud-sync'),
+    authModal: document.getElementById('auth-modal'),
+    btnCloseAuthModal: document.getElementById('btn-close-auth-modal'),
+    btnSaveSupabaseConfig: document.getElementById('btn-save-supabase-config'),
+    btnSubmitAuth: document.getElementById('btn-submit-auth'),
+    btnAuthLogout: document.getElementById('btn-auth-logout'),
+    linkToggleAuthMode: document.getElementById('link-toggle-auth-mode')
 };
 
 // --- INITIALIZE THE APP ---
@@ -296,6 +305,7 @@ function initApp() {
     setupEventHandlers();
     updateUIConfigs();
     renderStats();
+    initSupabaseConnection();
 }
 
 // --- SETUP EVENT HANDLERS ---
@@ -436,6 +446,98 @@ function setupEventHandlers() {
             }, 300);
         });
     });
+
+    // 9. Lắng nghe sự kiện click nút Đăng nhập / Đồng bộ Cloud
+    if (elements.btnCloudSync) {
+        elements.btnCloudSync.addEventListener('click', () => {
+            openAuthModal();
+        });
+    }
+
+    if (elements.btnCloseAuthModal) {
+        elements.btnCloseAuthModal.addEventListener('click', () => {
+            closeAuthModal();
+        });
+    }
+
+    // Tab switching in Auth Modal
+    const authTabBtns = document.querySelectorAll('.auth-tab-btn');
+    authTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.getAttribute('data-auth-tab');
+            
+            authTabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            document.querySelectorAll('.auth-tab-content').forEach(content => {
+                if (content.id === `auth-tab-${targetTab}`) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+        });
+    });
+
+    // Save Supabase Configuration
+    if (elements.btnSaveSupabaseConfig) {
+        elements.btnSaveSupabaseConfig.addEventListener('click', () => {
+            const url = document.getElementById('input-supabase-url').value.trim();
+            const key = document.getElementById('input-supabase-key').value.trim();
+            
+            if (!url || !key) {
+                alert("Vui lòng điền đầy đủ cả URL và Anon API Key.");
+                return;
+            }
+            
+            localStorage.setItem('supabase_url', url);
+            localStorage.setItem('supabase_key', key);
+            
+            if (initSupabaseConnection()) {
+                alert("Cấu hình Supabase thành công! Giờ bạn có thể đăng nhập hoặc đăng ký tài khoản.");
+                // Switch to login tab automatically
+                document.querySelector('.auth-tab-btn[data-auth-tab="login"]').click();
+            } else {
+                alert("Lưu thất bại. Vui lòng kiểm tra lại tính chính xác của URL và Key.");
+            }
+        });
+    }
+
+    // Toggle Login / Register mode
+    if (elements.linkToggleAuthMode) {
+        elements.linkToggleAuthMode.addEventListener('click', () => {
+            if (elements.linkToggleAuthMode.style.cursor === 'not-allowed') return;
+            
+            const submitBtn = elements.btnSubmitAuth;
+            if (currentAuthMode === 'login') {
+                currentAuthMode = 'register';
+                elements.authTitle.textContent = 'Đăng Ký Tài Khoản';
+                elements.authDesc.textContent = 'Tạo tài khoản mới để bắt đầu sao lưu tiến độ lên cơ sở dữ liệu Supabase của bạn.';
+                elements.linkToggleAuthMode.textContent = 'Đã có tài khoản? Đăng nhập ngay';
+                if (submitBtn) submitBtn.textContent = 'Đăng Ký';
+            } else {
+                currentAuthMode = 'login';
+                elements.authTitle.textContent = 'Đăng Nhập Đồng Bộ';
+                elements.authDesc.textContent = 'Đăng nhập tài khoản để đồng bộ hóa lịch sử luyện tập và Streak trực tuyến.';
+                elements.linkToggleAuthMode.textContent = 'Chưa có tài khoản? Đăng ký ngay';
+                if (submitBtn) submitBtn.textContent = 'Đăng Nhập';
+            }
+        });
+    }
+
+    // Submit Auth (Login or Register)
+    if (elements.btnSubmitAuth) {
+        elements.btnSubmitAuth.addEventListener('click', () => {
+            handleAuthSubmit();
+        });
+    }
+
+    // Logout Cloud
+    if (elements.btnAuthLogout) {
+        elements.btnAuthLogout.addEventListener('click', () => {
+            handleLogout();
+        });
+    }
 }
 
 // --- TAB SWITCHING LOGIC ---
@@ -849,6 +951,7 @@ function saveWorkoutLog() {
     calculateStreak();
     saveData();
     renderStats();
+    uploadNewLogOnline(logEntry);
 }
 
 function calculateStreak() {
@@ -1086,6 +1189,312 @@ function clearAllData() {
     
     renderStats();
     updateUIConfigs();
+}
+
+// --- SUPABASE CLOUD MANAGEMENT ---
+let supabaseClient = null;
+
+function initSupabaseConnection() {
+    const url = localStorage.getItem('supabase_url');
+    const key = localStorage.getItem('supabase_key');
+    
+    const warningEl = document.getElementById('auth-connection-warning');
+    const emailInput = document.getElementById('input-auth-email');
+    const passwordInput = document.getElementById('input-auth-password');
+    const submitBtn = document.getElementById('btn-submit-auth');
+    const toggleLink = document.getElementById('link-toggle-auth-mode');
+    
+    if (url && key) {
+        try {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(url, key);
+                
+                // Mở khóa form đăng nhập
+                if (warningEl) warningEl.style.display = 'none';
+                if (emailInput) emailInput.disabled = false;
+                if (passwordInput) passwordInput.disabled = false;
+                if (submitBtn) submitBtn.disabled = false;
+                if (toggleLink) {
+                    toggleLink.style.cursor = 'pointer';
+                    toggleLink.style.opacity = '1';
+                }
+                
+                // Gán giá trị vào input config
+                const configUrl = document.getElementById('input-supabase-url');
+                const configKey = document.getElementById('input-supabase-key');
+                if (configUrl) configUrl.value = url;
+                if (configKey) configKey.value = key;
+                
+                checkUserSession();
+                return true;
+            }
+        } catch (e) {
+            console.error("Lỗi khởi tạo Supabase:", e);
+        }
+    }
+    
+    // Nếu chưa cấu hình, khóa form Auth
+    supabaseClient = null;
+    if (warningEl) warningEl.style.display = 'block';
+    if (emailInput) emailInput.disabled = true;
+    if (passwordInput) passwordInput.disabled = true;
+    if (submitBtn) submitBtn.disabled = true;
+    if (toggleLink) {
+        toggleLink.style.cursor = 'not-allowed';
+        toggleLink.style.opacity = '0.5';
+    }
+    return false;
+}
+
+async function checkUserSession() {
+    if (!supabaseClient) return;
+    
+    try {
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        if (error) throw error;
+        
+        updateAuthUI(session ? session.user : null);
+        if (session) {
+            syncDataOnline();
+        }
+    } catch (e) {
+        console.error("Lỗi kiểm tra session:", e);
+    }
+}
+
+function updateAuthUI(user) {
+    const fieldsDiv = document.getElementById('auth-form-fields');
+    const profileDiv = document.getElementById('user-profile-section');
+    const profileEmail = document.getElementById('user-profile-email');
+    const cloudBtnText = document.getElementById('cloud-sync-status-text');
+    const cloudBtn = document.getElementById('btn-cloud-sync');
+    
+    if (user) {
+        if (fieldsDiv) fieldsDiv.style.display = 'none';
+        if (profileDiv) profileDiv.style.display = 'block';
+        if (profileEmail) profileEmail.textContent = user.email;
+        if (cloudBtnText) cloudBtnText.textContent = 'Đã đồng bộ';
+        if (cloudBtn) cloudBtn.classList.add('online');
+    } else {
+        if (fieldsDiv) fieldsDiv.style.display = 'block';
+        if (profileDiv) profileDiv.style.display = 'none';
+        if (cloudBtnText) cloudBtnText.textContent = 'Đồng bộ Cloud';
+        if (cloudBtn) {
+            cloudBtn.classList.remove('online');
+            cloudBtn.classList.remove('syncing');
+        }
+    }
+}
+
+async function handleAuthSubmit() {
+    if (!supabaseClient) return;
+    
+    const email = document.getElementById('input-auth-email').value.trim();
+    const password = document.getElementById('input-auth-password').value;
+    const submitBtn = document.getElementById('btn-submit-auth');
+    
+    if (!email || !password) {
+        alert("Vui lòng điền đầy đủ Email và Mật khẩu.");
+        return;
+    }
+    
+    submitBtn.disabled = true;
+    submitBtn.textContent = currentAuthMode === 'login' ? 'Đang đăng nhập...' : 'Đang đăng ký...';
+    
+    try {
+        if (currentAuthMode === 'login') {
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+            if (error) throw error;
+            updateAuthUI(data.user);
+            await syncDataOnline();
+            alert("Đăng nhập và đồng bộ dữ liệu đám mây thành công!");
+            closeAuthModal();
+        } else {
+            const { data, error } = await supabaseClient.auth.signUp({
+                email: email,
+                password: password
+            });
+            if (error) throw error;
+            
+            if (data.user && data.session) {
+                updateAuthUI(data.user);
+                await syncDataOnline();
+                alert("Đăng ký tài khoản và tự động đồng bộ đám mây thành công!");
+                closeAuthModal();
+            } else {
+                alert("Đăng ký thành công! Vui lòng kiểm tra Email của bạn để nhấp vào link kích hoạt tài khoản.");
+                closeAuthModal();
+            }
+        }
+    } catch (e) {
+        alert("Lỗi xác thực: " + e.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = currentAuthMode === 'login' ? 'Đăng Nhập' : 'Đăng Ký';
+    }
+}
+
+async function handleLogout() {
+    if (!supabaseClient) return;
+    
+    if (confirm("Bạn có chắc chắn muốn đăng xuất khỏi tài khoản đám mây? Lịch sử trên máy vẫn sẽ được bảo lưu.")) {
+        try {
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) throw error;
+            
+            updateAuthUI(null);
+            alert("Đã đăng xuất tài khoản đám mây thành công!");
+        } catch (e) {
+            alert("Lỗi đăng xuất: " + e.message);
+        }
+    }
+}
+
+async function syncDataOnline() {
+    if (!supabaseClient) return;
+    
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) return;
+        
+        const cloudBtn = document.getElementById('btn-cloud-sync');
+        const cloudBtnText = document.getElementById('cloud-sync-status-text');
+        
+        if (cloudBtn) cloudBtn.classList.add('syncing');
+        if (cloudBtnText) cloudBtnText.textContent = 'Đang đồng bộ...';
+        
+        // 1. Tải log online từ Supabase
+        const { data: onlineLogs, error } = await supabaseClient
+            .from('pc_flex_logs')
+            .select('*')
+            .order('timestamp', { ascending: false });
+            
+        if (error) throw error;
+        
+        // 2. Lấy dữ liệu local offline hiện tại
+        const localHistory = JSON.parse(localStorage.getItem('pc_flex_history')) || [];
+        
+        const timestamps = new Set();
+        const merged = [];
+        
+        const getNormTime = (t) => new Date(t).getTime();
+        
+        // Đưa dữ liệu online vào merged
+        onlineLogs.forEach(log => {
+            const time = getNormTime(log.timestamp);
+            const roundTime = Math.round(time / 1000) * 1000; // Làm tròn giây
+            timestamps.add(roundTime);
+            
+            merged.push({
+                id: log.id,
+                timestamp: log.timestamp,
+                level: log.level,
+                config: {
+                    squeeze: log.squeeze,
+                    relax: log.relax,
+                    reps: log.reps
+                },
+                completed: log.completed
+            });
+        });
+        
+        // Tìm các bản ghi offline chưa được upload lên online
+        const toUpload = [];
+        localHistory.forEach(log => {
+            const time = getNormTime(log.timestamp);
+            const roundTime = Math.round(time / 1000) * 1000;
+            
+            if (!timestamps.has(roundTime)) {
+                timestamps.add(roundTime);
+                merged.push(log);
+                
+                toUpload.push({
+                    user_id: user.id,
+                    timestamp: log.timestamp,
+                    level: log.level,
+                    squeeze: log.config.squeeze,
+                    relax: log.config.relax,
+                    reps: log.config.reps,
+                    completed: log.completed
+                });
+            }
+        });
+        
+        // 3. Tải lên dữ liệu offline mới
+        if (toUpload.length > 0) {
+            const { error: uploadError } = await supabaseClient
+                .from('pc_flex_logs')
+                .insert(toUpload);
+                
+            if (uploadError) throw uploadError;
+            console.log(`Đã tải lên ${toUpload.length} bản ghi offline lên Supabase.`);
+        }
+        
+        // Sắp xếp giảm dần theo thời gian
+        merged.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        // 4. Lưu lại local
+        state.history = merged;
+        state.totalSessions = state.history.length;
+        state.totalRepsCompleted = state.history.reduce((sum, log) => sum + (log.config.reps || 0), 0);
+        calculateStreak();
+        saveData();
+        renderStats();
+        
+        if (cloudBtn) {
+            cloudBtn.classList.remove('syncing');
+            cloudBtn.classList.add('online');
+        }
+        if (cloudBtnText) cloudBtnText.textContent = 'Đã đồng bộ';
+    } catch (e) {
+        console.error("Lỗi đồng bộ online:", e);
+        const cloudBtn = document.getElementById('btn-cloud-sync');
+        const cloudBtnText = document.getElementById('cloud-sync-status-text');
+        if (cloudBtn) cloudBtn.classList.remove('syncing');
+        if (cloudBtnText) cloudBtnText.textContent = 'Lỗi đồng bộ';
+    }
+}
+
+async function uploadNewLogOnline(logEntry) {
+    if (!supabaseClient) return;
+    
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) return;
+        
+        const { error } = await supabaseClient
+            .from('pc_flex_logs')
+            .insert({
+                user_id: user.id,
+                timestamp: logEntry.timestamp,
+                level: logEntry.level,
+                squeeze: logEntry.config.squeeze,
+                relax: logEntry.config.relax,
+                reps: logEntry.config.reps,
+                completed: logEntry.completed
+            });
+            
+        if (error) throw error;
+        console.log("Tự động lưu bài tập mới lên Supabase Cloud thành công.");
+        
+        // Cập nhật lại giao diện lịch tuần
+        renderWeeklyCalendar();
+    } catch (e) {
+        console.error("Lỗi lưu trực tuyến:", e);
+    }
+}
+
+function openAuthModal() {
+    const modal = document.getElementById('auth-modal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeAuthModal() {
+    const modal = document.getElementById('auth-modal');
+    if (modal) modal.style.display = 'none';
 }
 
 // --- START APP ON DOCUMENT LOAD ---

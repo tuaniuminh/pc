@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="app-container">
@@ -731,7 +732,15 @@
                 <div class="history-card">
                     <div class="history-header">
                         <h3>Lịch Sử Tập Luyện Gần Đây</h3>
-                        <button class="btn btn-secondary-danger" id="btn-clear-data">Xóa dữ liệu</button>
+                        <div class="history-actions" style="display: flex; gap: 0.75rem;">
+                            <button class="btn btn-secondary" id="btn-cloud-sync" style="padding: 0.5rem 1rem !important; border-radius: 10px !important; font-size: 0.85rem !important; font-weight: 500 !important; display: flex; align-items: center; gap: 0.4rem; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); color: #93c5fd; cursor: pointer; transition: all 0.2s ease;">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                                    <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+                                </svg>
+                                <span id="cloud-sync-status-text">Đồng bộ Cloud</span>
+                            </button>
+                            <button class="btn btn-secondary-danger" id="btn-clear-data">Xóa dữ liệu</button>
+                        </div>
                     </div>
                     
                     <div class="table-container">
@@ -758,6 +767,89 @@
     </div>
 
     <!-- Script connection -->
+    <!-- Supabase Auth & Configuration Modal -->
+    <div class="modal-backdrop" id="auth-modal" style="display: none;">
+        <div class="auth-modal-card">
+            <button class="modal-close-btn" id="btn-close-auth-modal">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            
+            <!-- Tab Headers -->
+            <div class="auth-modal-tabs">
+                <button class="auth-tab-btn active" data-auth-tab="login">Đăng Nhập / Đăng Ký</button>
+                <button class="auth-tab-btn" data-auth-tab="config">Cài Đặt Cloud (Supabase)</button>
+            </div>
+            
+            <!-- Tab Content: Configuration -->
+            <div class="auth-tab-content" id="auth-tab-config" style="display: none;">
+                <h3>Cấu Hình Cloud Supabase</h3>
+                <p class="auth-desc">Điền thông tin kết nối từ cơ sở dữ liệu Supabase của riêng bạn để tự làm chủ và lưu trữ dữ liệu vĩnh viễn.</p>
+                
+                <div class="auth-form-group">
+                    <label for="input-supabase-url">Supabase API URL</label>
+                    <input type="text" id="input-supabase-url" placeholder="https://xxxxxxxxxxxxxx.supabase.co" autocomplete="off">
+                </div>
+                <div class="auth-form-group">
+                    <label for="input-supabase-key">Supabase Anon API Key</label>
+                    <input type="password" id="input-supabase-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." autocomplete="off">
+                </div>
+                
+                <div class="supabase-guide-box">
+                    <h5>💡 Hướng dẫn lấy URL & Key miễn phí:</h5>
+                    <ol>
+                        <li>Đăng ký tài khoản tại <strong>supabase.com</strong>, tạo một Project mới.</li>
+                        <li>Truy cập <strong>Project Settings</strong> (icon bánh răng) ➜ <strong>API</strong>.</li>
+                        <li>Sao chép <strong>Project URL</strong> dán vào ô URL phía trên.</li>
+                        <li>Sao chép <strong>anon / public Key</strong> dán vào ô Key phía trên.</li>
+                    </ol>
+                </div>
+                
+                <button class="btn btn-primary btn-block" id="btn-save-supabase-config">Lưu cấu hình & Kết nối</button>
+            </div>
+            
+            <!-- Tab Content: Login / Register -->
+            <div class="auth-tab-content active" id="auth-tab-login">
+                <h3 id="auth-title">Đăng Nhập Đồng Bộ</h3>
+                <p class="auth-desc" id="auth-desc">Đăng nhập tài khoản để đồng bộ hóa lịch sử luyện tập và Streak trực tuyến.</p>
+                
+                <div id="auth-connection-warning" class="auth-warning-alert">
+                    ⚠️ Bạn cần hoàn tất <strong>Cài Đặt Cloud (Supabase)</strong> ở tab bên cạnh trước khi đăng nhập!
+                </div>
+                
+                <div id="auth-form-fields">
+                    <div class="auth-form-group">
+                        <label for="input-auth-email">Địa chỉ Email</label>
+                        <input type="email" id="input-auth-email" placeholder="ten-cua-ban@gmail.com" autocomplete="off" disabled>
+                    </div>
+                    <div class="auth-form-group">
+                        <label for="input-auth-password">Mật khẩu</label>
+                        <input type="password" id="input-auth-password" placeholder="••••••••" autocomplete="off" disabled>
+                    </div>
+                    
+                    <div class="auth-actions-row">
+                        <span class="auth-toggle-link" id="link-toggle-auth-mode" style="cursor: not-allowed; opacity: 0.5;">Chưa có tài khoản? Đăng ký ngay</span>
+                    </div>
+                    
+                    <button class="btn btn-primary btn-block" id="btn-submit-auth" disabled>Đăng Nhập</button>
+                </div>
+                
+                <!-- User Profile (Logged In state) -->
+                <div id="user-profile-section" style="display: none; text-align: center; padding: 1.5rem 0;">
+                    <div class="profile-avatar">👤</div>
+                    <h4 id="user-profile-email" style="margin-bottom: 0.25rem; font-size: 1.1rem; font-weight: 700;">user@example.com</h4>
+                    <p style="color: var(--color-primary); font-size: 0.825rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem; font-family: var(--font-secondary);">
+                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-primary); box-shadow: 0 0 10px var(--color-primary); animation: calendarPulse 2s infinite;"></span>
+                        Đã đồng bộ trực tuyến
+                    </p>
+                    <button class="btn btn-secondary-danger btn-block" id="btn-auth-logout">Đăng Xuất</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
