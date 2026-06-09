@@ -891,14 +891,14 @@ function enterSqueezePhase() {
     
     if (isReverseKegelHold) {
         elements.orb.classList.add('resting');
-        elements.orbAction.textContent = 'GIÃN CƠ';
+        elements.orbAction.textContent = 'KEGEL NGƯỢC';
         
         if (state.selectedLevel === 'goodMorning') {
-            elements.orbSubText.textContent = `Pha 2: Kegel ngược đẩy nhẹ chậu - Lượt ${state.currentRep - 20}/5`;
+            elements.orbSubText.textContent = `Hít vào - Đẩy nhẹ cơ PC ra ngoài (Lượt ${state.currentRep - 20}/5)`;
         } else if (state.selectedLevel === 'powerCombo') {
-            elements.orbSubText.textContent = `Pha 5: Cooldown - Kegel ngược đẩy nhẹ chậu - Lượt ${state.currentRep - 58}/5`;
+            elements.orbSubText.textContent = `Hít vào - Đẩy nhẹ cơ PC ra ngoài (Lượt ${state.currentRep - 58}/5)`;
         } else if (state.selectedLevel === 'nightRecovery') {
-            elements.orbSubText.textContent = `Pha 1: Kegel ngược đẩy nhẹ sàn chậu - Lượt ${state.currentRep}/10`;
+            elements.orbSubText.textContent = `Hít vào - Đẩy nhẹ cơ PC ra ngoài (Lượt ${state.currentRep}/10)`;
         }
     } else if (isBreathingInhale) {
         elements.orb.classList.add('relaxing');
@@ -1018,46 +1018,40 @@ function enterRelaxPhase() {
     elements.orb.classList.remove('resting');
     
     // Determine if it is a resting or stretching phase
-    const isRestRep = (state.selectedLevel === 'powerCombo' && (state.currentRep === 21 || state.currentRep === 34 || state.currentRep === 47 || state.currentRep === 58)) ||
-                      (state.selectedLevel === 'goodMorning' && state.currentRep >= 21) ||
-                      (state.selectedLevel === 'powerCombo' && state.currentRep >= 59) ||
-                      (state.selectedLevel === 'nightRecovery');
+    const isPureRest = (state.selectedLevel === 'powerCombo' && (state.currentRep === 21 || state.currentRep === 34 || state.currentRep === 47 || state.currentRep === 58));
+    const isReverseKegelRest = (state.selectedLevel === 'goodMorning' && state.currentRep >= 21) ||
+                               (state.selectedLevel === 'powerCombo' && state.currentRep >= 59) ||
+                               (state.selectedLevel === 'nightRecovery' && state.currentRep <= 10);
+    const isBreathingExhale = (state.selectedLevel === 'nightRecovery' && state.currentRep >= 11);
                       
-    if (isRestRep) {
+    if (isPureRest) {
         elements.orb.classList.add('resting');
+        elements.orbAction.textContent = (state.currentRep === 58) ? 'CHUẨN BỊ' : 'NGHỈ NGƠI';
         
-        // Custom labels for rests, reverse kegels and deep breaths
-        if (state.selectedLevel === 'goodMorning') {
-            elements.orbAction.textContent = 'GIÃN CƠ';
-            elements.orbSubText.textContent = `Pha 2: Kegel ngược đẩy nhẹ chậu ra ngoài - Lượt ${state.currentRep - 20}/5`;
-        } else if (state.selectedLevel === 'powerCombo') {
-            if (state.currentRep === 21) {
-                elements.orbAction.textContent = 'NGHỈ NGƠI';
-                elements.orbSubText.textContent = 'Nghỉ phục hồi (30s) - Chuẩn bị Pha 2';
-            } else if (state.currentRep === 34) {
-                elements.orbAction.textContent = 'NGHỈ NGƠI';
-                elements.orbSubText.textContent = 'Nghỉ phục hồi (30s) - Chuẩn bị Pha 3';
-            } else if (state.currentRep === 47) {
-                elements.orbAction.textContent = 'NGHỈ NGƠI';
-                elements.orbSubText.textContent = 'Nghỉ phục hồi (1 phút) - Chuẩn bị Pha 4';
-            } else if (state.currentRep === 58) {
-                elements.orbAction.textContent = 'CHUẨN BỊ';
-                elements.orbSubText.textContent = 'Nghỉ phục hồi (10s) - Chuẩn bị giãn cơ Kegel ngược';
-            } else {
-                elements.orbAction.textContent = 'GIÃN CƠ';
-                elements.orbSubText.textContent = `Pha 5: Cooldown - Kegel ngược đẩy nhẹ chậu - Lượt ${state.currentRep - 58}/5`;
-            }
-        } else if (state.selectedLevel === 'nightRecovery') {
-            if (state.currentRep <= 10) {
-                elements.orbAction.textContent = 'GIÃN CƠ';
-                elements.orbSubText.textContent = `Pha 1: Kegel ngược đẩy nhẹ sàn chậu - Lượt ${state.currentRep}/10`;
-            } else {
-                elements.orb.classList.remove('resting');
-                elements.orb.classList.add('relaxing');
-                elements.orbAction.textContent = 'THỞ SÂU';
-                elements.orbSubText.textContent = `Pha 2: Hít sâu phình bụng, thở ra xẹp bụng - Lượt ${state.currentRep - 10}/5`;
-            }
+        if (state.currentRep === 21) {
+            elements.orbSubText.textContent = 'Nghỉ phục hồi (30s) - Chuẩn bị Pha 2';
+        } else if (state.currentRep === 34) {
+            elements.orbSubText.textContent = 'Nghỉ phục hồi (30s) - Chuẩn bị Pha 3';
+        } else if (state.currentRep === 47) {
+            elements.orbSubText.textContent = 'Nghỉ phục hồi (1 phút) - Chuẩn bị Pha 4';
+        } else if (state.currentRep === 58) {
+            elements.orbSubText.textContent = 'Nghỉ phục hồi (10s) - Chuẩn bị tập Kegel ngược';
         }
+    } else if (isReverseKegelRest) {
+        elements.orb.classList.add('relaxing');
+        elements.orbAction.textContent = 'NGHỈ';
+        
+        if (state.selectedLevel === 'goodMorning') {
+            elements.orbSubText.textContent = `Thở ra - Thả lỏng cơ PC tự nhiên (Lượt ${state.currentRep - 20}/5)`;
+        } else if (state.selectedLevel === 'powerCombo') {
+            elements.orbSubText.textContent = `Thở ra - Thả lỏng cơ PC tự nhiên (Lượt ${state.currentRep - 58}/5)`;
+        } else if (state.selectedLevel === 'nightRecovery') {
+            elements.orbSubText.textContent = `Thở ra - Thả lỏng cơ PC tự nhiên (Lượt ${state.currentRep}/10)`;
+        }
+    } else if (isBreathingExhale) {
+        elements.orb.classList.add('relaxing');
+        elements.orbAction.textContent = 'THỞ RA';
+        elements.orbSubText.textContent = `Thở ra chậm rãi, xẹp bụng - Lượt ${state.currentRep - 10}/5`;
     } else {
         elements.orb.classList.add('relaxing');
         elements.orbAction.textContent = 'THẢ LỎNG';
