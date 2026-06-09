@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.1.1">
+    <link rel="stylesheet" href="styles.css?v=1.1.2">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -70,10 +70,17 @@
                         <h1>Rèn Luyện Mỗi Ngày</h1>
                         <p class="subtitle">Chọn cấp độ phù hợp và làm theo chỉ dẫn của vòng tròn sinh học.</p>
                     </div>
-                    <!-- Trạng thái đồng bộ ở trang chủ -->
-                    <div class="home-sync-status" id="home-sync-status">
-                        <span class="sync-dot" id="home-sync-dot"></span>
-                        <span id="home-sync-text">Chưa kết nối Cloud</span>
+                    <div class="header-indicators" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                        <!-- Thống kê tổng số lần siết -->
+                        <div class="home-stat-badge" id="home-total-reps-badge" title="Tổng số lần siết cơ PC đã thực hiện hoàn tất">
+                            <span class="badge-icon">⚡</span>
+                            <span>Đã siết: <strong id="home-total-reps-count">0</strong> lượt</span>
+                        </div>
+                        <!-- Trạng thái đồng bộ ở trang chủ -->
+                        <div class="home-sync-status" id="home-sync-status">
+                            <span class="sync-dot" id="home-sync-dot"></span>
+                            <span id="home-sync-text">Chưa kết nối Cloud</span>
+                        </div>
                     </div>
                 </div>
 
@@ -895,6 +902,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=1.1.1"></script>
+    <script src="app.js?v=1.1.2"></script>
 </body>
 </html>

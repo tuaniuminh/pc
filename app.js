@@ -1302,6 +1302,12 @@ function renderStats() {
         elements.statsTotalReps.textContent = `${state.totalRepsCompleted} lượt`;
     }
 
+    // 3. Home Page Stats Badge
+    const homeRepsCount = document.getElementById('home-total-reps-count');
+    if (homeRepsCount) {
+        homeRepsCount.textContent = state.totalRepsCompleted;
+    }
+
     // Cập nhật Lịch hoạt động và Huy hiệu
     renderWeeklyCalendar();
     updateBadges();
