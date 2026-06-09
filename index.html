@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.0.6">
+    <link rel="stylesheet" href="styles.css?v=1.0.7">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -139,12 +139,30 @@
                         <p class="config-desc">Chọn bài tập được lập trình sẵn hoặc tùy chỉnh theo ý muốn của bạn.</p>
                         
                         <div class="levels-list">
+                            <!-- Chào Buổi Sáng -->
+                            <div class="level-item active" data-level="goodMorning">
+                                <div class="level-icon level-pow" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.35);">🌅</div>
+                                <div class="level-info">
+                                    <span class="level-name" style="color: #f59e0b; font-weight: 700;">Chào Buổi Sáng (Khởi Động Nhẹ)</span>
+                                    <span class="level-meta">20 lượt siết 1s - thả 2s | 5 lượt Kegel ngược giãn chậu</span>
+                                </div>
+                            </div>
+
                             <!-- Combo Sức Mạnh -->
-                            <div class="level-item active" data-level="powerCombo">
+                            <div class="level-item" data-level="powerCombo">
                                 <div class="level-icon level-pow">★</div>
                                 <div class="level-info">
-                                    <span class="level-name" style="color: var(--color-primary); font-weight: 700;">Combo Sức Mạnh (Interval Đặc Biệt)</span>
-                                    <span class="level-meta">Nhấp nhả 20 lượt 1s | Siết giữ 24 lượt 3s | Tối đa 10 lượt 5s + Nghỉ phục hồi</span>
+                                    <span class="level-name" style="color: var(--color-primary); font-weight: 700;">Combo Sức Mạnh (Hiệp Tập Chính)</span>
+                                    <span class="level-meta">Siết nhanh 20 lượt 1s | Giữ 24 lượt 3s | Giữ 10 lượt 5s + Nghỉ phục hồi & Cooldown Kegel ngược</span>
+                                </div>
+                            </div>
+
+                            <!-- Phục Hồi Ban Đêm -->
+                            <div class="level-item" data-level="nightRecovery">
+                                <div class="level-icon level-pow" style="background: rgba(139, 92, 246, 0.15); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.35);">🌙</div>
+                                <div class="level-info">
+                                    <span class="level-name" style="color: #a78bfa; font-weight: 700;">Phục Hồi Ban Đêm (Thư Giãn Sâu)</span>
+                                    <span class="level-meta">10 lượt Kegel ngược giãn chậu | 5 lượt hít thở sâu phục hồi chậu</span>
                                 </div>
                             </div>
 
@@ -859,6 +877,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=1.0.6"></script>
+    <script src="app.js?v=1.0.7"></script>
 </body>
 </html>
