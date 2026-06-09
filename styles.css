@@ -2510,15 +2510,18 @@ body {
 }
 
 .home-sync-status {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 0.85rem;
+    padding: 0 0.85rem;
+    height: 32px;
+    box-sizing: border-box;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 20px;
     font-size: 0.8rem;
     font-weight: 500;
+    line-height: 1;
     user-select: none;
 }
 
@@ -2527,7 +2530,8 @@ body {
     height: 8px;
     border-radius: 50%;
     background-color: #9ca3af;
-    display: inline-block;
+    display: block;
+    flex-shrink: 0;
     transition: background-color 0.3s ease;
 }
 
@@ -2538,15 +2542,18 @@ body {
 
 /* Home Page PC Squeeze Count Stats Badge */
 .home-stat-badge {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.5rem 0.85rem;
+    padding: 0 0.85rem;
+    height: 32px;
+    box-sizing: border-box;
     background: rgba(99, 102, 241, 0.08);
     border: 1px solid rgba(99, 102, 241, 0.2);
     border-radius: 20px;
     font-size: 0.8rem;
     font-weight: 500;
+    line-height: 1;
     color: #c7d2fe;
     user-select: none;
 }
