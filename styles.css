@@ -2519,19 +2519,7 @@ body {
     border-radius: 20px;
     font-size: 0.8rem;
     font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
     user-select: none;
-}
-
-.home-sync-status:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.15);
-    transform: translateY(-1px);
-}
-
-.home-sync-status:active {
-    transform: translateY(0);
 }
 
 .sync-dot {

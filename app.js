@@ -484,7 +484,7 @@ function setupEventHandlers() {
     // 9. Event delegation cho tất cả sự kiện tương tác trong Auth Modal và Cloud Sync
     document.addEventListener('click', (e) => {
         // Mở Auth Modal
-        const cloudSyncBtn = e.target.closest('#btn-cloud-sync') || e.target.closest('#home-sync-status');
+        const cloudSyncBtn = e.target.closest('#btn-cloud-sync');
         if (cloudSyncBtn) {
             openAuthModal();
             return;
