@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.1.7">
+    <link rel="stylesheet" href="styles.css?v=1.1.8">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -127,6 +127,12 @@
                             <div class="session-progress-bar">
                                 <div class="progress-fill" id="session-progress-fill" style="width: 0%"></div>
                             </div>
+                        </div>
+
+                        <!-- Bladder Reminder Alert -->
+                        <div class="bladder-reminder" id="bladder-reminder-alert">
+                            <span class="reminder-icon">🚽</span>
+                            <span class="reminder-text"><strong>Lưu ý:</strong> Nên đi tiểu sạch bàng quang trước khi tập để bảo vệ sức khỏe và đạt hiệu quả tốt nhất.</span>
                         </div>
 
                         <!-- Action Controls -->
@@ -902,6 +908,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=1.1.7"></script>
+    <script src="app.js?v=1.1.8"></script>
 </body>
 </html>

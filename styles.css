@@ -2573,4 +2573,32 @@ body {
     justify-content: center;
 }
 
+/* Bladder Reminder Styling */
+.bladder-reminder {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.75rem 0.95rem;
+    background: rgba(239, 68, 68, 0.04);
+    border: 1px solid rgba(239, 68, 68, 0.15);
+    border-radius: 12px;
+    margin: 1.25rem 0;
+    font-size: 0.75rem;
+    color: #fca5a5;
+    line-height: 1.4;
+    user-select: none;
+    text-align: left;
+}
+
+.reminder-icon {
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+.reminder-text strong {
+    color: #ef4444;
+    font-weight: 700;
+}
+
+
 
