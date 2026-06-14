@@ -374,7 +374,13 @@ function setupEventHandlers() {
     // 3. Level selection
     elements.levelItems.forEach(item => {
         item.addEventListener('click', () => {
-            if (state.workoutState !== 'idle') return; // Prevent change mid-workout
+            const activeStates = ['squeezing', 'relaxing'];
+            const isMidWorkout = activeStates.includes(state.workoutState) || state.workoutState.startsWith('paused_');
+            if (isMidWorkout) return; // Prevent change mid-workout
+            
+            if (state.workoutState !== 'idle') {
+                resetWorkout();
+            }
             
             elements.levelItems.forEach(i => i.classList.remove('active'));
             item.classList.add('active');
@@ -651,6 +657,7 @@ function updateUIConfigs() {
     }
 
     // Reset visual display elements
+    elements.btnStart.disabled = false;
     elements.repDisplay.textContent = `0 / ${state.totalReps}`;
     elements.progressBar.style.width = '0%';
     elements.orbTimer.textContent = String(state.squeezeDuration).padStart(2, '0');
@@ -795,6 +802,7 @@ function resetWorkout() {
     
     // Restore Start/Reset button
     elements.btnReset.disabled = true;
+    elements.btnStart.disabled = false;
     elements.btnStart.classList.add('btn-primary');
     elements.btnStart.classList.remove('btn-secondary');
     elements.textStart.textContent = 'Bắt đầu';
