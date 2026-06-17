@@ -330,9 +330,9 @@ function autoSelectLevelByTime() {
     const hour = new Date().getHours();
     let defaultLevel = 'goodMorning';
     
-    if (hour >= 5 && hour < 11) {
+    if (hour >= 5 && hour < 10) {
         defaultLevel = 'goodMorning';
-    } else if (hour >= 11 && hour < 17) {
+    } else if (hour >= 10 && hour < 19) {
         defaultLevel = 'powerCombo';
     } else {
         defaultLevel = 'nightRecovery';
