@@ -1102,18 +1102,18 @@ function enterRelaxPhase() {
             elements.orbSubText.textContent = 'Thả nhanh';
         } else if (state.selectedLevel === 'powerCombo') {
             if (state.currentRep <= 19) {
-                elements.orbSubText.textContent = `Thả lỏng cơ sàn chậu hoàn toàn - Lượt ${state.currentRep}/20`;
+                elements.orbSubText.textContent = `Thả lỏng cơ sàn chậu hoàn toàn - Lượt ${state.currentRep}/19`;
             } else if (state.currentRep >= 21 && state.currentRep <= 31) {
-                elements.orbSubText.textContent = `Thả lỏng 3 giây - Lượt ${state.currentRep - 20}/12`;
+                elements.orbSubText.textContent = `Thả lỏng 3 giây - Lượt ${state.currentRep - 20}/11`;
             } else if (state.currentRep >= 33 && state.currentRep <= 43) {
-                elements.orbSubText.textContent = `Thả lỏng 3 giây - Lượt ${state.currentRep - 32}/12`;
+                elements.orbSubText.textContent = `Thả lỏng 3 giây - Lượt ${state.currentRep - 32}/11`;
             } else if (state.currentRep >= 45 && state.currentRep <= 53) {
-                elements.orbSubText.textContent = `Thả lỏng hoàn toàn 5 giây - Lượt ${state.currentRep - 44}/10`;
+                elements.orbSubText.textContent = `Thả lỏng hoàn toàn 5 giây - Lượt ${state.currentRep - 44}/9`;
             }
         } else if (state.selectedLevel === 'goodMorning' && state.currentRep <= 19) {
-            elements.orbSubText.textContent = `Thả lỏng 2 giây - Lượt ${state.currentRep}/20`;
+            elements.orbSubText.textContent = `Thả lỏng 2 giây - Lượt ${state.currentRep}/19`;
         } else if (state.selectedLevel === 'nightRecovery' && state.currentRep <= 14) {
-            elements.orbSubText.textContent = `Thả lỏng cơ sàn chậu hoàn toàn - Lượt ${state.currentRep}/15`;
+            elements.orbSubText.textContent = `Thả lỏng cơ sàn chậu hoàn toàn - Lượt ${state.currentRep}/14`;
         } else {
             elements.orbSubText.textContent = 'Thả lỏng cơ sàn chậu hoàn toàn';
         }
