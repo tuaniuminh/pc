@@ -1960,4 +1960,55 @@ document.addEventListener('gesturestart', function (event) {
 // --- START APP ON DOCUMENT LOAD ---
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
+    registerServiceWorker();
 });
+
+// --- PWA SERVICE WORKER REGISTRATION & UPDATE HANDLER ---
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').then(reg => {
+            console.log('Service Worker registered with scope:', reg.scope);
+            
+            // If there's already a worker waiting, show the update toast
+            if (reg.waiting) {
+                showPWAUpdateToast(reg.waiting);
+            }
+            
+            // Listen for any new service worker installation
+            reg.addEventListener('updatefound', () => {
+                const newWorker = reg.installing;
+                if (newWorker) {
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            showPWAUpdateToast(newWorker);
+                        }
+                    });
+                }
+            });
+        }).catch(err => {
+            console.warn('Service Worker registration failed:', err);
+        });
+        
+        // Listen for controller changes to reload the page once skipWaiting completes
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                refreshing = true;
+                window.location.reload();
+            }
+        });
+    }
+}
+
+function showPWAUpdateToast(worker) {
+    const toast = document.getElementById('pwa-update-toast');
+    const updateBtn = document.getElementById('btn-pwa-update');
+    
+    if (toast && updateBtn) {
+        toast.classList.add('show');
+        updateBtn.onclick = () => {
+            worker.postMessage('SKIP_WAITING');
+            toast.classList.remove('show');
+        };
+    }
+}
