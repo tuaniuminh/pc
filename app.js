@@ -277,7 +277,8 @@ const elements = {
     orbTimer: document.getElementById('orb-timer'),
     orbSubText: document.getElementById('orb-sub-text'),
     repDisplay: document.getElementById('current-rep-display'),
-    progressBar: document.getElementById('session-progress-fill'),
+    progressBar: document.getElementById('session-progress-bar'),
+    phaseLabelsContainer: document.getElementById('phase-labels'),
     btnStart: document.getElementById('btn-start'),
     btnReset: document.getElementById('btn-reset'),
     textStart: document.getElementById('text-start'),
@@ -659,7 +660,8 @@ function updateUIConfigs() {
     // Reset visual display elements
     elements.btnStart.disabled = false;
     elements.repDisplay.textContent = `0 / ${state.totalReps}`;
-    elements.progressBar.style.width = '0%';
+    renderProgressSegments();
+    updateProgressSegments();
     elements.orbTimer.textContent = String(state.squeezeDuration).padStart(2, '0');
     elements.orbAction.textContent = 'SẴN SÀNG';
     
@@ -1124,10 +1126,105 @@ function enterRelaxPhase() {
     audioController.playRelaxSFX();
 }
 
+function getWorkoutPhases(level, totalReps) {
+    if (level === 'goodMorning') {
+        return [
+            { name: 'Siết 1s', start: 1, end: 20 },
+            { name: 'Kegel ngược', start: 21, end: 25 }
+        ];
+    }
+    if (level === 'powerCombo') {
+        return [
+            { name: 'Siết 1s', start: 1, end: 20 },
+            { name: 'Siết 3s', start: 21, end: 32 },
+            { name: 'Siết 3s', start: 33, end: 44 },
+            { name: 'Siết 5s', start: 45, end: 54 },
+            { name: 'Kegel ngược', start: 55, end: 59 }
+        ];
+    }
+    if (level === 'nightRecovery') {
+        return [
+            { name: 'Siết 1s', start: 1, end: 15 },
+            { name: 'Kegel ngược', start: 16, end: 25 },
+            { name: 'Thở bụng', start: 26, end: 30 }
+        ];
+    }
+    // For other levels, return a single phase representing the whole workout
+    return [
+        { name: 'Luyện tập', start: 1, end: totalReps }
+    ];
+}
+
+function renderProgressSegments() {
+    if (!elements.progressBar || !elements.phaseLabelsContainer) return;
+    
+    elements.progressBar.innerHTML = '';
+    elements.phaseLabelsContainer.innerHTML = '';
+    
+    const phases = getWorkoutPhases(state.selectedLevel, state.totalReps);
+    
+    phases.forEach(phase => {
+        const reps = phase.end - phase.start + 1;
+        
+        // 1. Create progress segment div
+        const segment = document.createElement('div');
+        segment.className = 'progress-segment';
+        segment.style.flex = `${reps} 1 0%`;
+        
+        const fill = document.createElement('div');
+        fill.className = 'progress-segment-fill';
+        segment.appendChild(fill);
+        
+        elements.progressBar.appendChild(segment);
+        
+        // 2. Create phase label span
+        const label = document.createElement('span');
+        label.className = 'phase-label';
+        label.style.flex = `${reps} 1 0%`;
+        label.textContent = phase.name;
+        
+        elements.phaseLabelsContainer.appendChild(label);
+    });
+}
+
+function updateProgressSegments() {
+    const phases = getWorkoutPhases(state.selectedLevel, state.totalReps);
+    const segmentFills = elements.progressBar.querySelectorAll('.progress-segment-fill');
+    const labels = elements.phaseLabelsContainer.querySelectorAll('.phase-label');
+    
+    phases.forEach((phase, index) => {
+        const fillEl = segmentFills[index];
+        const labelEl = labels[index];
+        if (!fillEl) return;
+        
+        let widthPercent = 0;
+        const phaseTotalReps = phase.end - phase.start + 1;
+        
+        if (state.workoutState === 'completed') {
+            widthPercent = 100;
+            if (labelEl) labelEl.classList.remove('active');
+        } else {
+            if (state.currentRep < phase.start) {
+                widthPercent = 0;
+                if (labelEl) labelEl.classList.remove('active');
+            } else if (state.currentRep > phase.end) {
+                widthPercent = 100;
+                if (labelEl) labelEl.classList.remove('active');
+            } else {
+                // Active phase
+                const repsCompleted = state.currentRep - phase.start;
+                widthPercent = (repsCompleted / phaseTotalReps) * 100;
+                if (labelEl) labelEl.classList.add('active');
+            }
+        }
+        
+        fillEl.style.width = `${widthPercent}%`;
+    });
+}
+
 function updateProgressDisplays() {
     elements.repDisplay.textContent = `${state.currentRep} / ${state.totalReps}`;
-    const percent = ((state.currentRep - 1) / state.totalReps) * 100;
-    elements.progressBar.style.width = `${percent}%`;
+    updateProgressSegments();
 }
 
 function finishWorkout() {
@@ -1144,7 +1241,7 @@ function finishWorkout() {
     elements.orbSubText.textContent = 'Tuyệt vời! Bạn đã hoàn thành hiệp tập.';
     
     // Progress bar full
-    elements.progressBar.style.width = '100%';
+    updateProgressSegments();
     elements.repDisplay.textContent = `${state.totalReps} / ${state.totalReps}`;
     
     // Update controllers

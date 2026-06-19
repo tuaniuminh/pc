@@ -499,18 +499,54 @@ body {
 .session-progress-bar {
     width: 100%;
     height: 8px;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    overflow: hidden;
+    display: flex;
+    gap: 3px;
+    padding: 1px;
+    box-sizing: border-box;
 }
 
-.progress-fill {
+.progress-segment {
+    height: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-segment-fill {
     height: 100%;
     background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
-    border-radius: 4px;
     width: 0%;
     transition: width 0.3s ease;
+}
+
+.phase-labels {
+    display: flex;
+    gap: 3px;
+    width: 100%;
+    margin-top: 0.4rem;
+    box-sizing: border-box;
+}
+
+.phase-label {
+    font-size: 0.65rem;
+    color: var(--color-text-secondary);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all 0.3s ease;
+    padding: 2px 0;
+    opacity: 0.5;
+}
+
+.phase-label.active {
+    color: var(--color-primary);
+    font-weight: 700;
+    opacity: 1;
 }
 
 /* Controls Buttons */
