@@ -2026,7 +2026,7 @@ function bindPWAUpdateChecker() {
         
         // Cập nhật giao diện nút đang kiểm tra
         btnCheck.innerHTML = `
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; animation: spin 1s linear infinite;">
+            <svg class="icon-refresh" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; animation: spin 1s linear infinite;">
                 <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
             </svg>Đang kiểm tra...
         `;
