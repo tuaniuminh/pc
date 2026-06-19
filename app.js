@@ -733,7 +733,7 @@ function startWorkout() {
     requestWakeLock();
     
     // Toggle buttons state
-    elements.btnReset.disabled = false;
+    elements.btnReset.disabled = true;
     elements.btnStart.classList.remove('btn-primary');
     elements.btnStart.classList.add('btn-secondary');
     elements.textStart.textContent = 'Tạm dừng';
@@ -767,6 +767,7 @@ function pauseWorkout() {
         <polygon points="5 3 19 12 5 21 5 3"/>
     `;
     elements.orbSubText.textContent = 'Đang tạm dừng bài tập';
+    elements.btnReset.disabled = false;
 }
 
 function resumeWorkout() {
@@ -781,6 +782,7 @@ function resumeWorkout() {
         <rect x="6" y="4" width="4" height="16"/>
         <rect x="14" y="4" width="4" height="16"/>
     `;
+    elements.btnReset.disabled = true;
     
     if (state.workoutState === 'squeezing') {
         elements.orbSubText.textContent = 'Giữ cơ PC co thắt';
@@ -1246,6 +1248,7 @@ function finishWorkout() {
     
     // Update controllers
     elements.btnStart.disabled = true;
+    elements.btnReset.disabled = false;
     audioController.playCompletionSFX();
 
     // Save statistics & log
