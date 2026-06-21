@@ -40,11 +40,16 @@
     -webkit-font-smoothing: antialiased;
 }
 
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
 body {
     background-color: var(--bg-dark);
     color: var(--color-text-primary);
-    min-height: 100vh;
-    overflow-x: hidden;
+    position: fixed;
+    inset: 0;
     background-image: 
         radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 40%),
         radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 40%);
@@ -70,7 +75,7 @@ body {
 /* --- LAYOUT STRUCTURE --- */
 .app-container {
     display: flex;
-    min-height: 100vh;
+    height: 100%;
 }
 
 /* Sidebar Styling */
@@ -212,6 +217,19 @@ body {
     padding: 3rem;
     max-width: 1200px;
     width: calc(100% - 280px);
+    height: 100%;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    will-change: scroll-position;
+    transform: translateZ(0);
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.main-content::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 .content-section {
