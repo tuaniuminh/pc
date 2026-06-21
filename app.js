@@ -732,6 +732,15 @@ function startWorkout() {
     state.timeRemaining = state.squeezeDuration;
     requestWakeLock();
     
+    // Hiển thị hiệu ứng sáng viền nổi bật trong 2 giây cho phần lưu ý tiểu tiện
+    const bladderAlert = document.getElementById('bladder-reminder-alert');
+    if (bladderAlert) {
+        bladderAlert.classList.add('highlight-glow');
+        setTimeout(() => {
+            bladderAlert.classList.remove('highlight-glow');
+        }, 2000);
+    }
+    
     // Toggle buttons state
     elements.btnReset.disabled = true;
     elements.btnStart.classList.remove('btn-primary');
