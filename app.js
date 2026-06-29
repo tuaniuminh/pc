@@ -1845,12 +1845,20 @@ function updateProgressSegments() {
                 fillEl.parentElement.classList.remove('completed-slide-left');
             } else if (state.currentRep > phase.end) {
                 widthPercent = 100;
-                if (labelEl) labelEl.classList.remove('active');
+                if (labelEl) {
+                    labelEl.classList.remove('active');
+                    labelEl.classList.add('completed-slide-left');
+                }
+                fillEl.parentElement.classList.add('completed-slide-left');
             } else {
                 // Active phase
                 const repsCompleted = state.currentRep - phase.start;
                 widthPercent = (repsCompleted / phaseTotalReps) * 100;
-                if (labelEl) labelEl.classList.add('active');
+                if (labelEl) {
+                    labelEl.classList.add('active');
+                    labelEl.classList.remove('completed-slide-left');
+                }
+                fillEl.parentElement.classList.remove('completed-slide-left');
             }
         }
         
@@ -2555,26 +2563,57 @@ function closeAuthModal() {
     if (modal) modal.style.display = 'none';
 }
 
-// --- SCREEN WAKE LOCK API ---
+// --- SCREEN WAKE LOCK API & DUAL LOCK FALLBACK ---
 let wakeLock = null;
+let fallbackVideo = null;
 
 async function requestWakeLock() {
-    if (!('wakeLock' in navigator)) {
-        console.log('Wake Lock API not supported in this browser.');
-        return;
+    // 1. Cố gắng sử dụng Wake Lock API tiêu chuẩn trước
+    if ('wakeLock' in navigator) {
+        try {
+            if (!wakeLock) {
+                wakeLock = await navigator.wakeLock.request('screen');
+                console.log('Screen Wake Lock activated.');
+                
+                wakeLock.addEventListener('release', () => {
+                    console.log('Screen Wake Lock was released.');
+                    wakeLock = null;
+                    // Tự động yêu cầu lại nếu bài tập vẫn đang chạy và trang đang hiển thị
+                    const activeStates = ['squeezing', 'relaxing'];
+                    if (activeStates.includes(state.workoutState) && document.visibilityState === 'visible') {
+                        setTimeout(requestWakeLock, 1000);
+                    }
+                });
+            }
+        } catch (err) {
+            console.warn(`Failed to request Screen Wake Lock: ${err.message}`);
+        }
     }
+    
+    // 2. Phát video MP4 trống base64 siêu nhỏ chạy lặp ẩn làm phương án dự phòng (fallback) để giữ màn hình
     try {
-        if (!wakeLock) {
-            wakeLock = await navigator.wakeLock.request('screen');
-            console.log('Screen Wake Lock activated.');
-            
-            wakeLock.addEventListener('release', () => {
-                console.log('Screen Wake Lock was released.');
-                wakeLock = null;
-            });
+        if (!fallbackVideo) {
+            fallbackVideo = document.createElement('video');
+            fallbackVideo.setAttribute('playsinline', '');
+            fallbackVideo.setAttribute('loop', '');
+            fallbackVideo.setAttribute('muted', '');
+            fallbackVideo.src = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAr9tZGF0AAACoAYF//+///AAAAMmF2Y0MBZAAK/+EAGWdkAAqs2V+WXAWyAAADAAIAAAMAYB4kSywBAAZo6+PLIsAAAAAYc3R0cwAAAAAAAAABAAAAAQAAAgAAAAAcc3RzYwAAAAAAAAABAAAAAQAAAAEAAAABAAAAFHN0c3oAAAAAAAACtwAAAAEAAAAUc3RjbwAAAAAAAAABAAAAMAAAAGJ1ZHRhAAAAWm1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALWlsc3QAAAAlqXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTQuNjMuMTA0';
+            fallbackVideo.style.position = 'absolute';
+            fallbackVideo.style.width = '1px';
+            fallbackVideo.style.height = '1px';
+            fallbackVideo.style.opacity = '0.01';
+            fallbackVideo.style.pointerEvents = 'none';
+            fallbackVideo.style.top = '0';
+            fallbackVideo.style.left = '0';
+            document.body.appendChild(fallbackVideo);
+        }
+        
+        if (fallbackVideo.paused) {
+            await fallbackVideo.play();
+            console.log('Screen Wake Lock Fallback Video playing.');
         }
     } catch (err) {
-        console.warn(`Failed to request Screen Wake Lock: ${err.message}`);
+        console.warn(`Failed to play Wake Lock Fallback Video: ${err.message}`);
     }
 }
 
@@ -2583,6 +2622,15 @@ function releaseWakeLock() {
         wakeLock.release();
         wakeLock = null;
         console.log('Screen Wake Lock released manually.');
+    }
+    
+    if (fallbackVideo) {
+        try {
+            fallbackVideo.pause();
+            console.log('Screen Wake Lock Fallback Video paused.');
+        } catch (err) {
+            console.warn(`Failed to pause Fallback Video: ${err.message}`);
+        }
     }
 }
 
