@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.1.20">
+    <link rel="stylesheet" href="styles.css?v=1.1.21">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -274,29 +274,45 @@
                             <div class="level-item" data-level="custom">
                                 <div class="level-icon level-cus">C</div>
                                 <div class="level-info">
-                                    <span class="level-name">Tùy Chỉnh (Tự Do)</span>
-                                    <span class="level-meta">Tự cài đặt thời gian và số lượt tập</span>
+                                    <span class="level-name">Thiết Kế Bài Tập Mới</span>
+                                    <span class="level-meta">Tùy chỉnh đa giai đoạn, nghỉ chuyển chặng & Kegel ngược</span>
                                 </div>
                             </div>
                                 </div>
                             </details>
+
+                            <!-- Custom Workouts Section -->
+                            <div class="custom-workouts-section" id="custom-workouts-section" style="margin-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1rem; display: none;">
+                                <h4 style="margin: 0 0 0.8rem 0; font-size: 0.8rem; font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Bài tập tùy chỉnh của bạn</h4>
+                                <div class="custom-workouts-list" id="custom-workouts-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                    <!-- Rendered custom workouts go here -->
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Custom Level Controls Panel -->
                         <div class="custom-controls-panel" id="custom-controls-panel" style="display: none;">
-                            <div class="input-grid">
-                                <div class="input-group">
-                                    <label for="custom-squeeze">Thời gian Siết (giây)</label>
-                                    <input type="number" id="custom-squeeze" min="1" max="60" value="5">
-                                </div>
-                                <div class="input-group">
-                                    <label for="custom-relax">Thời gian Thả (giây)</label>
-                                    <input type="number" id="custom-relax" min="1" max="60" value="5">
-                                </div>
-                                <div class="input-group">
-                                    <label for="custom-reps">Số lượt (Reps)</label>
-                                    <input type="number" id="custom-reps" min="1" max="100" value="10">
-                                </div>
+                            <h4 id="custom-panel-title" style="margin: 0 0 1rem 0; font-size: 0.95rem; color: var(--color-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Thiết Kế Bài Tập Đa Giai Đoạn</h4>
+                            
+                            <div class="input-group" style="margin-bottom: 1.25rem;">
+                                <label for="custom-workout-name">Tên bài tập tùy chỉnh</label>
+                                <input type="text" id="custom-workout-name" placeholder="Ví dụ: Bài tập Kegel của tôi" style="text-align: left; padding: 0.75rem 1rem; font-weight: 500;">
+                            </div>
+
+                            <div id="custom-stages-container" style="display: flex; flex-direction: column; gap: 1rem;">
+                                <!-- Dynamically generated stage cards -->
+                            </div>
+
+                            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                                <button type="button" class="btn btn-secondary" id="btn-add-custom-stage" style="padding: 0.75rem 1rem; font-size: 0.85rem; border-radius: 10px; flex: 1;">
+                                    + Thêm giai đoạn
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="btn-cancel-custom-edit" style="padding: 0.75rem 1rem; font-size: 0.85rem; border-radius: 10px; flex: 1; display: none;">
+                                    Hủy bỏ
+                                </button>
+                                <button type="button" class="btn btn-primary" id="btn-save-custom-workout" style="padding: 0.75rem 1rem; font-size: 0.85rem; border-radius: 10px; flex: 2; background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)); border: none; color: #0f172a; font-weight: 700;">
+                                    Lưu & Sử dụng
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -826,7 +842,7 @@
 
             <!-- Footer showing version and check for updates -->
             <footer class="app-footer">
-                <span class="app-version">Phiên bản v1.1.20</span>
+                <span class="app-version">Phiên bản v1.1.21</span>
                 <button class="btn-check-update" id="btn-check-update">
                     <svg class="icon-refresh" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
                         <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
@@ -927,6 +943,6 @@
         <button id="btn-pwa-update">Cập nhật ngay</button>
     </div>
 
-    <script src="app.js?v=1.1.20"></script>
+    <script src="app.js?v=1.1.21"></script>
 </body>
 </html>

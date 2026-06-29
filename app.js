@@ -20,7 +20,15 @@ const state = {
     history: [],
     streak: 0,
     totalSessions: 0,
-    totalRepsCompleted: 0
+    totalRepsCompleted: 0,
+    
+    // Custom workout builder state
+    customWorkouts: [],
+    tempStages: [],
+    editingWorkoutId: null,
+    workoutSteps: [],
+    workoutPhases: [],
+    currentStepIndex: 0
 };
 
 // --- WORKOUT CONFIGURATIONS ---
@@ -39,6 +47,18 @@ const levelConfigs = {
 };
 
 function calculateSqueezes(level, reps) {
+    if (level && level.startsWith('custom_')) {
+        const workout = state.customWorkouts.find(w => w.id === level);
+        if (workout && workout.stages) {
+            return workout.stages.reduce((sum, stage) => {
+                if (stage.type === 'normal' || stage.type === 'reverse') {
+                    return sum + parseInt(stage.reps || 0);
+                }
+                return sum;
+            }, 0);
+        }
+        return reps;
+    }
     if (level === 'goodMorning') {
         return 20; // 20 siết nhanh, 5 Kegel ngược
     }
@@ -287,9 +307,14 @@ const elements = {
     // Level Configs
     levelItems: document.querySelectorAll('.level-item'),
     customPanel: document.getElementById('custom-controls-panel'),
-    customSqueezeInput: document.getElementById('custom-squeeze'),
-    customRelaxInput: document.getElementById('custom-relax'),
-    customRepsInput: document.getElementById('custom-reps'),
+    customWorkoutsSection: document.getElementById('custom-workouts-section'),
+    customWorkoutsList: document.getElementById('custom-workouts-list'),
+    customWorkoutNameInput: document.getElementById('custom-workout-name'),
+    customStagesContainer: document.getElementById('custom-stages-container'),
+    btnAddCustomStage: document.getElementById('btn-add-custom-stage'),
+    btnSaveCustomWorkout: document.getElementById('btn-save-custom-workout'),
+    btnCancelCustomEdit: document.getElementById('btn-cancel-custom-edit'),
+    customPanelTitle: document.getElementById('custom-panel-title'),
 
     // Sound Controls
     btnToggleSFX: document.getElementById('btn-toggle-sfx'),
@@ -319,6 +344,7 @@ const elements = {
 // --- INITIALIZE THE APP ---
 function initApp() {
     loadData();
+    renderCustomWorkoutsList();
     autoSelectLevelByTime();
     setupEventHandlers();
     updateUIConfigs();
@@ -391,15 +417,16 @@ function setupEventHandlers() {
         });
     });
 
-    // Custom input updates
-    const customInputs = [elements.customSqueezeInput, elements.customRelaxInput, elements.customRepsInput];
-    customInputs.forEach(input => {
-        input.addEventListener('change', () => {
-            if (state.selectedLevel === 'custom') {
-                updateUIConfigs();
-            }
-        });
-    });
+    // Custom workout builder events binding
+    if (elements.btnAddCustomStage) {
+        elements.btnAddCustomStage.addEventListener('click', addCustomStage);
+    }
+    if (elements.btnSaveCustomWorkout) {
+        elements.btnSaveCustomWorkout.addEventListener('click', saveCustomWorkout);
+    }
+    if (elements.btnCancelCustomEdit) {
+        elements.btnCancelCustomEdit.addEventListener('click', cancelCustomWorkoutEdit);
+    }
 
     // 4. Sound toggles
     elements.btnToggleSFX.addEventListener('click', () => {
@@ -646,15 +673,43 @@ function switchLibrarySubtab(subtabName) {
 function updateUIConfigs() {
     if (state.selectedLevel === 'custom') {
         elements.customPanel.style.display = 'block';
-        state.squeezeDuration = Math.max(1, parseInt(elements.customSqueezeInput.value) || 5);
-        state.relaxDuration = Math.max(1, parseInt(elements.customRelaxInput.value) || 5);
-        state.totalReps = Math.max(1, parseInt(elements.customRepsInput.value) || 10);
+        if (!state.editingWorkoutId) {
+            elements.customPanelTitle.textContent = 'Thiết Kế Bài Tập Đa Giai Đoạn';
+            elements.customWorkoutNameInput.value = '';
+            state.tempStages = [{ type: 'normal', squeeze: 5, relax: 5, reps: 10, transitionRest: 10 }];
+            renderCustomStageCards();
+        }
+        state.squeezeDuration = 5;
+        state.relaxDuration = 5;
+        state.totalReps = 10;
+    } else if (state.selectedLevel && state.selectedLevel.startsWith('custom_')) {
+        elements.customPanel.style.display = 'none';
+        const workout = state.customWorkouts.find(w => w.id === state.selectedLevel);
+        if (workout) {
+            state.totalReps = workout.stages.reduce((sum, stage) => {
+                if (stage.type === 'normal' || stage.type === 'reverse') {
+                    return sum + parseInt(stage.reps || 0);
+                }
+                return sum;
+            }, 0);
+            
+            // Lấy thời lượng siết của giai đoạn đầu tiên để hiển thị ban đầu
+            const firstStage = workout.stages[0];
+            state.squeezeDuration = firstStage ? parseInt(firstStage.squeeze || 5) : 5;
+            state.relaxDuration = firstStage ? parseInt(firstStage.relax || 5) : 5;
+        } else {
+            state.squeezeDuration = 5;
+            state.relaxDuration = 5;
+            state.totalReps = 10;
+        }
     } else {
         elements.customPanel.style.display = 'none';
         const config = levelConfigs[state.selectedLevel];
-        state.squeezeDuration = config.squeeze;
-        state.relaxDuration = config.relax;
-        state.totalReps = config.reps;
+        if (config) {
+            state.squeezeDuration = config.squeeze;
+            state.relaxDuration = config.relax;
+            state.totalReps = config.reps;
+        }
     }
 
     // Reset visual display elements
@@ -677,6 +732,11 @@ function updateUIConfigs() {
         elements.orbSubText.textContent = 'Bấm Bắt đầu để tập Hỗn hợp Kim Tự Tháp (10 lượt)';
     } else if (state.selectedLevel === 'reflexMixed') {
         elements.orbSubText.textContent = 'Bấm Bắt đầu để tập Hỗn hợp Phản Xạ Sinh Lý (12 lượt)';
+    } else if (state.selectedLevel === 'custom') {
+        elements.orbSubText.textContent = 'Đang thiết kế bài tập tùy chỉnh mới';
+    } else if (state.selectedLevel && state.selectedLevel.startsWith('custom_')) {
+        const workout = state.customWorkouts.find(w => w.id === state.selectedLevel);
+        elements.orbSubText.textContent = `Bài tập đã chọn: ${workout ? workout.name : 'Không tên'} (${state.totalReps} lượt)`;
     } else {
         elements.orbSubText.textContent = `Bấm Bắt đầu để tập (${state.squeezeDuration}s siết - ${state.relaxDuration}s thả)`;
     }
@@ -725,14 +785,881 @@ function updateSoundButtons() {
     }
 }
 
-// --- WORKOUT GAME LOOP / WORKFLOW ---
+// --- WORKOUT GAME LOOP / WORKFLOW & CUSTOMIZATION ---
+
+function generateWorkoutSteps(level) {
+    let steps = [];
+    let phases = [];
+    let totalReps = 0;
+
+    if (level && level.startsWith('custom_')) {
+        const workout = state.customWorkouts.find(w => w.id === level);
+        if (workout && workout.stages) {
+            let repIndex = 1;
+            phases = workout.stages.map((stage, sIdx) => {
+                const repsCount = parseInt(stage.reps || 1);
+                const start = repIndex;
+                const end = repIndex + repsCount - 1;
+                repIndex = end + 1;
+                
+                let phaseName = `Giai đoạn ${sIdx + 1}`;
+                if (stage.type === 'reverse') {
+                    phaseName = `Kegel ngược ${sIdx + 1}`;
+                }
+                
+                for (let r = 1; r <= repsCount; r++) {
+                    const currentRep = start + r - 1;
+                    const stageType = stage.type || 'normal';
+                    
+                    if (stageType === 'normal') {
+                        steps.push({
+                            type: 'squeezing',
+                            duration: Math.max(1, parseInt(stage.squeeze || 5)),
+                            action: 'SIẾT CƠ',
+                            subtext: `Siết chặt cơ PC - Lượt ${r}/${repsCount} (${phaseName})`,
+                            sfx: 'squeeze',
+                            orbClass: 'squeezing',
+                            repIndex: currentRep
+                        });
+                        
+                        if (r === repsCount && sIdx < workout.stages.length - 1 && parseInt(stage.transitionRest || 0) > 0) {
+                            steps.push({
+                                type: 'relaxing',
+                                duration: parseInt(stage.transitionRest),
+                                action: 'NGHỈ CHUYỂN',
+                                subtext: `Nghỉ phục hồi ${stage.transitionRest}s - Chuẩn bị giai đoạn tiếp theo`,
+                                sfx: 'relax',
+                                orbClass: 'resting',
+                                repIndex: currentRep
+                            });
+                        } else {
+                            steps.push({
+                                type: 'relaxing',
+                                duration: Math.max(1, parseInt(stage.relax || 5)),
+                                action: 'THẢ LỎNG',
+                                subtext: `Thả lỏng cơ sàn chậu - Lượt ${r}/${repsCount}`,
+                                sfx: 'relax',
+                                orbClass: 'relaxing',
+                                repIndex: currentRep
+                            });
+                        }
+                    } else if (stageType === 'reverse') {
+                        steps.push({
+                            type: 'squeezing',
+                            duration: Math.max(1, parseInt(stage.squeeze || 5)),
+                            action: 'KEGEL NGƯỢC',
+                            subtext: `Hít vào, đẩy nhẹ cơ PC ra ngoài - Lượt ${r}/${repsCount} (${phaseName})`,
+                            sfx: 'squeeze',
+                            orbClass: 'resting',
+                            repIndex: currentRep
+                        });
+                        
+                        if (r === repsCount && sIdx < workout.stages.length - 1 && parseInt(stage.transitionRest || 0) > 0) {
+                            steps.push({
+                                type: 'relaxing',
+                                duration: parseInt(stage.transitionRest),
+                                action: 'NGHỈ CHUYỂN',
+                                subtext: `Nghỉ phục hồi ${stage.transitionRest}s - Chuẩn bị giai đoạn tiếp theo`,
+                                sfx: 'relax',
+                                orbClass: 'resting',
+                                repIndex: currentRep
+                            });
+                        } else {
+                            steps.push({
+                                type: 'relaxing',
+                                duration: Math.max(1, parseInt(stage.relax || 5)),
+                                action: 'NGHỈ',
+                                subtext: `Thở ra, thả lỏng cơ sàn chậu tự nhiên - Lượt ${r}/${repsCount}`,
+                                sfx: 'relax',
+                                orbClass: 'relaxing',
+                                repIndex: currentRep
+                            });
+                        }
+                    }
+                }
+                
+                return { name: phaseName, start, end };
+            });
+            
+            totalReps = repIndex - 1;
+            return { steps, phases, totalReps };
+        }
+    }
+
+    // Mặc định cho các cấp độ sẵn có
+    if (level === 'goodMorning') {
+        totalReps = 25;
+        phases = [
+            { name: 'Siết 1s', start: 1, end: 20 },
+            { name: 'Kegel ngược', start: 21, end: 25 }
+        ];
+        
+        for (let r = 1; r <= 20; r++) {
+            steps.push({
+                type: 'squeezing',
+                duration: 1,
+                action: 'SIẾT CƠ',
+                subtext: `Co thắt cơ PC chặt nhất có thể - Lượt ${r}/20`,
+                sfx: 'squeeze',
+                orbClass: 'squeezing',
+                repIndex: r
+            });
+            if (r === 20) {
+                steps.push({
+                    type: 'relaxing',
+                    duration: 10,
+                    action: 'CHUẨN BỊ',
+                    subtext: 'Nghỉ phục hồi 10s - Chuẩn bị tập Kegel ngược',
+                    sfx: 'relax',
+                    orbClass: 'resting',
+                    repIndex: r
+                });
+            } else {
+                steps.push({
+                    type: 'relaxing',
+                    duration: 2,
+                    action: 'THẢ LỎNG',
+                    subtext: `Thả lỏng 2 giây - Lượt ${r}/19`,
+                    sfx: 'relax',
+                    orbClass: 'relaxing',
+                    repIndex: r
+                });
+            }
+        }
+        for (let r = 21; r <= 25; r++) {
+            steps.push({
+                type: 'squeezing',
+                duration: 5,
+                action: 'KEGEL NGƯỢC',
+                subtext: `Hít vào - Đẩy nhẹ cơ PC ra ngoài - Lượt ${r - 20}/5`,
+                sfx: 'squeeze',
+                orbClass: 'resting',
+                repIndex: r
+            });
+            steps.push({
+                type: 'relaxing',
+                duration: 5,
+                action: 'NGHỈ',
+                subtext: `Thở ra - Thả lỏng cơ PC tự nhiên - Lượt ${r - 20}/5`,
+                sfx: 'relax',
+                orbClass: 'relaxing',
+                repIndex: r
+            });
+        }
+    } else if (level === 'powerCombo') {
+        totalReps = 59;
+        phases = [
+            { name: 'Siết 1s', start: 1, end: 20 },
+            { name: 'Siết 3s', start: 21, end: 32 },
+            { name: 'Siết 3s', start: 33, end: 44 },
+            { name: 'Siết 5s', start: 45, end: 54 },
+            { name: 'Kegel ngược', start: 55, end: 59 }
+        ];
+        for (let r = 1; r <= 20; r++) {
+            steps.push({
+                type: 'squeezing',
+                duration: 1,
+                action: 'SIẾT CƠ',
+                subtext: `Siết cơ PC chặt nhất có thể - Lượt ${r}/20`,
+                sfx: 'squeeze',
+                orbClass: 'squeezing',
+                repIndex: r
+            });
+            if (r === 20) {
+                steps.push({
+                    type: 'relaxing',
+                    duration: 30,
+                    action: 'NGHỈ NGƠI',
+                    subtext: 'Nghỉ phục hồi 30s - Chuẩn bị Pha 2',
+                    sfx: 'relax',
+                    orbClass: 'resting',
+                    repIndex: r
+                });
+            } else {
+                steps.push({
+                    type: 'relaxing',
+                    duration: 1,
+                    action: 'THẢ LỎNG',
+                    subtext: `Thả lỏng cơ PC hoàn toàn - Lượt ${r}/19`,
+                    sfx: 'relax',
+                    orbClass: 'relaxing',
+                    repIndex: r
+                });
+            }
+        }
+        for (let r = 21; r <= 32; r++) {
+            steps.push({
+                type: 'squeezing',
+                duration: 3,
+                action: 'SIẾT CƠ',
+                subtext: `Pha 2: Siết giữ 3 giây - Lượt ${r - 20}/12`,
+                sfx: 'squeeze',
+                orbClass: 'squeezing',
+                repIndex: r
+            });
+            if (r === 32) {
+                steps.push({
+                    type: 'relaxing',
+                    duration: 30,
+                    action: 'NGHỈ NGƠI',
+                    subtext: 'Nghỉ phục hồi 30s - Chuẩn bị Pha 3',
+                    sfx: 'relax',
+                    orbClass: 'resting',
+                    repIndex: r
+                });
+            } else {
+                steps.push({
+                    type: 'relaxing',
+                    duration: 3,
+                    action: 'THẢ LỎNG',
+                    subtext: `Thả lỏng 3 giây - Lượt ${r - 20}/11`,
+                    sfx: 'relax',
+                    orbClass: 'relaxing',
+                    repIndex: r
+                });
+            }
+        }
+        for (let r = 33; r <= 44; r++) {
+            steps.push({
+                type: 'squeezing',
+                duration: 3,
+                action: 'SIẾT CƠ',
+                subtext: `Pha 3: Siết giữ 3 giây - Lượt ${r - 32}/12`,
+                sfx: 'squeeze',
+                orbClass: 'squeezing',
+                repIndex: r
+            });
+            if (r === 44) {
+                steps.push({
+                    type: 'relaxing',
+                    duration: 60,
+                    action: 'NGHỈ NGƠI',
+                    subtext: 'Nghỉ phục hồi 1 phút - Chuẩn bị Pha 4',
+                    sfx: 'relax',
+                    orbClass: 'resting',
+                    repIndex: r
+                });
+            } else {
+                steps.push({
+                    type: 'relaxing',
+                    duration: 3,
+                    action: 'THẢ LỎNG',
+                    subtext: `Thả lỏng 3 giây - Lượt ${r - 32}/11`,
+                    sfx: 'relax',
+                    orbClass: 'relaxing',
+                    repIndex: r
+                });
+            }
+        }
+        for (let r = 45; r <= 54; r++) {
+            steps.push({
+                type: 'squeezing',
+                duration: 5,
+                action: 'SIẾT CƠ',
+                subtext: `Pha 4: Cực hạn - Siết giữ 5 giây - Lượt ${r - 44}/10`,
+                sfx: 'squeeze',
+                orbClass: 'squeezing',
+                repIndex: r
+            });
+            if (r === 54) {
+                steps.push({
+                    type: 'relaxing',
+                    duration: 10,
+                    action: 'CHUẨN BỊ',
+                    subtext: 'Nghỉ phục hồi 10s - Chuẩn bị tập Kegel ngược',
+                    sfx: 'relax',
+                    orbClass: 'resting',
+                    repIndex: r
+                });
+            } else {
+                steps.push({
+                    type: 'relaxing',
+                    duration: 5,
+                    action: 'THẢ LỎNG',
+                    subtext: `Thả lỏng hoàn toàn 5 giây - Lượt ${r - 44}/9`,
+                    sfx: 'relax',
+                    orbClass: 'relaxing',
+                    repIndex: r
+                });
+            }
+        }
+        for (let r = 55; r <= 59; r++) {
+            steps.push({
+                type: 'squeezing',
+                duration: 5,
+                action: 'KEGEL NGƯỢC',
+                subtext: `Hít vào - Đẩy nhẹ cơ PC ra ngoài - Lượt ${r - 54}/5`,
+                sfx: 'squeeze',
+                orbClass: 'resting',
+                repIndex: r
+            });
+            steps.push({
+                type: 'relaxing',
+                duration: 5,
+                action: 'NGHỈ',
+                subtext: `Thở ra - Thả lỏng cơ PC tự nhiên - Lượt ${r - 54}/5`,
+                sfx: 'relax',
+                orbClass: 'relaxing',
+                repIndex: r
+            });
+        }
+    } else if (level === 'nightRecovery') {
+        totalReps = 30;
+        phases = [
+            { name: 'Siết 1s', start: 1, end: 15 },
+            { name: 'Kegel ngược', start: 16, end: 25 },
+            { name: 'Thở bụng', start: 26, end: 30 }
+        ];
+        for (let r = 1; r <= 15; r++) {
+            steps.push({
+                type: 'squeezing',
+                duration: 1,
+                action: 'SIẾT CƠ',
+                subtext: `Pha 1: Siết nhanh - Hít thở tự nhiên - Lượt ${r}/15`,
+                sfx: 'squeeze',
+                orbClass: 'squeezing',
+                repIndex: r
+            });
+            if (r === 15) {
+                steps.push({
+                    type: 'relaxing',
+                    duration: 5,
+                    action: 'CHUẨN BỊ',
+                    subtext: 'Nghỉ phục hồi 5s - Chuẩn bị tập Kegel ngược',
+                    sfx: 'relax',
+                    orbClass: 'resting',
+                    repIndex: r
+                });
+            } else {
+                steps.push({
+                    type: 'relaxing',
+                    duration: 1,
+                    action: 'THẢ LỎNG',
+                    subtext: `Thả lỏng cơ sàn chậu hoàn toàn - Lượt ${r}/14`,
+                    sfx: 'relax',
+                    orbClass: 'relaxing',
+                    repIndex: r
+                });
+            }
+        }
+        for (let r = 16; r <= 25; r++) {
+            steps.push({
+                type: 'squeezing',
+                duration: 5,
+                action: 'KEGEL NGƯỢC',
+                subtext: `Hít vào - Đẩy nhẹ cơ PC ra ngoài - Lượt ${r - 15}/10`,
+                sfx: 'squeeze',
+                orbClass: 'resting',
+                repIndex: r
+            });
+            steps.push({
+                type: 'relaxing',
+                duration: 5,
+                action: 'NGHỈ',
+                subtext: `Thở ra - Thả lỏng cơ PC tự nhiên - Lượt ${r - 15}/10`,
+                sfx: 'relax',
+                orbClass: 'relaxing',
+                repIndex: r
+            });
+        }
+        for (let r = 26; r <= 30; r++) {
+            steps.push({
+                type: 'squeezing',
+                duration: 5,
+                action: 'HÍT VÀO',
+                subtext: `Pha 3: Hít sâu chậm rãi bằng bụng - Lượt ${r - 25}/5`,
+                sfx: 'squeeze',
+                orbClass: 'relaxing',
+                repIndex: r
+            });
+            steps.push({
+                type: 'relaxing',
+                duration: 10,
+                action: 'THỞ RA',
+                subtext: `Thở ra chậm rãi, xẹp bụng - Lượt ${r - 25}/5`,
+                sfx: 'relax',
+                orbClass: 'relaxing',
+                repIndex: r
+            });
+        }
+    } else {
+        const config = levelConfigs[level] || { squeeze: 5, relax: 5, reps: 10 };
+        totalReps = config.reps;
+        phases = [
+            { name: 'Luyện tập', start: 1, end: totalReps }
+        ];
+        
+        for (let r = 1; r <= totalReps; r++) {
+            let squeezeText = 'Co thắt cơ PC chặt nhất có thể';
+            let relaxText = 'Thả lỏng cơ sàn chậu hoàn toàn';
+            let squeezeDur = config.squeeze;
+            let relaxDur = config.relax;
+            
+            if (level === 'ladder') {
+                squeezeText = 'Siết nhẹ 30% lực';
+            } else if (level === 'mixed') {
+                if ((r >= 1 && r <= 3) || (r >= 9 && r <= 11)) {
+                    squeezeDur = 8;
+                    relaxDur = 8;
+                    squeezeText = 'Nhịp chậm: Siết sâu & giữ';
+                } else {
+                    squeezeDur = 1;
+                    relaxDur = 1;
+                    squeezeText = 'Nhịp nhanh: Nhấp nhanh cơ PC';
+                    relaxText = 'Thả nhanh';
+                }
+            } else if (level === 'pyramidMixed') {
+                const squeezeMap = { 1: 3, 2: 1, 3: 6, 4: 1, 5: 9, 6: 1, 7: 12, 8: 1, 9: 6, 10: 3 };
+                const relaxMap = { 1: 3, 2: 1, 3: 6, 4: 1, 5: 9, 6: 1, 7: 10, 8: 1, 9: 6, 10: 3 };
+                squeezeDur = squeezeMap[r] || 3;
+                relaxDur = relaxMap[r] || 3;
+                
+                if (squeezeDur === 12) {
+                    squeezeText = 'Đỉnh tháp: Siết tối đa 12 giây!';
+                } else if (squeezeDur === 1) {
+                    squeezeText = 'Nhịp nhanh: Co thắt nhanh 1s';
+                    relaxText = 'Thả nhanh';
+                } else {
+                    squeezeText = `Kim tự tháp: Siết sâu ${squeezeDur}s`;
+                }
+            } else if (level === 'reflexMixed') {
+                if (r <= 4) {
+                    squeezeDur = 10;
+                    relaxDur = 5;
+                    squeezeText = 'Sức bền: Giữ co thắt 10 giây';
+                } else if (r <= 8) {
+                    squeezeDur = 1;
+                    relaxDur = 1;
+                    squeezeText = 'Phản xạ: Nhấp nhanh liên tục 1s';
+                    relaxText = 'Thả nhanh';
+                } else {
+                    squeezeDur = 5;
+                    relaxDur = 3;
+                    squeezeText = 'Phục hồi: Giữ trung bình 5 giây';
+                }
+            }
+
+            steps.push({
+                type: 'squeezing',
+                duration: squeezeDur,
+                action: 'SIẾT CƠ',
+                subtext: `${squeezeText} - Lượt ${r}/${totalReps}`,
+                sfx: 'squeeze',
+                orbClass: 'squeezing',
+                repIndex: r
+            });
+            steps.push({
+                type: 'relaxing',
+                duration: relaxDur,
+                action: 'THẢ LỎNG',
+                subtext: `${relaxText} - Lượt ${r}/${totalReps}`,
+                sfx: 'relax',
+                orbClass: 'relaxing',
+                repIndex: r
+            });
+        }
+    }
+
+    return { steps, phases, totalReps };
+}
+
+function executeWorkoutStep() {
+    const step = state.workoutSteps[state.currentStepIndex];
+    if (!step) return;
+    
+    state.timeRemaining = step.duration;
+    state.workoutState = step.type; // 'squeezing' or 'relaxing'
+    state.currentRep = step.repIndex || 0;
+    
+    // Cập nhật giao diện quả cầu
+    elements.orb.classList.remove('squeezing', 'relaxing', 'resting', 'completed');
+    if (step.orbClass) {
+        elements.orb.classList.add(step.orbClass);
+    }
+    
+    // Cập nhật text hiển thị
+    elements.orbAction.textContent = step.action;
+    elements.orbSubText.textContent = step.subtext;
+    elements.orbTimer.textContent = String(state.timeRemaining).padStart(2, '0');
+    
+    // Cập nhật các thanh đếm & thanh tiến trình
+    updateProgressDisplays();
+    
+    // Phát âm báo nhịp
+    if (step.sfx === 'squeeze') {
+        audioController.playSqueezeSFX();
+    } else if (step.sfx === 'relax') {
+        audioController.playRelaxSFX();
+    }
+}
+
+function renderCustomStageCards() {
+    if (!elements.customStagesContainer) return;
+    elements.customStagesContainer.innerHTML = '';
+    
+    state.tempStages.forEach((stage, idx) => {
+        const card = document.createElement('div');
+        card.className = 'custom-stage-card';
+        card.setAttribute('data-index', idx);
+        
+        const isLast = idx === state.tempStages.length - 1;
+        const removeButtonHTML = state.tempStages.length > 1 ? `
+            <button type="button" class="btn-remove-stage" onclick="removeCustomStage(${idx})">
+                ✕ Xóa
+            </button>
+        ` : '';
+
+        let squeezeLabel = 'Thời gian Siết (giây)';
+        let relaxLabel = 'Thời gian Thả (giây)';
+        
+        if (stage.type === 'reverse') {
+            squeezeLabel = 'Thời gian Giữ (giây)';
+            relaxLabel = 'Thời gian Thả (giây)';
+        }
+        
+        card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <span style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Giai đoạn ${idx + 1}</span>
+                ${removeButtonHTML}
+            </div>
+            
+            <div class="input-grid" style="grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 0.75rem;">
+                <div class="input-group">
+                    <label>Loại bài tập</label>
+                    <select class="custom-stage-type" data-index="${idx}">
+                        <option value="normal" ${stage.type === 'normal' ? 'selected' : ''}>Kegel thường (Siết)</option>
+                        <option value="reverse" ${stage.type === 'reverse' ? 'selected' : ''}>Kegel ngược (Giãn)</option>
+                    </select>
+                </div>
+                
+                <div class="input-group reps-group">
+                    <label>Số lượt (Reps)</label>
+                    <input type="number" class="custom-stage-reps" data-index="${idx}" min="1" max="100" value="${stage.reps || 10}">
+                </div>
+            </div>
+            
+            <div class="input-grid time-inputs-grid" style="grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 0.75rem;">
+                <div class="input-group squeeze-time-group">
+                    <label class="squeeze-label" data-index="${idx}">${squeezeLabel}</label>
+                    <input type="number" class="custom-stage-squeeze" data-index="${idx}" min="1" max="60" value="${stage.squeeze || 5}">
+                </div>
+                <div class="input-group relax-time-group">
+                    <label class="relax-label" data-index="${idx}">${relaxLabel}</label>
+                    <input type="number" class="custom-stage-relax" data-index="${idx}" min="1" max="60" value="${stage.relax || 5}">
+                </div>
+            </div>
+
+            <div class="input-group transition-rest-group" style="margin-top: 0.5rem; ${isLast ? 'display: none;' : ''}">
+                <label>Nghỉ chuyển giai đoạn sau (giây)</label>
+                <input type="number" class="custom-stage-transition" data-index="${idx}" min="0" max="120" value="${stage.transitionRest || 10}" style="text-align: center;">
+            </div>
+        `;
+        
+        const typeSelect = card.querySelector('.custom-stage-type');
+        const repsInput = card.querySelector('.custom-stage-reps');
+        const squeezeInput = card.querySelector('.custom-stage-squeeze');
+        const relaxInput = card.querySelector('.custom-stage-relax');
+        const transitionInput = card.querySelector('.custom-stage-transition');
+        
+        typeSelect.addEventListener('change', (e) => {
+            state.tempStages[idx].type = e.target.value;
+            renderCustomStageCards();
+        });
+        
+        repsInput.addEventListener('change', (e) => {
+            state.tempStages[idx].reps = Math.max(1, parseInt(e.target.value) || 10);
+        });
+        
+        squeezeInput.addEventListener('change', (e) => {
+            state.tempStages[idx].squeeze = Math.max(1, parseInt(e.target.value) || 5);
+        });
+        
+        relaxInput.addEventListener('change', (e) => {
+            state.tempStages[idx].relax = Math.max(1, parseInt(e.target.value) || 5);
+        });
+        
+        transitionInput.addEventListener('change', (e) => {
+            state.tempStages[idx].transitionRest = Math.max(0, parseInt(e.target.value) || 0);
+        });
+        
+        elements.customStagesContainer.appendChild(card);
+    });
+}
+
+window.removeCustomStage = function(index) {
+    if (state.tempStages.length > 1) {
+        state.tempStages.splice(index, 1);
+        renderCustomStageCards();
+    }
+};
+
+function addCustomStage() {
+    state.tempStages.push({
+        type: 'normal',
+        squeeze: 5,
+        relax: 5,
+        reps: 10,
+        transitionRest: 10
+    });
+    renderCustomStageCards();
+}
+
+function renderCustomWorkoutsList() {
+    if (!elements.customWorkoutsList || !elements.customWorkoutsSection) return;
+    
+    elements.customWorkoutsList.innerHTML = '';
+    
+    if (state.customWorkouts.length === 0) {
+        elements.customWorkoutsSection.style.display = 'none';
+        return;
+    }
+    
+    elements.customWorkoutsSection.style.display = 'block';
+    
+    state.customWorkouts.forEach(workout => {
+        const item = document.createElement('div');
+        item.className = 'level-item';
+        item.setAttribute('data-level', workout.id);
+        if (state.selectedLevel === workout.id) {
+            item.classList.add('active');
+        }
+        
+        const summaryText = workout.stages.map((stage, idx) => {
+            const typeText = stage.type === 'reverse' ? 'Ngược' : 'Thường';
+            return `GĐ${idx + 1}(${typeText}): ${stage.squeeze}s/${stage.relax}s x ${stage.reps}`;
+        }).join(' | ');
+        
+        item.innerHTML = `
+            <div class="level-icon level-cus">C</div>
+            <div class="level-info" style="flex: 1; overflow: hidden;">
+                <span class="level-name">${workout.name}</span>
+                <span class="level-meta" style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 100%;">${summaryText}</span>
+            </div>
+            <div class="custom-workout-actions" style="display: flex; gap: 0.25rem; align-items: center;" onclick="event.stopPropagation();">
+                <button class="btn-edit-custom" data-id="${workout.id}" style="background: none; border: none; color: #a78bfa; cursor: pointer; padding: 4px; display: flex; align-items: center;" title="Sửa bài tập">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4z"/>
+                    </svg>
+                </button>
+                <button class="btn-delete-custom" data-id="${workout.id}" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 4px; display: flex; align-items: center;" title="Xóa bài tập">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        <line x1="10" y1="11" x2="10" y2="17"/>
+                        <line x1="14" y1="11" x2="14" y2="17"/>
+                    </svg>
+                </button>
+            </div>
+        `;
+        
+        item.addEventListener('click', () => {
+            const activeStates = ['squeezing', 'relaxing'];
+            const isMidWorkout = activeStates.includes(state.workoutState) || state.workoutState.startsWith('paused_');
+            if (isMidWorkout) return;
+            
+            if (state.workoutState !== 'idle') {
+                resetWorkout();
+            }
+            
+            document.querySelectorAll('.level-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            
+            state.selectedLevel = workout.id;
+            updateUIConfigs();
+        });
+        
+        item.querySelector('.btn-edit-custom').addEventListener('click', (e) => {
+            e.stopPropagation();
+            editCustomWorkout(workout.id);
+        });
+        
+        item.querySelector('.btn-delete-custom').addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteCustomWorkout(workout.id);
+        });
+        
+        elements.customWorkoutsList.appendChild(item);
+    });
+}
+
+async function saveCustomWorkout() {
+    const name = elements.customWorkoutNameInput.value.trim() || `Bài tập tùy chỉnh ${state.customWorkouts.length + 1}`;
+    
+    if (state.tempStages.length === 0) {
+        alert("Vui lòng thêm ít nhất một giai đoạn.");
+        return;
+    }
+    
+    const workoutData = {
+        id: state.editingWorkoutId || 'custom_' + Date.now(),
+        name: name,
+        stages: JSON.parse(JSON.stringify(state.tempStages)),
+        updatedAt: new Date().toISOString()
+    };
+    
+    if (state.editingWorkoutId) {
+        const index = state.customWorkouts.findIndex(w => w.id === state.editingWorkoutId);
+        if (index !== -1) {
+            state.customWorkouts[index] = workoutData;
+        }
+    } else {
+        state.customWorkouts.push(workoutData);
+    }
+    
+    state.editingWorkoutId = null;
+    state.tempStages = [];
+    elements.customWorkoutNameInput.value = '';
+    elements.btnCancelCustomEdit.style.display = 'none';
+    elements.customPanelTitle.textContent = 'Thiết Kế Bài Tập Đa Giai Đoạn';
+    
+    saveData();
+    state.selectedLevel = workoutData.id;
+    
+    renderCustomWorkoutsList();
+    
+    document.querySelectorAll('.level-item').forEach(i => {
+        if (i.getAttribute('data-level') === state.selectedLevel) {
+            i.classList.add('active');
+        } else {
+            i.classList.remove('active');
+        }
+    });
+    
+    updateUIConfigs();
+    
+    if (supabaseClient) {
+        try {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (user) {
+                updateSyncStatusUI('syncing');
+                const { error } = await supabaseClient.auth.updateUser({
+                    data: { custom_workouts: state.customWorkouts }
+                });
+                if (error) throw error;
+                updateSyncStatusUI('online');
+                console.log("Đã đồng bộ bài tập tùy chỉnh lên Supabase.");
+            }
+        } catch (err) {
+            console.error("Lỗi đồng bộ lên cloud:", err);
+            updateSyncStatusUI('error');
+        }
+    }
+    
+    alert("Đã lưu bài tập tùy chỉnh thành công!");
+}
+
+function cancelCustomWorkoutEdit() {
+    state.editingWorkoutId = null;
+    state.tempStages = [];
+    elements.customWorkoutNameInput.value = '';
+    elements.btnCancelCustomEdit.style.display = 'none';
+    elements.customPanelTitle.textContent = 'Thiết Kế Bài Tập Đa Giai Đoạn';
+    state.selectedLevel = 'goodMorning';
+    
+    document.querySelectorAll('.level-item').forEach(i => {
+        if (i.getAttribute('data-level') === state.selectedLevel) {
+            i.classList.add('active');
+        } else {
+            i.classList.remove('active');
+        }
+    });
+    
+    updateUIConfigs();
+}
+
+function editCustomWorkout(workoutId) {
+    const workout = state.customWorkouts.find(w => w.id === workoutId);
+    if (!workout) return;
+    
+    state.editingWorkoutId = workoutId;
+    elements.customPanelTitle.textContent = 'Chỉnh Sửa Bài Tập Tùy Chỉnh';
+    elements.customWorkoutNameInput.value = workout.name;
+    state.tempStages = JSON.parse(JSON.stringify(workout.stages));
+    
+    elements.btnCancelCustomEdit.style.display = 'block';
+    elements.customPanel.style.display = 'block';
+    
+    document.querySelectorAll('.level-item').forEach(i => {
+        if (i.getAttribute('data-level') === 'custom') {
+            i.classList.add('active');
+        } else {
+            i.classList.remove('active');
+        }
+    });
+    
+    renderCustomStageCards();
+}
+
+async function deleteCustomWorkout(workoutId) {
+    if (!confirm("Bạn có chắc chắn muốn xóa bài tập tùy chỉnh này?")) {
+        return;
+    }
+    
+    state.customWorkouts = state.customWorkouts.filter(w => w.id !== workoutId);
+    saveData();
+    
+    if (state.selectedLevel === workoutId) {
+        state.selectedLevel = 'goodMorning';
+        document.querySelectorAll('.level-item').forEach(i => {
+            if (i.getAttribute('data-level') === state.selectedLevel) {
+                i.classList.add('active');
+            } else {
+                i.classList.remove('active');
+            }
+        });
+    }
+    
+    renderCustomWorkoutsList();
+    updateUIConfigs();
+    
+    if (supabaseClient) {
+        try {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (user) {
+                updateSyncStatusUI('syncing');
+                const { error } = await supabaseClient.auth.updateUser({
+                    data: { custom_workouts: state.customWorkouts }
+                });
+                if (error) throw error;
+                updateSyncStatusUI('online');
+            }
+        } catch (err) {
+            console.error("Lỗi đồng bộ khi xóa bài tập:", err);
+            updateSyncStatusUI('error');
+        }
+    }
+}
+
+function mergeCustomWorkouts(local, cloud) {
+    const map = new Map();
+    cloud.forEach(w => {
+        map.set(w.id, w);
+    });
+    local.forEach(w => {
+        if (map.has(w.id)) {
+            const cloudItem = map.get(w.id);
+            const localTime = new Date(w.updatedAt || 0).getTime();
+            const cloudTime = new Date(cloudItem.updatedAt || 0).getTime();
+            if (localTime > cloudTime) {
+                map.set(w.id, w);
+            }
+        } else {
+            map.set(w.id, w);
+        }
+    });
+    return Array.from(map.values());
+}
+
 function startWorkout() {
-    state.workoutState = 'squeezing';
-    state.currentRep = 1;
-    state.timeRemaining = state.squeezeDuration;
+    const workoutData = generateWorkoutSteps(state.selectedLevel);
+    state.workoutSteps = workoutData.steps;
+    state.workoutPhases = workoutData.phases;
+    state.totalReps = workoutData.totalReps;
+    state.currentStepIndex = 0;
+    
     requestWakeLock();
     
-    // Hiển thị hiệu ứng sáng viền nổi bật trong 2 giây cho phần lưu ý tiểu tiện
     const bladderAlert = document.getElementById('bladder-reminder-alert');
     if (bladderAlert) {
         bladderAlert.classList.add('highlight-glow');
@@ -741,7 +1668,6 @@ function startWorkout() {
         }, 2000);
     }
     
-    // Toggle buttons state
     elements.btnReset.disabled = true;
     elements.btnStart.classList.remove('btn-primary');
     elements.btnStart.classList.add('btn-secondary');
@@ -751,13 +1677,11 @@ function startWorkout() {
         <rect x="14" y="4" width="4" height="16"/>
     `;
     
-    // Adjust levels selection access
     elements.levelItems.forEach(item => item.style.pointerEvents = 'none');
     
-    // Trigger Squeeze phase
-    enterSqueezePhase();
+    renderProgressSegments();
+    executeWorkoutStep();
     
-    // Start interval
     state.timerInterval = setInterval(tick, 1000);
 }
 
@@ -766,11 +1690,9 @@ function pauseWorkout() {
     state.timerInterval = null;
     releaseWakeLock();
     
-    // Save current active state before pausing
     const oldState = state.workoutState;
     state.workoutState = 'paused_' + oldState;
     
-    // Change UI state
     elements.textStart.textContent = 'Tiếp tục';
     elements.iconStart.innerHTML = `
         <polygon points="5 3 19 12 5 21 5 3"/>
@@ -780,12 +1702,10 @@ function pauseWorkout() {
 }
 
 function resumeWorkout() {
-    // Restore state from paused state
     const originalState = state.workoutState.replace('paused_', '');
     state.workoutState = originalState;
     requestWakeLock();
     
-    // Change UI state
     elements.textStart.textContent = 'Tạm dừng';
     elements.iconStart.innerHTML = `
         <rect x="6" y="4" width="4" height="16"/>
@@ -793,16 +1713,11 @@ function resumeWorkout() {
     `;
     elements.btnReset.disabled = true;
     
-    if (state.workoutState === 'squeezing') {
-        elements.orbSubText.textContent = 'Giữ cơ PC co thắt';
-    } else {
-        elements.orbSubText.textContent = 'Thả lỏng toàn thân, hít thở đều';
-    }
-
+    const step = state.workoutSteps[state.currentStepIndex];
+    elements.orbSubText.textContent = step.subtext;
+    
     state.timerInterval = setInterval(tick, 1000);
 }
-
-// Switch pause / resume logic is now merged into main btnStart listener
 
 function resetWorkout() {
     clearInterval(state.timerInterval);
@@ -810,10 +1725,8 @@ function resetWorkout() {
     state.workoutState = 'idle';
     releaseWakeLock();
     
-    // Restore Level select availability
     elements.levelItems.forEach(item => item.style.pointerEvents = 'auto');
     
-    // Restore Start/Reset button
     elements.btnReset.disabled = true;
     elements.btnStart.disabled = false;
     elements.btnStart.classList.add('btn-primary');
@@ -826,315 +1739,19 @@ function resetWorkout() {
     updateUIConfigs();
 }
 
-// Tick core timer loop
 function tick() {
     state.timeRemaining--;
     
     if (state.timeRemaining < 0) {
-        // Toggle Phase Squeeze -> Relax or next rep
-        if (state.workoutState === 'squeezing') {
-            enterRelaxPhase();
-        } else if (state.workoutState === 'relaxing') {
-            if (state.currentRep >= state.totalReps) {
-                finishWorkout();
-            } else {
-                state.currentRep++;
-                enterSqueezePhase();
-            }
+        state.currentStepIndex++;
+        if (state.currentStepIndex >= state.workoutSteps.length) {
+            finishWorkout();
+        } else {
+            executeWorkoutStep();
         }
     } else {
         elements.orbTimer.textContent = String(state.timeRemaining).padStart(2, '0');
     }
-}
-
-function enterSqueezePhase() {
-    state.workoutState = 'squeezing';
-    
-    // Dynamic duration logic for custom levels
-    if (state.selectedLevel === 'goodMorning') {
-        if (state.currentRep <= 20) {
-            state.squeezeDuration = 1;
-        } else {
-            state.squeezeDuration = 5; // Reverse Kegel (Hold)
-        }
-    } else if (state.selectedLevel === 'powerCombo') {
-        if (state.currentRep <= 20) {
-            state.squeezeDuration = 1;
-        } else if (state.currentRep >= 21 && state.currentRep <= 32) {
-            state.squeezeDuration = 3;
-        } else if (state.currentRep >= 33 && state.currentRep <= 44) {
-            state.squeezeDuration = 3;
-        } else if (state.currentRep >= 45 && state.currentRep <= 54) {
-            state.squeezeDuration = 5;
-        } else {
-            state.squeezeDuration = 5; // Reverse Kegel (Hold)
-        }
-    } else if (state.selectedLevel === 'nightRecovery') {
-        if (state.currentRep <= 15) {
-            state.squeezeDuration = 1; // Fast flicks (Squeeze)
-        } else if (state.currentRep <= 25) {
-            state.squeezeDuration = 5; // Reverse Kegel (Hold)
-        } else {
-            state.squeezeDuration = 5; // Deep breathing (Inhale)
-        }
-    } else if (state.selectedLevel === 'mixed') {
-        // Mixed logic: Reps 1-3 & 9-11 are slow (8s), Reps 4-8 are fast flicks (1s)
-        if ((state.currentRep >= 1 && state.currentRep <= 3) || (state.currentRep >= 9 && state.currentRep <= 11)) {
-            state.squeezeDuration = 8;
-            state.relaxDuration = 8;
-        } else {
-            state.squeezeDuration = 1;
-            state.relaxDuration = 1;
-        }
-    } else if (state.selectedLevel === 'ladder') {
-        state.squeezeDuration = 9;
-        state.relaxDuration = 8;
-    } else if (state.selectedLevel === 'pyramidMixed') {
-        const squeezeMap = { 1: 3, 2: 1, 3: 6, 4: 1, 5: 9, 6: 1, 7: 12, 8: 1, 9: 6, 10: 3 };
-        state.squeezeDuration = squeezeMap[state.currentRep] || 3;
-    } else if (state.selectedLevel === 'reflexMixed') {
-        if (state.currentRep <= 4) {
-            state.squeezeDuration = 10;
-        } else if (state.currentRep <= 8) {
-            state.squeezeDuration = 1;
-        } else {
-            state.squeezeDuration = 5;
-        }
-    }
-
-    if (state.squeezeDuration === 0) {
-        enterRelaxPhase();
-        return;
-    }
-
-    state.timeRemaining = state.squeezeDuration;
-    
-    // UI Visual changes
-    elements.orb.classList.remove('relaxing', 'squeezing', 'resting');
-    
-    // Identify special states
-    const isReverseKegelHold = (state.selectedLevel === 'goodMorning' && state.currentRep >= 21) ||
-                                (state.selectedLevel === 'powerCombo' && state.currentRep >= 55) ||
-                                (state.selectedLevel === 'nightRecovery' && state.currentRep >= 16 && state.currentRep <= 25);
-    const isBreathingInhale = (state.selectedLevel === 'nightRecovery' && state.currentRep >= 26);
-    
-    if (isReverseKegelHold) {
-        elements.orb.classList.add('resting');
-        elements.orbAction.textContent = 'KEGEL NGƯỢC';
-        
-        if (state.selectedLevel === 'goodMorning') {
-            elements.orbSubText.textContent = `Hít vào - Đẩy nhẹ cơ PC ra ngoài - Lượt ${state.currentRep - 20}/5`;
-        } else if (state.selectedLevel === 'powerCombo') {
-            elements.orbSubText.textContent = `Hít vào - Đẩy nhẹ cơ PC ra ngoài - Lượt ${state.currentRep - 54}/5`;
-        } else if (state.selectedLevel === 'nightRecovery') {
-            elements.orbSubText.textContent = `Hít vào - Đẩy nhẹ cơ PC ra ngoài - Lượt ${state.currentRep - 15}/10`;
-        }
-    } else if (isBreathingInhale) {
-        elements.orb.classList.add('relaxing');
-        elements.orbAction.textContent = 'HÍT VÀO';
-        elements.orbSubText.textContent = `Pha 3: Hít sâu chậm rãi bằng bụng - Lượt ${state.currentRep - 25}/5`;
-    } else {
-        elements.orb.classList.add('squeezing');
-        elements.orbAction.textContent = 'SIẾT CƠ';
-        
-        if (state.selectedLevel === 'ladder') {
-            elements.orbSubText.textContent = 'Siết nhẹ 30% lực';
-        } else if (state.selectedLevel === 'mixed') {
-            if (state.squeezeDuration === 8) {
-                elements.orbSubText.textContent = 'Nhịp chậm: Siết sâu & giữ';
-            } else {
-                elements.orbSubText.textContent = 'Nhịp nhanh: Nhấp nhanh cơ PC';
-            }
-        } else if (state.selectedLevel === 'pyramidMixed') {
-            if (state.squeezeDuration === 12) {
-                elements.orbSubText.textContent = 'Đỉnh tháp: Siết tối đa 12 giây!';
-            } else if (state.squeezeDuration === 1) {
-                elements.orbSubText.textContent = 'Nhịp nhanh: Co thắt nhanh 1s';
-            } else {
-                elements.orbSubText.textContent = `Kim tự tháp: Siết sâu ${state.squeezeDuration}s`;
-            }
-        } else if (state.selectedLevel === 'reflexMixed') {
-            if (state.squeezeDuration === 10) {
-                elements.orbSubText.textContent = 'Sức bền: Giữ co thắt 10 giây';
-            } else if (state.squeezeDuration === 1) {
-                elements.orbSubText.textContent = 'Phản xạ: Nhấp nhanh liên tục 1s';
-            } else {
-                elements.orbSubText.textContent = 'Phục hồi: Giữ trung bình 5 giây';
-            }
-        } else if (state.selectedLevel === 'powerCombo') {
-            if (state.currentRep <= 20) {
-                elements.orbSubText.textContent = `Siết cơ PC chặt nhất có thể - Lượt ${state.currentRep}/20`;
-            } else if (state.currentRep >= 21 && state.currentRep <= 32) {
-                elements.orbSubText.textContent = `Pha 2: Siết giữ 3 giây - Lượt ${state.currentRep - 20}/12`;
-            } else if (state.currentRep >= 33 && state.currentRep <= 44) {
-                elements.orbSubText.textContent = `Pha 3: Siết giữ 3 giây - Lượt ${state.currentRep - 32}/12`;
-            } else if (state.currentRep >= 45 && state.currentRep <= 54) {
-                elements.orbSubText.textContent = `Pha 4: Cực hạn - Siết giữ 5 giây - Lượt ${state.currentRep - 44}/10`;
-            }
-        } else if (state.selectedLevel === 'nightRecovery') {
-            elements.orbSubText.textContent = `Pha 1: Siết nhanh - Hít thở tự nhiên - Lượt ${state.currentRep}/15`;
-        } else if (state.selectedLevel === 'goodMorning') {
-            elements.orbSubText.textContent = `Co thắt cơ PC chặt nhất có thể - Lượt ${state.currentRep}/20`;
-        } else {
-            elements.orbSubText.textContent = 'Co thắt cơ PC chặt nhất có thể';
-        }
-    }
-    
-    elements.orbTimer.textContent = String(state.timeRemaining).padStart(2, '0');
-    
-    updateProgressDisplays();
-    audioController.playSqueezeSFX();
-}
-
-function enterRelaxPhase() {
-    state.workoutState = 'relaxing';
-    
-    // Dynamic relax duration logic for mixed level
-    if (state.selectedLevel === 'goodMorning') {
-        if (state.currentRep <= 19) {
-            state.relaxDuration = 2;
-        } else if (state.currentRep === 20) {
-            state.relaxDuration = 10; // Nghỉ chặng 10s
-        } else {
-            state.relaxDuration = 5; // Reverse Kegel
-        }
-    } else if (state.selectedLevel === 'mixed') {
-        if ((state.currentRep >= 1 && state.currentRep <= 3) || (state.currentRep >= 9 && state.currentRep <= 11)) {
-            state.relaxDuration = 8;
-        } else {
-            state.relaxDuration = 1;
-        }
-    } else if (state.selectedLevel === 'ladder') {
-        state.relaxDuration = 8;
-    } else if (state.selectedLevel === 'pyramidMixed') {
-        const relaxMap = { 1: 3, 2: 1, 3: 6, 4: 1, 5: 9, 6: 1, 7: 10, 8: 1, 9: 6, 10: 3 };
-        state.relaxDuration = relaxMap[state.currentRep] || 3;
-    } else if (state.selectedLevel === 'reflexMixed') {
-        if (state.currentRep <= 4) {
-            state.relaxDuration = 5;
-        } else if (state.currentRep <= 8) {
-            state.relaxDuration = 1;
-        } else {
-            state.relaxDuration = 3;
-        }
-    } else if (state.selectedLevel === 'powerCombo') {
-        if (state.currentRep <= 19) {
-            state.relaxDuration = 1;
-        } else if (state.currentRep === 20) {
-            state.relaxDuration = 30;
-        } else if (state.currentRep >= 21 && state.currentRep <= 31) {
-            state.relaxDuration = 3;
-        } else if (state.currentRep === 32) {
-            state.relaxDuration = 30;
-        } else if (state.currentRep >= 33 && state.currentRep <= 43) {
-            state.relaxDuration = 3;
-        } else if (state.currentRep === 44) {
-            state.relaxDuration = 60;
-        } else if (state.currentRep >= 45 && state.currentRep <= 53) {
-            state.relaxDuration = 5;
-        } else if (state.currentRep === 54) {
-            state.relaxDuration = 10;
-        } else {
-            state.relaxDuration = 5; // Reverse Kegel cooldown
-        }
-    } else if (state.selectedLevel === 'nightRecovery') {
-        if (state.currentRep <= 14) {
-            state.relaxDuration = 1; // Fast flicks (Relax)
-        } else if (state.currentRep === 15) {
-            state.relaxDuration = 5; // 5s Rest before Reverse Kegel
-        } else if (state.currentRep <= 25) {
-            state.relaxDuration = 5; // Reverse Kegel
-        } else {
-            state.relaxDuration = 10; // Deep breathing
-        }
-    }
-
-    state.timeRemaining = state.relaxDuration;
-    
-    // UI Visual changes
-    elements.orb.classList.remove('squeezing');
-    elements.orb.classList.remove('relaxing');
-    elements.orb.classList.remove('resting');
-    
-    // Determine if it is a resting or stretching phase
-    const isPureRest = (state.selectedLevel === 'goodMorning' && state.currentRep === 20) ||
-                       (state.selectedLevel === 'powerCombo' && (state.currentRep === 20 || state.currentRep === 32 || state.currentRep === 44 || state.currentRep === 54)) ||
-                       (state.selectedLevel === 'nightRecovery' && state.currentRep === 15);
-    const isReverseKegelRest = (state.selectedLevel === 'goodMorning' && state.currentRep >= 21) ||
-                               (state.selectedLevel === 'powerCombo' && state.currentRep >= 55) ||
-                               (state.selectedLevel === 'nightRecovery' && state.currentRep >= 16 && state.currentRep <= 25);
-    const isBreathingExhale = (state.selectedLevel === 'nightRecovery' && state.currentRep >= 26);
-                      
-    if (isPureRest) {
-        elements.orb.classList.add('resting');
-        
-        const isPreparatoryRest = (state.selectedLevel === 'powerCombo' && state.currentRep === 54) || 
-                                  (state.selectedLevel === 'goodMorning' && state.currentRep === 20) || 
-                                  (state.selectedLevel === 'nightRecovery' && state.currentRep === 15);
-        elements.orbAction.textContent = isPreparatoryRest ? 'CHUẨN BỊ' : 'NGHỈ NGƠI';
-        
-        if (state.selectedLevel === 'goodMorning' && state.currentRep === 20) {
-            elements.orbSubText.textContent = 'Nghỉ phục hồi 10s - Chuẩn bị tập Kegel ngược';
-        } else if (state.selectedLevel === 'powerCombo') {
-            if (state.currentRep === 20) {
-                elements.orbSubText.textContent = 'Nghỉ phục hồi 30s - Chuẩn bị Pha 2';
-            } else if (state.currentRep === 32) {
-                elements.orbSubText.textContent = 'Nghỉ phục hồi 30s - Chuẩn bị Pha 3';
-            } else if (state.currentRep === 44) {
-                elements.orbSubText.textContent = 'Nghỉ phục hồi 1 phút - Chuẩn bị Pha 4';
-            } else if (state.currentRep === 54) {
-                elements.orbSubText.textContent = 'Nghỉ phục hồi 10s - Chuẩn bị tập Kegel ngược';
-            }
-        } else if (state.selectedLevel === 'nightRecovery' && state.currentRep === 15) {
-            elements.orbSubText.textContent = 'Nghỉ phục hồi 5s - Chuẩn bị tập Kegel ngược';
-        }
-    } else if (isReverseKegelRest) {
-        elements.orb.classList.add('relaxing');
-        elements.orbAction.textContent = 'NGHỈ';
-        
-        if (state.selectedLevel === 'goodMorning') {
-            elements.orbSubText.textContent = `Thở ra - Thả lỏng cơ PC tự nhiên - Lượt ${state.currentRep - 20}/5`;
-        } else if (state.selectedLevel === 'powerCombo') {
-            elements.orbSubText.textContent = `Thở ra - Thả lỏng cơ PC tự nhiên - Lượt ${state.currentRep - 54}/5`;
-        } else if (state.selectedLevel === 'nightRecovery') {
-            elements.orbSubText.textContent = `Thở ra - Thả lỏng cơ PC tự nhiên - Lượt ${state.currentRep - 15}/10`;
-        }
-    } else if (isBreathingExhale) {
-        elements.orb.classList.add('relaxing');
-        elements.orbAction.textContent = 'THỞ RA';
-        elements.orbSubText.textContent = `Thở ra chậm rãi, xẹp bụng - Lượt ${state.currentRep - 25}/5`;
-    } else {
-        elements.orb.classList.add('relaxing');
-        elements.orbAction.textContent = 'THẢ LỎNG';
-        
-        if (state.selectedLevel === 'mixed' && state.relaxDuration === 1) {
-            elements.orbSubText.textContent = 'Thả nhanh';
-        } else if (state.selectedLevel === 'pyramidMixed' && state.relaxDuration === 1) {
-            elements.orbSubText.textContent = 'Thả nhanh';
-        } else if (state.selectedLevel === 'reflexMixed' && state.relaxDuration === 1) {
-            elements.orbSubText.textContent = 'Thả nhanh';
-        } else if (state.selectedLevel === 'powerCombo') {
-            if (state.currentRep <= 19) {
-                elements.orbSubText.textContent = `Thả lỏng cơ sàn chậu hoàn toàn - Lượt ${state.currentRep}/19`;
-            } else if (state.currentRep >= 21 && state.currentRep <= 31) {
-                elements.orbSubText.textContent = `Thả lỏng 3 giây - Lượt ${state.currentRep - 20}/11`;
-            } else if (state.currentRep >= 33 && state.currentRep <= 43) {
-                elements.orbSubText.textContent = `Thả lỏng 3 giây - Lượt ${state.currentRep - 32}/11`;
-            } else if (state.currentRep >= 45 && state.currentRep <= 53) {
-                elements.orbSubText.textContent = `Thả lỏng hoàn toàn 5 giây - Lượt ${state.currentRep - 44}/9`;
-            }
-        } else if (state.selectedLevel === 'goodMorning' && state.currentRep <= 19) {
-            elements.orbSubText.textContent = `Thả lỏng 2 giây - Lượt ${state.currentRep}/19`;
-        } else if (state.selectedLevel === 'nightRecovery' && state.currentRep <= 14) {
-            elements.orbSubText.textContent = `Thả lỏng cơ sàn chậu hoàn toàn - Lượt ${state.currentRep}/14`;
-        } else {
-            elements.orbSubText.textContent = 'Thả lỏng cơ sàn chậu hoàn toàn';
-        }
-    }
-    
-    elements.orbTimer.textContent = String(state.timeRemaining).padStart(2, '0');
-    
-    audioController.playRelaxSFX();
 }
 
 function getWorkoutPhases(level, totalReps) {
@@ -1213,11 +1830,19 @@ function updateProgressSegments() {
         
         if (state.workoutState === 'completed') {
             widthPercent = 100;
-            if (labelEl) labelEl.classList.remove('active');
+            if (labelEl) {
+                labelEl.classList.remove('active');
+                labelEl.classList.remove('completed-slide-left');
+            }
+            fillEl.parentElement.classList.remove('completed-slide-left');
         } else {
             if (state.currentRep < phase.start) {
                 widthPercent = 0;
-                if (labelEl) labelEl.classList.remove('active');
+                if (labelEl) {
+                    labelEl.classList.remove('active');
+                    labelEl.classList.remove('completed-slide-left');
+                }
+                fillEl.parentElement.classList.remove('completed-slide-left');
             } else if (state.currentRep > phase.end) {
                 widthPercent = 100;
                 if (labelEl) labelEl.classList.remove('active');
@@ -1347,6 +1972,7 @@ function saveData() {
     localStorage.setItem('pc_flex_streak', state.streak);
     localStorage.setItem('pc_flex_total_sessions', state.totalSessions);
     localStorage.setItem('pc_flex_total_reps', state.totalRepsCompleted);
+    localStorage.setItem('pc_flex_custom_workouts', JSON.stringify(state.customWorkouts));
 }
 
 function loadData() {
@@ -1354,6 +1980,7 @@ function loadData() {
         state.history = JSON.parse(localStorage.getItem('pc_flex_history')) || [];
         state.streak = parseInt(localStorage.getItem('pc_flex_streak')) || 0;
         state.totalSessions = parseInt(localStorage.getItem('pc_flex_total_sessions')) || 0;
+        state.customWorkouts = JSON.parse(localStorage.getItem('pc_flex_custom_workouts')) || [];
         state.totalRepsCompleted = state.history.reduce((sum, log) => {
             const level = log.level;
             const reps = log.config ? (log.config.reps || 0) : (log.reps || 0);
@@ -1858,8 +2485,24 @@ async function syncDataOnline() {
             return sum + calculateSqueezes(lvl, rps);
         }, 0);
         calculateStreak();
+        
+        // 5. Đồng bộ bài tập tùy chỉnh qua user_metadata của Supabase
+        let cloudWorkouts = user.user_metadata ? (user.user_metadata.custom_workouts || []) : [];
+        let mergedWorkouts = mergeCustomWorkouts(state.customWorkouts, cloudWorkouts);
+        state.customWorkouts = mergedWorkouts;
+        localStorage.setItem('pc_flex_custom_workouts', JSON.stringify(state.customWorkouts));
+        
         saveData();
         renderStats();
+        renderCustomWorkoutsList();
+        
+        // Cập nhật lại cloud nếu local mới hơn
+        const isDifferent = JSON.stringify(cloudWorkouts) !== JSON.stringify(mergedWorkouts);
+        if (isDifferent) {
+            await supabaseClient.auth.updateUser({
+                data: { custom_workouts: mergedWorkouts }
+            });
+        }
         
         updateSyncStatusUI('online');
     } catch (e) {

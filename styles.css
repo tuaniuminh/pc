@@ -514,6 +514,14 @@ body {
     border-radius: 2px;
     overflow: hidden;
     position: relative;
+    transform-origin: left;
+    transition: flex 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
+                width 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
+                max-width 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
+                min-width 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
+                margin 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
+                opacity 0.4s ease, 
+                transform 0.6s ease;
 }
 
 .progress-segment-fill {
@@ -521,6 +529,17 @@ body {
     background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
     width: 0%;
     transition: width 0.3s ease;
+}
+
+.progress-segment.completed-slide-left {
+    flex: 0 0 0% !important;
+    width: 0 !important;
+    max-width: 0 !important;
+    min-width: 0 !important;
+    margin-right: -3px !important;
+    opacity: 0 !important;
+    pointer-events: none;
+    transform: scaleX(0);
 }
 
 .phase-labels {
@@ -538,15 +557,34 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease, 
+                flex 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
+                width 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
+                max-width 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
+                min-width 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
+                margin 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
+                opacity 0.4s ease, 
+                transform 0.6s ease;
     padding: 2px 0;
     opacity: 0.5;
+    transform-origin: left;
 }
 
 .phase-label.active {
     color: var(--color-primary);
     font-weight: 700;
     opacity: 1;
+}
+
+.phase-label.completed-slide-left {
+    flex: 0 0 0% !important;
+    width: 0 !important;
+    max-width: 0 !important;
+    min-width: 0 !important;
+    margin-right: -3px !important;
+    opacity: 0 !important;
+    pointer-events: none;
+    transform: scaleX(0);
 }
 
 /* Controls Buttons */
@@ -2770,4 +2808,77 @@ body {
         box-shadow: 0 0 15px rgba(239, 68, 68, 0.4), inset 0 0 8px rgba(239, 68, 68, 0.2);
         transform: scale(1.02);
     }
+}
+
+/* Custom Multi-Stage Workout Creator & Actions */
+.custom-stage-card {
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1.25rem;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.25s ease;
+    animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.custom-stage-card:hover {
+    background: rgba(255, 255, 255, 0.025);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.btn-remove-stage {
+    background: none;
+    border: none;
+    color: #f87171;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(248, 113, 113, 0.15);
+    background: rgba(248, 113, 113, 0.03);
+}
+
+.btn-remove-stage:hover {
+    background: rgba(248, 113, 113, 0.12);
+    border-color: rgba(248, 113, 113, 0.3);
+    color: #ef4444;
+}
+
+.custom-stage-type, .custom-stage-reps, .custom-stage-squeeze, .custom-stage-relax, .custom-stage-transition {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    color: var(--color-text-primary);
+    padding: 0.75rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.custom-stage-type:focus, .custom-stage-reps:focus, .custom-stage-squeeze:focus, .custom-stage-relax:focus, .custom-stage-transition:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 10px rgba(0, 245, 212, 0.15);
+    background: rgba(15, 23, 42, 0.8);
+}
+
+.custom-workout-actions button {
+    opacity: 0.6;
+    transition: all 0.2s ease;
+    border-radius: 6px;
+}
+
+.custom-workout-actions button:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.05);
+    transform: scale(1.08);
 }
