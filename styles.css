@@ -2882,3 +2882,63 @@ body {
     background: rgba(255, 255, 255, 0.05);
     transform: scale(1.08);
 }
+
+/* --- GENDER SELECTOR & GENDER SPECIFIC DISPLAY --- */
+.gender-selector {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1.25rem 0;
+    padding: 0.25rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 14px;
+}
+
+.gender-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--font-primary);
+}
+
+.gender-btn:hover {
+    color: var(--color-text-primary);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.gender-btn.active[data-gender="male"] {
+    color: #0f172a;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    box-shadow: 0 4px 15px rgba(0, 245, 212, 0.25);
+}
+
+.gender-btn.active[data-gender="female"] {
+    color: #ffffff;
+    background: linear-gradient(135deg, #ec4899, #8b5cf6);
+    box-shadow: 0 4px 15px rgba(236, 72, 153, 0.25);
+}
+
+.gender-icon {
+    font-size: 1.15rem;
+}
+
+/* Gender-specific visibility rules */
+body.gender-male .female-only {
+    display: none !important;
+}
+
+body.gender-female .male-only {
+    display: none !important;
+}
+
