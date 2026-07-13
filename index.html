@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.1.24">
+    <link rel="stylesheet" href="styles.css?v=1.1.25">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -160,6 +160,18 @@
                     <div class="config-card">
                         <h3>Cấu Hình Bài Tập</h3>
                         <p class="config-desc">Chọn bài tập được lập trình sẵn hoặc tùy chỉnh theo ý muốn của bạn.</p>
+                        
+                        <!-- Gender Selection Group -->
+                        <div class="gender-selector">
+                            <button class="gender-btn active" id="btn-gender-male" data-gender="male">
+                                <span class="gender-icon">♂️</span>
+                                <span>Nam giới</span>
+                            </button>
+                            <button class="gender-btn" id="btn-gender-female" data-gender="female">
+                                <span class="gender-icon">♀️</span>
+                                <span>Nữ giới</span>
+                            </button>
+                        </div>
                         
                         <div class="levels-list">
                             <!-- Chào Buổi Sáng -->
@@ -1167,7 +1179,7 @@
 
             <!-- Footer showing version and check for updates -->
             <footer class="app-footer">
-                <span class="app-version">Phiên bản v1.1.24</span>
+                <span class="app-version">Phiên bản v1.1.25</span>
                 <button class="btn-check-update" id="btn-check-update">
                     <svg class="icon-refresh" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
                         <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
@@ -1268,6 +1280,6 @@
         <button id="btn-pwa-update">Cập nhật ngay</button>
     </div>
 
-    <script src="app.js?v=1.1.24"></script>
+    <script src="app.js?v=1.1.25"></script>
 </body>
 </html>

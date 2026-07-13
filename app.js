@@ -802,6 +802,14 @@ function setupEventHandlers() {
             handleLogout();
             return;
         }
+
+        // 10. Lựa chọn giới tính (Nam / Nữ)
+        const genderBtn = e.target.closest('.gender-btn');
+        if (genderBtn) {
+            const gender = genderBtn.getAttribute('data-gender');
+            selectGender(gender);
+            return;
+        }
     });
 }
 
