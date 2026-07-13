@@ -354,18 +354,25 @@ function selectGender(gender) {
     document.body.classList.remove('gender-male', 'gender-female');
     document.body.classList.add('gender-' + gender);
     
-    // Cập nhật trạng thái active cho nút giới tính
-    const btnMale = document.getElementById('btn-gender-male');
-    const btnFemale = document.getElementById('btn-gender-female');
-    if (btnMale && btnFemale) {
+    // Cập nhật trạng thái active cho tất cả các nút giới tính trên trang
+    const btnMales = document.querySelectorAll('.btn-gender-male, #btn-gender-male');
+    const btnFemales = document.querySelectorAll('.btn-gender-female, #btn-gender-female');
+    
+    btnMales.forEach(btn => {
         if (gender === 'male') {
-            btnMale.classList.add('active');
-            btnFemale.classList.remove('active');
+            btn.classList.add('active');
         } else {
-            btnMale.classList.remove('active');
-            btnFemale.classList.add('active');
+            btn.classList.remove('active');
         }
-    }
+    });
+    
+    btnFemales.forEach(btn => {
+        if (gender === 'female') {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
     
     // Cập nhật tên và mô tả bài tập trên giao diện
     updateWorkoutLevelsUI();
@@ -517,18 +524,25 @@ function initApp() {
     renderStats();
     initSupabaseConnection();
     
-    // Đảm bảo nút giới tính hiển thị đúng active state ban đầu
-    const btnMale = document.getElementById('btn-gender-male');
-    const btnFemale = document.getElementById('btn-gender-female');
-    if (btnMale && btnFemale) {
+    // Đảm bảo tất cả các nút giới tính hiển thị đúng active state ban đầu
+    const btnMales = document.querySelectorAll('.btn-gender-male, #btn-gender-male');
+    const btnFemales = document.querySelectorAll('.btn-gender-female, #btn-gender-female');
+    
+    btnMales.forEach(btn => {
         if (state.gender === 'male') {
-            btnMale.classList.add('active');
-            btnFemale.classList.remove('active');
+            btn.classList.add('active');
         } else {
-            btnMale.classList.remove('active');
-            btnFemale.classList.add('active');
+            btn.classList.remove('active');
         }
-    }
+    });
+    
+    btnFemales.forEach(btn => {
+        if (state.gender === 'female') {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
 }
 
 // Automatically select default workout level based on the time of day

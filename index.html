@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.1.25">
+    <link rel="stylesheet" href="styles.css?v=1.1.26">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -163,11 +163,11 @@
                         
                         <!-- Gender Selection Group -->
                         <div class="gender-selector">
-                            <button class="gender-btn active" id="btn-gender-male" data-gender="male">
+                            <button class="gender-btn active btn-gender-male" id="btn-gender-male" data-gender="male">
                                 <span class="gender-icon">♂️</span>
                                 <span>Nam giới</span>
                             </button>
-                            <button class="gender-btn" id="btn-gender-female" data-gender="female">
+                            <button class="gender-btn btn-gender-female" id="btn-gender-female" data-gender="female">
                                 <span class="gender-icon">♀️</span>
                                 <span>Nữ giới</span>
                             </button>
@@ -353,11 +353,22 @@
                     <p class="subtitle">Tìm hiểu kiến thức cốt lõi, phương pháp tập luyện sàn chậu khoa học và các bài học lâm sàng hữu ích từ bác sĩ chuyên khoa.</p>
                 </div>
 
+                <!-- Gender Selector in Library Tab -->
+                <div class="gender-selector" style="max-width: 320px; margin: 0 auto 1.5rem auto;">
+                    <button class="gender-btn active btn-gender-male" data-gender="male">
+                        <span class="gender-icon">♂️</span>
+                        <span>Tài liệu Nam giới</span>
+                    </button>
+                    <button class="gender-btn btn-gender-female" data-gender="female">
+                        <span class="gender-icon">♀️</span>
+                        <span>Tài liệu Nữ giới</span>
+                    </button>
+                </div>
+
                 <!-- Subtab Navigation -->
                 <div class="library-tabs">
                     <button class="lib-tab-btn active" data-subtab="overview">Tổng Quan & Lý Thuyết</button>
                     <button class="lib-tab-btn" data-subtab="how-to-find">Cách Tìm Cơ PC</button>
-                    <button class="lib-tab-btn" data-subtab="syllabus">Giáo Trình Tập</button>
                     <button class="lib-tab-btn" data-subtab="faq">Giải Đáp Thường Gặp</button>
                 </div>
 
@@ -493,473 +504,6 @@
                         </div>
                     </div>
 
-                    <!-- Subtab: Syllabus -->
-                    <div class="lib-content-pane" id="lib-syllabus">
-                        <!-- MALE ONLY -->
-                        <div class="male-only">
-                            <h3>Giáo Trình Luyện Tập 4 Cấp Độ (Nam Giới)</h3>
-                            <p class="syllabus-desc">Lộ trình rèn luyện cơ PC tịnh tiến chuẩn y khoa. Mỗi giai đoạn được tối ưu hóa cho từng tuần để đạt hiệu quả tốt nhất. Bấm vào từng giai đoạn để mở rộng lịch tập chi tiết và chọn bài tập.</p>
-                            
-                            <div class="roadmap-timeline">
-                                <!-- Giai đoạn 1 -->
-                                <div class="roadmap-item active" id="roadmap-phase-1">
-                                    <div class="roadmap-header">
-                                        <div class="roadmap-badge-num">1</div>
-                                        <div class="roadmap-header-title">
-                                            <h4>Giai đoạn 1: Đánh Thức Sàn Chậu <span class="phase-week">Tuần 1 - 2</span></h4>
-                                            <p>Mục tiêu: Định vị chính xác cơ PC, học cô lập cơ sàn chậu và tránh gồng các cơ phụ (bụng, mông, đùi).</p>
-                                        </div>
-                                        <div class="roadmap-arrow">
-                                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polyline points="6 9 12 15 18 9"></polyline>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div class="roadmap-body">
-                                        <div class="phase-header-info">
-                                            <strong>Khuyến nghị y khoa:</strong> Chỉ tập trung Cấp độ 1 (Đánh thức) trong 2 tuần đầu. Thực hiện tư thế nằm ngửa co gối nhẹ là cách dễ nhất để cảm nhận và cô lập cơ PC.
-                                        </div>
-                                        <div class="schedule-grid">
-                                            <div class="schedule-card">
-                                                <div class="time-header morning">
-                                                    <span>🌅 BUỔI SÁNG</span>
-                                                    <span class="time-range">07:00 - 09:00</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                    <h4>Cấp độ 1: Đánh Thức</h4>
-                                                    <p>Tập ngay sau khi ngủ dậy và đã đi tiểu làm trống bàng quang.</p>
-                                                    <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="beginner">▶ Bắt đầu Tập Cấp 1</button>
-                                                </div>
-                                            </div>
-                                            <div class="schedule-card">
-                                                <div class="time-header noon">
-                                                    <span>☀️ BUỔI TRƯA</span>
-                                                    <span class="time-range">12:00 - 13:30</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                    <h4>Cấp độ 1: Đánh Thức</h4>
-                                                    <p>Tập khi nghỉ trưa. Giúp lưu thông máu sàn chậu khi ngồi làm việc lâu.</p>
-                                                    <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="beginner">▶ Bắt đầu Tập Cấp 1</button>
-                                                </div>
-                                            </div>
-                                            <div class="schedule-card">
-                                                <div class="time-header night">
-                                                    <span>🌙 BUỔI TỐI</span>
-                                                    <span class="time-range">21:30 - 23:00</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                    <h4>Cấp độ 1: Đánh Thức</h4>
-                                                    <p>Tập trước khi đi ngủ. Thả lỏng toàn bộ cơ thể khi nằm ngửa co đầu gối.</p>
-                                                    <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="beginner">▶ Bắt đầu Tập Cấp 1</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Giai đoạn 2 -->
-                                <div class="roadmap-item" id="roadmap-phase-2">
-                                    <div class="roadmap-header">
-                                        <div class="roadmap-badge-num">2</div>
-                                        <div class="roadmap-header-title">
-                                            <h4>Giai đoạn 2: Tăng Cường Sức Bền <span class="phase-week">Tuần 3 - 4</span></h4>
-                                            <p>Mục tiêu: Nâng cao thời gian co giữ cơ PC chịu áp lực lâu dài và rèn luyện phản xạ co nhanh.</p>
-                                        </div>
-                                        <div class="roadmap-arrow">
-                                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polyline points="6 9 12 15 18 9"></polyline>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div class="roadmap-body">
-                                        <div class="phase-header-info">
-                                            <strong>Khuyến nghị y khoa:</strong> Phối hợp tập Cấp độ 2 để rèn luyện lực co giữ sâu và Cấp độ 4 (Nhấp nhanh) nhằm kích hoạt các sợi cơ co nhanh nhạy bén.
-                                        </div>
-                                        <div class="schedule-grid">
-                                            <div class="schedule-card">
-                                                <div class="time-header morning">
-                                                    <span>🌅 BUỔI SÁNG</span>
-                                                    <span class="time-range">07:00 - 09:00</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                    <h4>Cấp độ 2: Sức Bền</h4>
-                                                    <p>Rèn luyện lực co giữ bền bỉ sâu của dải cơ chậu sau khi bàng quang trống.</p>
-                                                    <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="intermediate">▶ Bắt đầu Tập Cấp 2</button>
-                                                </div>
-                                            </div>
-                                            <div class="schedule-card">
-                                                <div class="time-header noon">
-                                                    <span>☀️ BUỔI TRƯA</span>
-                                                    <span class="time-range">12:00 - 13:30</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                    <h4>Cấp độ 4: Nhấp Nhanh</h4>
-                                                    <p>Tập nhịp nhanh 1 giây nhằm rèn luyện nhóm cơ co nhanh nhạy bén.</p>
-                                                    <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="fastFlicks">▶ Bắt đầu Tập Cấp 4</button>
-                                                </div>
-                                            </div>
-                                            <div class="schedule-card">
-                                                <div class="time-header night">
-                                                    <span>🌙 BUỔI TỐI</span>
-                                                    <span class="time-range">21:30 - 23:00</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                    <h4>Cấp độ 2: Sức Bền</h4>
-                                                    <p>Tập luyện sức bền chậu trước khi đi ngủ giúp tăng lưu lượng máu hồi lưu.</p>
-                                                    <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="intermediate">▶ Bắt đầu Tập Cấp 2</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Giai đoạn 3 -->
-                                <div class="roadmap-item" id="roadmap-phase-3">
-                                    <div class="roadmap-header">
-                                        <div class="roadmap-badge-num">3</div>
-                                        <div class="roadmap-header-title">
-                                            <h4>Giai đoạn 3: Kiểm Soát Lực Co <span class="phase-week">Tuần 5</span></h4>
-                                            <p>Mục tiêu: Xây dựng sức mạnh cơ cực đại và khả năng điều chỉnh, phân nấc lực co bóp cơ sàn chậu.</p>
-                                        </div>
-                                        <div class="roadmap-arrow">
-                                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polyline points="6 9 12 15 18 9"></polyline>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div class="roadmap-body">
-                                        <div class="phase-header-info">
-                                            <strong>Khuyến nghị y khoa:</strong> Tập Cấp độ 3 để gia tăng lực cơ đỉnh điểm và Cấp độ 5 để học khả năng chia nhỏ các mức lực co bóp tinh tế (30% -> 60% -> 100% lực).
-                                        </div>
-                                        <div class="schedule-grid">
-                                            <div class="schedule-card">
-                                                <div class="time-header morning">
-                                                    <span>🌅 BUỔI SÁNG</span>
-                                                    <span class="time-range">07:00 - 09:00</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                    <h4>Cấp độ 5: Nấc Thang</h4>
-                                                    <p>Rèn luyện khả năng kiểm soát tinh tế, chia lực siết (30% -> 60% -> 100% lực).</p>
-                                                    <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="ladder">▶ Bắt đầu Tập Cấp 5</button>
-                                                </div>
-                                            </div>
-                                            <div class="schedule-card">
-                                                <div class="time-header noon">
-                                                    <span>☀️ BUỔI TRƯA</span>
-                                                    <span class="time-range">12:00 - 13:30</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                    <h4>Cấp độ 3: Sức Mạnh</h4>
-                                                    <p>Tập luyện sức mạnh tối đa với nhịp giữ siêu lâu 10 giây mỗi lượt.</p>
-                                                    <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="advanced">▶ Bắt đầu Tập Cấp 3</button>
-                                                </div>
-                                            </div>
-                                            <div class="schedule-card">
-                                                <div class="time-header night">
-                                                    <span>🌙 BUỔI TỐI</span>
-                                                    <span class="time-range">21:30 - 23:00</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                    <h4>Cấp độ 5: Nấc Thang</h4>
-                                                    <p>Tập co thắt chia cấp độ lực giúp hoàn thiện kiểm soát dẫn truyền thần kinh cơ.</p>
-                                                    <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="ladder">▶ Bắt đầu Tập Cấp 5</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Giai đoạn 4 -->
-                                <div class="roadmap-item" id="roadmap-phase-4">
-                                    <div class="roadmap-header">
-                                        <div class="roadmap-badge-num">4</div>
-                                        <div class="roadmap-header-title">
-                                            <h4>Giai đoạn 4: Bậc Thầy Phản Xạ <span class="phase-week">Tuần 6 trở đi</span></h4>
-                                            <p>Mục tiêu: Kiểm soát hoàn hảo, kết hợp nhuần nhuyễn nhịp chậm/nhanh và phản xạ sinh lý tự nhiên.</p>
-                                        </div>
-                                        <div class="roadmap-arrow">
-                                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polyline points="6 9 12 15 18 9"></polyline>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div class="roadmap-body">
-                                        <div class="phase-header-info">
-                                            <strong>Khuyến nghị y khoa:</strong> Áp dụng các bài tập nâng cao cấp độ 6, 7, 8. Khi cơ PC đã khỏe, bạn nên tập ở nhiều tư thế khác nhau (đứng, ngồi, đi bộ) để cơ thích nghi trong mọi hoàn cảnh sinh hoạt.
-                                        </div>
-                                        <div class="schedule-grid">
-                                            <div class="schedule-card">
-                                                <div class="time-header morning">
-                                                    <span>🌅 BUỔI SÁNG</span>
-                                                    <span class="time-range">07:00 - 09:00</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                    <h4>Cấp độ 7: Hỗn Hợp Kim Tự Tháp</h4>
-                                                    <p>Tập lực co siết tăng dần hình kim tự tháp (3s -> 12s) kết hợp nhấp nhanh phản xạ.</p>
-                                                    <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="pyramidMixed">▶ Bắt đầu Tập Cấp 7</button>
-                                                </div>
-                                            </div>
-                                            <div class="schedule-card">
-                                                <div class="time-header noon">
-                                                    <span>☀️ BUỔI TRƯA</span>
-                                                    <span class="time-range">12:00 - 13:30</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                    <h4>Cấp độ 6: Hỗn Hợp Lâm Sàng</h4>
-                                                    <p>Bài tập kết hợp giữa các nhịp giữ lâu (8s) xen kẽ nhịp nhấp nhanh 1s liên tục.</p>
-                                                    <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="mixed">▶ Bắt đầu Tập Cấp 6</button>
-                                                </div>
-                                            </div>
-                                            <div class="schedule-card">
-                                                <div class="time-header night">
-                                                    <span>🌙 BUỔI TỐI</span>
-                                                    <span class="time-range">21:30 - 23:00</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                    <h4>Cấp độ 8: Phản Xạ Sinh Lý</h4>
-                                                    <p>Bài tập hỗn hợp cao cấp nhất, tối đa hóa sức bền và phản xạ kết hợp vượt giới hạn.</p>
-                                                    <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="reflexMixed">▶ Bắt đầu Tập Cấp 8</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- FEMALE ONLY -->
-                        <div class="female-only">
-                            <h3>Giáo Trình Luyện Tập 4 Giai Đoạn (Nữ Giới)</h3>
-                            <p class="syllabus-desc">Lộ trình tập luyện sàn chậu khoa học giúp se khít âm đạo và nâng đỡ tử cung. Bấm vào từng giai đoạn để xem lịch tập gợi ý và chọn bài tập.</p>
-                            
-                            <div class="roadmap-timeline">
-                                <!-- Giai đoạn 1 -->
-                                <div class="roadmap-item active" id="roadmap-phase-1-female">
-                                    <div class="roadmap-header">
-                                        <div class="roadmap-badge-num" style="background: rgba(236, 72, 153, 0.15); color: #ec4899; border-color: rgba(236, 72, 153, 0.35);">1</div>
-                                        <div class="roadmap-header-title">
-                                            <h4>Giai đoạn 1: Kích Hoạt Đàn Hồi <span class="phase-week" style="background: rgba(236, 72, 153, 0.1); color: #f472b6;">Tuần 1 - 2</span></h4>
-                                            <p>Mục tiêu: Học cách cô lập cơ sàn chậu âm đạo và tránh gồng các cơ phụ mông đùi.</p>
-                                        </div>
-                                        <div class="roadmap-arrow">
-                                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polyline points="6 9 12 15 18 9"></polyline>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div class="roadmap-body">
-                                        <div class="phase-header-info" style="border-color: rgba(236, 72, 153, 0.2); background: rgba(236, 72, 153, 0.02); color: #f472b6;">
-                                            <strong>Lời khuyên y khoa:</strong> Nên bắt đầu với tư thế nằm ngửa co nhẹ đầu gối. Tập trung siết nhẹ cơ sàn chậu 3s rồi thả lỏng 3s, cảm nhận âm đạo co rút nhẹ.
-                                        </div>
-                                        <div class="schedule-grid">
-                                            <div class="schedule-card">
-                                                <div class="time-header morning" style="background: rgba(236, 72, 153, 0.08); border-color: rgba(236, 72, 153, 0.15); color: #f472b6;">
-                                                     <span>🌅 BUỔI SÁNG</span>
-                                                     <span class="time-range">07:00 - 09:00</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                     <h4>Bình Minh Tươi Trẻ</h4>
-                                                     <p>Kích hoạt tuần hoàn máu sàn chậu nhẹ nhàng ngay khi thức dậy.</p>
-                                                     <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="goodMorning" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; color: #fff;">▶ Bắt đầu Tập</button>
-                                                </div>
-                                            </div>
-                                            <div class="schedule-card">
-                                                <div class="time-header noon" style="background: rgba(236, 72, 153, 0.08); border-color: rgba(236, 72, 153, 0.15); color: #f472b6;">
-                                                     <span>☀️ BUỔI TRƯA</span>
-                                                     <span class="time-range">12:00 - 13:30</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                     <h4>Cấp độ 1: Nhận Diện Cơ (Sơ Cấp)</h4>
-                                                     <p>Tập khi nghỉ trưa để giải tỏa áp lực vùng chậu do ngồi nhiều.</p>
-                                                     <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="beginner" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; color: #fff;">▶ Bắt đầu Tập Cấp 1</button>
-                                                </div>
-                                            </div>
-                                            <div class="schedule-card">
-                                                <div class="time-header night" style="background: rgba(236, 72, 153, 0.08); border-color: rgba(236, 72, 153, 0.15); color: #f472b6;">
-                                                     <span>🌙 BUỔI TỐI</span>
-                                                     <span class="time-range">21:30 - 23:00</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                     <h4>Cấp độ 1: Nhận Diện Cơ (Sơ Cấp)</h4>
-                                                     <p>Tập thả lỏng cơ thể hoàn toàn ở tư thế nằm trước khi ngủ.</p>
-                                                     <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="beginner" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; color: #fff;">▶ Bắt đầu Tập Cấp 1</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Giai đoạn 2 -->
-                                <div class="roadmap-item" id="roadmap-phase-2-female">
-                                    <div class="roadmap-header">
-                                        <div class="roadmap-badge-num" style="background: rgba(236, 72, 153, 0.15); color: #ec4899; border-color: rgba(236, 72, 153, 0.35);">2</div>
-                                        <div class="roadmap-header-title">
-                                            <h4>Giai đoạn 2: Tăng Cường Sức Bền <span class="phase-week" style="background: rgba(236, 72, 153, 0.1); color: #f472b6;">Tuần 3 - 4</span></h4>
-                                            <p>Mục tiêu: Tăng thời lượng giữ cơ âm đạo chịu lực kéo dài và cải thiện độ đàn hồi chậu.</p>
-                                        </div>
-                                        <div class="roadmap-arrow">
-                                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polyline points="6 9 12 15 18 9"></polyline>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div class="roadmap-body">
-                                        <div class="phase-header-info" style="border-color: rgba(236, 72, 153, 0.2); background: rgba(236, 72, 153, 0.02); color: #f472b6;">
-                                            <strong>Lời khuyên y khoa:</strong> Phối hợp Cấp độ 2 (giữ 5s) để rèn luyện lực cơ chậu sâu nâng đỡ các cơ quan và Cấp độ 4 (nhấp nhanh) tăng phản xạ co bóp âm đạo.
-                                        </div>
-                                        <div class="schedule-grid">
-                                            <div class="schedule-card">
-                                                <div class="time-header morning" style="background: rgba(236, 72, 153, 0.08); border-color: rgba(236, 72, 153, 0.15); color: #f472b6;">
-                                                     <span>🌅 BUỔI SÁNG</span>
-                                                     <span class="time-range">07:00 - 09:00</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                     <h4>Cấp độ 2: Phối Hợp Lực (Trung Cấp)</h4>
-                                                     <p>Rèn luyện lực co giữ sâu của dải cơ sàn chậu.</p>
-                                                     <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="intermediate" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; color: #fff;">▶ Bắt đầu Tập Cấp 2</button>
-                                                </div>
-                                            </div>
-                                            <div class="schedule-card">
-                                                <div class="time-header noon" style="background: rgba(236, 72, 153, 0.08); border-color: rgba(236, 72, 153, 0.15); color: #f472b6;">
-                                                     <span>☀️ BUỔI TRƯA</span>
-                                                     <span class="time-range">12:00 - 13:30</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                     <h4>Combo Sức Bền</h4>
-                                                     <p>Tập trung tập luyện chặng sức bền 40 lượt tối ưu của Nữ.</p>
-                                                     <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="powerCombo" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; color: #fff;">▶ Bắt đầu Tập</button>
-                                                </div>
-                                            </div>
-                                            <div class="schedule-card">
-                                                <div class="time-header night" style="background: rgba(236, 72, 153, 0.08); border-color: rgba(236, 72, 153, 0.15); color: #f472b6;">
-                                                     <span>🌙 BUỔI TỐI</span>
-                                                     <span class="time-range">21:30 - 23:00</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                     <h4>Cấp độ 4: Nhấp Nhanh</h4>
-                                                     <p>Tập phản xạ nhấp cơ nhanh 1s tăng khả năng kiểm soát âm đạo linh hoạt.</p>
-                                                     <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="fastFlicks" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; color: #fff;">▶ Bắt đầu Tập Cấp 4</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Giai đoạn 3 -->
-                                <div class="roadmap-item" id="roadmap-phase-3-female">
-                                    <div class="roadmap-header">
-                                        <div class="roadmap-badge-num" style="background: rgba(236, 72, 153, 0.15); color: #ec4899; border-color: rgba(236, 72, 153, 0.35);">3</div>
-                                        <div class="roadmap-header-title">
-                                            <h4>Giai đoạn 3: Phân Phối Lực Cơ <span class="phase-week" style="background: rgba(236, 72, 153, 0.1); color: #f472b6;">Tuần 5</span></h4>
-                                            <p>Mục tiêu: Đạt sức mạnh co thắt tối đa và khả năng điều khiển các mức lực khác nhau.</p>
-                                        </div>
-                                        <div class="roadmap-arrow">
-                                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polyline points="6 9 12 15 18 9"></polyline>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div class="roadmap-body">
-                                        <div class="phase-header-info" style="border-color: rgba(236, 72, 153, 0.2); background: rgba(236, 72, 153, 0.02); color: #f472b6;">
-                                            <strong>Lời khuyên y khoa:</strong> Áp dụng Cấp độ 3 (giữ 10s cực hạn) và Cấp độ 5 (co thắt nấc thang) giúp điều khiển thần kinh cơ sàn chậu cực kỳ linh hoạt.
-                                        </div>
-                                        <div class="schedule-grid">
-                                            <div class="schedule-card">
-                                                <div class="time-header morning" style="background: rgba(236, 72, 153, 0.08); border-color: rgba(236, 72, 153, 0.15); color: #f472b6;">
-                                                     <span>🌅 BUỔI SÁNG</span>
-                                                     <span class="time-range">07:00 - 09:00</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                     <h4>Cấp độ 5: Nấc Thang</h4>
-                                                     <p>Rèn luyện khả năng siết tăng dần theo từng nấc lực (30% -> 60% -> 100%).</p>
-                                                     <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="ladder" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; color: #fff;">▶ Bắt đầu Tập Cấp 5</button>
-                                                </div>
-                                            </div>
-                                            <div class="schedule-card">
-                                                <div class="time-header noon" style="background: rgba(236, 72, 153, 0.08); border-color: rgba(236, 72, 153, 0.15); color: #f472b6;">
-                                                     <span>☀️ BUỔI TRƯA</span>
-                                                     <span class="time-range">12:00 - 13:30</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                     <h4>Cấp độ 3: Sức Bền Tối Đa (Cao Cấp)</h4>
-                                                     <p>Thử thách lực siết tối đa kéo dài 10 giây liên tục mỗi lượt.</p>
-                                                     <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="advanced" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; color: #fff;">▶ Bắt đầu Tập Cấp 3</button>
-                                                </div>
-                                            </div>
-                                            <div class="schedule-card">
-                                                <div class="time-header night" style="background: rgba(236, 72, 153, 0.08); border-color: rgba(236, 72, 153, 0.15); color: #f472b6;">
-                                                     <span>🌙 BUỔI TỐI</span>
-                                                     <span class="time-range">21:30 - 23:00</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                     <h4>Cấp độ 5: Nấc Thang</h4>
-                                                     <p>Tập phân cấp lực siết giúp tăng mật độ phản hồi thần kinh sàn chậu.</p>
-                                                     <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="ladder" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; color: #fff;">▶ Bắt đầu Tập Cấp 5</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Giai đoạn 4 -->
-                                <div class="roadmap-item" id="roadmap-phase-4-female">
-                                    <div class="roadmap-header">
-                                        <div class="roadmap-badge-num" style="background: rgba(236, 72, 153, 0.15); color: #ec4899; border-color: rgba(236, 72, 153, 0.35);">4</div>
-                                        <div class="roadmap-header-title">
-                                            <h4>Giai đoạn 4: Bậc Thầy Phục Hồi <span class="phase-week" style="background: rgba(236, 72, 153, 0.1); color: #f472b6;">Tuần 6 trở đi</span></h4>
-                                            <p>Mục tiêu: Đạt phản xạ co thắt tự nhiên, giãn sàn chậu sâu và phục hồi vùng chậu tối ưu.</p>
-                                        </div>
-                                        <div class="roadmap-arrow">
-                                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polyline points="6 9 12 15 18 9"></polyline>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div class="roadmap-body">
-                                        <div class="phase-header-info" style="border-color: rgba(236, 72, 153, 0.2); background: rgba(236, 72, 153, 0.02); color: #f472b6;">
-                                            <strong>Lời khuyên y khoa:</strong> Phối hợp Cấp độ 6, 7, 8 để rèn luyện độ dẻo dai toàn diện của âm đạo. Tập trung tập Phục Hồi Nhẹ Nhàng trước khi ngủ để thư giãn sâu.
-                                        </div>
-                                        <div class="schedule-grid">
-                                            <div class="schedule-card">
-                                                <div class="time-header morning" style="background: rgba(236, 72, 153, 0.08); border-color: rgba(236, 72, 153, 0.15); color: #f472b6;">
-                                                     <span>🌅 BUỔI SÁNG</span>
-                                                     <span class="time-range">07:00 - 09:00</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                     <h4>Cấp độ 7: Hỗn Hợp Kim Tự Tháp</h4>
-                                                     <p>Bài tập tăng lực siết kéo dài hình tháp xen kẽ nhấp nhanh 1s.</p>
-                                                     <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="pyramidMixed" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; color: #fff;">▶ Bắt đầu Tập Cấp 7</button>
-                                                </div>
-                                            </div>
-                                            <div class="schedule-card">
-                                                <div class="time-header noon" style="background: rgba(236, 72, 153, 0.08); border-color: rgba(236, 72, 153, 0.15); color: #f472b6;">
-                                                     <span>☀️ BUỔI TRƯA</span>
-                                                     <span class="time-range">12:00 - 13:30</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                     <h4>Cấp độ 6: Hỗn Hợp Lâm Sàng</h4>
-                                                     <p>Kombinat các nhịp siết sâu 8 giây phối hợp nhấp nhả linh hoạt.</p>
-                                                     <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="mixed" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; color: #fff;">▶ Bắt đầu Tập Cấp 6</button>
-                                                </div>
-                                            </div>
-                                            <div class="schedule-card">
-                                                <div class="time-header night" style="background: rgba(236, 72, 153, 0.08); border-color: rgba(236, 72, 153, 0.15); color: #f472b6;">
-                                                     <span>🌙 BUỔI TỐI</span>
-                                                     <span class="time-range">21:30 - 23:00</span>
-                                                </div>
-                                                <div class="schedule-body">
-                                                     <h4>Phục Hồi Nhẹ Nhàng</h4>
-                                                     <p>Bài tập giải phóng áp lực chậu, tập giãn cơ âm đạo sâu giúp ngủ ngon.</p>
-                                                     <button class="btn btn-primary btn-sm btn-select-workout" data-target-level="nightRecovery" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; color: #fff;">▶ Bắt đầu Tập</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Subtab: FAQ -->
                     <div class="lib-content-pane" id="lib-faq">
                         <!-- MALE ONLY -->
@@ -994,7 +538,7 @@
                                     <p>A: Rất nên tập. Luyện tập Kegel khi mang thai giúp nâng đỡ bàng quang, tử cung và thai nhi tốt hơn, giảm đau mỏi thắt lưng chậu, hỗ trợ quá trình sinh nở thuận lợi và đẩy nhanh phục hồi sau sinh. Tuy nhiên, nếu bạn có biến chứng thai kỳ (nhu dọa sẩy, hở eo tử cung), hãy tham khảo ý kiến bác sĩ trước khi tập.</p>
                                 </div>
                                 <div class="faq-item">
-                                    <h5>Q: Setelah sinh con bao lâu thì tôi có thể bắt đầu tập Kegel?</h5>
+                                    <h5>Q: Sau khi sinh con bao lâu thì tôi có thể bắt đầu tập Kegel?</h5>
                                     <p>A: Đối với sinh thường, nếu vết rách tầng sinh môn đã lành và không còn đau (thường sau 1 - 2 tuần), bạn có thể tập nhẹ nhàng. Đối với sinh mổ, nên đợi vết mổ lành hoàn toàn và sức khỏe ổn định (khoảng 4 - 6 tuần) trước khi bắt đầu luyện tập.</p>
                                 </div>
                                 <div class="faq-item">
@@ -1004,6 +548,18 @@
                                 <div class="faq-item">
                                     <h5>Q: Tại sao tôi bị mỏi lưng dưới và bụng khi tập?</h5>
                                     <p>A: Đó là dấu hiệu bạn đã gồng sai cơ bụng dưới và cơ thắt lưng thay vì cô lập cơ sàn chậu. Hãy hạ thấp mức tập, tập trung thả lỏng hoàn toàn bụng và đùi, hít thở đều đặn và chỉ siết nhẹ nhàng vùng âm đạo/hậu môn.</p>
+                                </div>
+                                <div class="faq-item">
+                                    <h5>Q: Tập Kegel có giúp cải thiện tình trạng khô hạn và tăng ham muốn ở nữ giới không?</h5>
+                                    <p>A: Có. Việc co bóp cơ sàn chậu đều đặn kích thích tăng cường tuần hoàn máu đến vùng âm đạo và xương chậu, từ đó thúc đẩy hoạt động của các tuyến tiết dịch bôi trơn âm đạo tự nhiên, cải thiện tình trạng khô hạn và làm tăng đáng kể sự nhạy cảm cũng như khả năng đạt cực khoái khi quan hệ.</p>
+                                </div>
+                                <div class="faq-item">
+                                    <h5>Q: Làm thế nào để biết tôi có đang co thắt cơ sàn chậu đúng cách hay không?</h5>
+                                    <p>A: Bạn có thể thử nghiệm bằng cách đưa một ngón tay sạch vào âm đạo và thực hiện siết cơ. Nếu bạn cảm nhận được âm đạo bóp chặt xung quanh ngón tay và kéo nhẹ ngón tay hướng lên phía trên, đồng thời cơ bụng, đùi và mông hoàn toàn thả lỏng thì bạn đã tập đúng cách.</p>
+                                </div>
+                                <div class="faq-item">
+                                    <h5>Q: Tôi có cần tập Kegel khi bước vào độ tuổi tiền mãn kinh hoặc mãn kinh không?</h5>
+                                    <p>A: Rất cần thiết. Sự sụt giảm nội tiết tố estrogen trong giai đoạn này làm teo và suy yếu cơ sàn chậu nhanh chóng, dẫn đến són tiểu và sa sinh dục. Tập luyện tích cực giúp làm dày thành âm đạo, củng cố bệ đỡ vững chắc cho tử cung và cổ bàng quang, bảo vệ sức khỏe phụ khoa lâu dài.</p>
                                 </div>
                             </div>
                         </div>
@@ -1179,7 +735,7 @@
 
             <!-- Footer showing version and check for updates -->
             <footer class="app-footer">
-                <span class="app-version">Phiên bản v1.1.25</span>
+                <span class="app-version">Phiên bản v1.1.26</span>
                 <button class="btn-check-update" id="btn-check-update">
                     <svg class="icon-refresh" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
                         <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
@@ -1280,6 +836,6 @@
         <button id="btn-pwa-update">Cập nhật ngay</button>
     </div>
 
-    <script src="app.js?v=1.1.25"></script>
+    <script src="app.js?v=1.1.26"></script>
 </body>
 </html>
