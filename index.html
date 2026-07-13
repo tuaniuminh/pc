@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.1.36">
+    <link rel="stylesheet" href="styles.css?v=1.1.37">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -723,7 +723,7 @@
 
             <!-- Footer showing version and check for updates -->
             <footer class="app-footer">
-                <span class="app-version">Phiên bản v1.1.36</span>
+                <span class="app-version">Phiên bản v1.1.37</span>
                 <button class="btn-check-update" id="btn-check-update">
                     <svg class="icon-refresh" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
                         <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
@@ -745,47 +745,10 @@
                 </svg>
             </button>
             
-            <!-- Tab Headers -->
-            <div class="auth-modal-tabs">
-                <button class="auth-tab-btn active" data-auth-tab="login">Đăng Nhập / Đăng Ký</button>
-                <button class="auth-tab-btn" data-auth-tab="config">Cài Đặt Cloud (Supabase)</button>
-            </div>
-            
-            <!-- Tab Content: Configuration -->
-            <div class="auth-tab-content" id="auth-tab-config">
-                <h3>Cấu Hình Cloud Supabase</h3>
-                <p class="auth-desc">Điền thông tin kết nối từ cơ sở dữ liệu Supabase của riêng bạn để tự làm chủ và lưu trữ dữ liệu vĩnh viễn.</p>
-                
-                <div class="auth-form-group">
-                    <label for="input-supabase-url">Supabase API URL</label>
-                    <input type="text" id="input-supabase-url" placeholder="https://xxxxxxxxxxxxxx.supabase.co" autocomplete="off">
-                </div>
-                <div class="auth-form-group">
-                    <label for="input-supabase-key">Supabase Anon API Key</label>
-                    <input type="password" id="input-supabase-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." autocomplete="off">
-                </div>
-                
-                <div class="supabase-guide-box">
-                    <h5>💡 Hướng dẫn lấy URL & Key miễn phí:</h5>
-                    <ol>
-                        <li>Đăng ký tài khoản tại <strong>supabase.com</strong>, tạo một Project mới.</li>
-                        <li>Truy cập <strong>Project Settings</strong> (icon bánh răng) ➜ <strong>API</strong>.</li>
-                        <li>Sao chép <strong>Project URL</strong> dán vào ô URL phía trên.</li>
-                        <li>Sao chép <strong>anon / public Key</strong> dán vào ô Key phía trên.</li>
-                    </ol>
-                </div>
-                
-                <button class="btn btn-primary btn-block" id="btn-save-supabase-config">Lưu cấu hình & Kết nối</button>
-            </div>
-            
             <!-- Tab Content: Login / Register -->
-            <div class="auth-tab-content active" id="auth-tab-login">
+            <div class="auth-tab-content active" id="auth-tab-login" style="padding-top: 1rem;">
                 <h3 id="auth-title">Đăng Nhập Đồng Bộ</h3>
                 <p class="auth-desc" id="auth-desc">Đăng nhập tài khoản để đồng bộ hóa lịch sử luyện tập và Streak trực tuyến.</p>
-                
-                <div id="auth-connection-warning" class="auth-warning-alert">
-                    ⚠️ Bạn cần hoàn tất <strong>Cài Đặt Cloud (Supabase)</strong> ở tab bên cạnh trước khi đăng nhập!
-                </div>
                 
                 <div id="auth-form-fields">
                     <div class="auth-form-group">
@@ -824,6 +787,6 @@
         <button id="btn-pwa-update">Cập nhật ngay</button>
     </div>
 
-    <script src="app.js?v=1.1.36"></script>
+    <script src="app.js?v=1.1.37"></script>
 </body>
 </html>

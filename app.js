@@ -337,7 +337,6 @@ const elements = {
     btnCloudSync: document.getElementById('btn-cloud-sync'),
     authModal: document.getElementById('auth-modal'),
     btnCloseAuthModal: document.getElementById('btn-close-auth-modal'),
-    btnSaveSupabaseConfig: document.getElementById('btn-save-supabase-config'),
     btnSubmitAuth: document.getElementById('btn-submit-auth'),
     btnAuthLogout: document.getElementById('btn-auth-logout'),
     linkToggleAuthMode: document.getElementById('link-toggle-auth-mode')
@@ -737,47 +736,7 @@ function setupEventHandlers() {
             return;
         }
 
-        // Chuyển đổi tab cấu hình/đăng nhập trong modal
-        const authTabBtn = e.target.closest('.auth-tab-btn');
-        if (authTabBtn) {
-            const targetTab = authTabBtn.getAttribute('data-auth-tab');
-            const siblingTabBtns = document.querySelectorAll('.auth-tab-btn');
-            siblingTabBtns.forEach(b => b.classList.remove('active'));
-            authTabBtn.classList.add('active');
-            
-            document.querySelectorAll('.auth-tab-content').forEach(content => {
-                if (content.id === `auth-tab-${targetTab}`) {
-                    content.classList.add('active');
-                } else {
-                    content.classList.remove('active');
-                }
-            });
-            return;
-        }
 
-        // Lưu cấu hình Supabase
-        const saveConfigBtn = e.target.closest('#btn-save-supabase-config');
-        if (saveConfigBtn) {
-            const url = document.getElementById('input-supabase-url').value.trim();
-            const key = document.getElementById('input-supabase-key').value.trim();
-            
-            if (!url || !key) {
-                alert("Vui lòng điền đầy đủ cả URL và Anon API Key.");
-                return;
-            }
-            
-            localStorage.setItem('supabase_url', url);
-            localStorage.setItem('supabase_key', key);
-            
-            if (initSupabaseConnection()) {
-                alert("Cấu hình Supabase thành công! Giờ bạn có thể đăng nhập hoặc đăng ký tài khoản.");
-                const loginTabBtn = document.querySelector('.auth-tab-btn[data-auth-tab="login"]');
-                if (loginTabBtn) loginTabBtn.click();
-            } else {
-                alert("Lưu thất bại. Vui lòng kiểm tra lại tính chính xác của URL và Key.");
-            }
-            return;
-        }
 
         // Chuyển đổi Đăng Nhập / Đăng Ký
         const toggleLink = e.target.closest('#link-toggle-auth-mode');
