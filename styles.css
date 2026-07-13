@@ -1480,6 +1480,13 @@ body {
         margin-top: 0.5rem;
     }
     
+    .home-stat-badge, .home-sync-status {
+        padding: 0 0.65rem !important;
+        font-size: 0.75rem !important;
+        gap: 0.35rem !important;
+        white-space: nowrap !important;
+    }
+    
     .header-section h1 {
         font-size: 1.75rem;
     }
@@ -2614,6 +2621,7 @@ body {
     font-weight: 500;
     line-height: 1;
     user-select: none;
+    white-space: nowrap;
 }
 
 .sync-dot {
@@ -2647,6 +2655,7 @@ body {
     line-height: 1;
     color: #c7d2fe;
     user-select: none;
+    white-space: nowrap;
 }
 
 .home-stat-badge strong {
