@@ -9,6 +9,7 @@ const state = {
     currentLibSubtab: 'overview',
     workoutState: 'idle', // idle, squeezing, relaxing, completed
     selectedLevel: 'goodMorning',
+    selectedLevelTab: 1, // Active level tab (1-5)
     timerInterval: null,
     timeRemaining: 0,
     currentRep: 0,
@@ -32,19 +33,400 @@ const state = {
     currentStepIndex: 0
 };
 
-// --- WORKOUT CONFIGURATIONS ---
-const levelConfigs = {
-    goodMorning: { squeeze: 1, relax: 2, reps: 25 },
-    powerCombo: { squeeze: 1, relax: 1, reps: 59 },
-    nightRecovery: { squeeze: 0, relax: 5, reps: 30 },
-    beginner: { squeeze: 3, relax: 3, reps: 10 },
-    intermediate: { squeeze: 5, relax: 5, reps: 12 },
-    advanced: { squeeze: 10, relax: 10, reps: 10 },
-    fastFlicks: { squeeze: 1, relax: 1, reps: 20 },
-    ladder: { squeeze: 9, relax: 8, reps: 8 },
-    mixed: { squeeze: 8, relax: 8, reps: 11 },
-    pyramidMixed: { squeeze: 3, relax: 3, reps: 10 },
-    reflexMixed: { squeeze: 10, relax: 5, reps: 12 }
+// --- CLINICAL WORKOUT CONFIGURATIONS (LEVELS 1-5) ---
+const clinicalLevels = {
+    1: {
+        name: 'Nhập Môn & Đánh Thức',
+        male: {
+            goodMorning: {
+                name: 'Chào Buổi Sáng',
+                meta: '20 lượt siết 1s - thả 2s | 5 lượt Kegel ngược giãn chậu',
+                color: '#f59e0b',
+                bg: 'rgba(245, 158, 11, 0.15)',
+                border: 'rgba(245, 158, 11, 0.35)',
+                icon: '🌅',
+                stages: [
+                    { type: 'normal', squeeze: 1, relax: 2, reps: 20 },
+                    { type: 'reverse', squeeze: 5, relax: 5, reps: 5 }
+                ]
+            },
+            powerCombo: {
+                name: 'Combo Sức Mạnh',
+                meta: 'Siết nhanh 20 lượt 1s | Giữ 24 lượt 3s | Giữ 10 lượt 5s + Cooldown',
+                color: 'var(--color-primary)',
+                bg: 'rgba(0, 245, 212, 0.1)',
+                border: 'rgba(0, 245, 212, 0.25)',
+                icon: '★',
+                stages: [
+                    { type: 'normal', squeeze: 1, relax: 1, reps: 20 },
+                    { type: 'normal', squeeze: 3, relax: 3, reps: 12 },
+                    { type: 'normal', squeeze: 3, relax: 3, reps: 12 },
+                    { type: 'normal', squeeze: 5, relax: 5, reps: 10 },
+                    { type: 'reverse', squeeze: 5, relax: 5, reps: 5 }
+                ]
+            },
+            nightRecovery: {
+                name: 'Phục Hồi Ban Đêm',
+                meta: '15 lượt siết nhanh | 10 lượt Kegel ngược | 5 lượt hít thở sâu',
+                color: '#a78bfa',
+                bg: 'rgba(139, 92, 246, 0.15)',
+                border: 'rgba(139, 92, 246, 0.35)',
+                icon: '🌙',
+                stages: [
+                    { type: 'normal', squeeze: 1, relax: 1, reps: 15 },
+                    { type: 'reverse', squeeze: 5, relax: 5, reps: 10 },
+                    { type: 'breathing', squeeze: 5, relax: 10, reps: 5 }
+                ]
+            }
+        },
+        female: {
+            goodMorning: {
+                name: 'Bình Minh Tươi Trẻ',
+                meta: '20 lượt siết 1s - thả 2s | 5 lượt Kegel ngược giãn chậu',
+                color: '#ec4899',
+                bg: 'rgba(236, 72, 153, 0.15)',
+                border: 'rgba(236, 72, 153, 0.35)',
+                icon: '🌅',
+                stages: [
+                    { type: 'normal', squeeze: 1, relax: 2, reps: 20 },
+                    { type: 'reverse', squeeze: 5, relax: 5, reps: 5 }
+                ]
+            },
+            powerCombo: {
+                name: 'Combo Sức Bền',
+                meta: '15 lượt siết nhanh 1s | 15 lượt siết giữ 3s | 10 lượt Kegel ngược',
+                color: '#a855f7',
+                bg: 'rgba(168, 85, 247, 0.15)',
+                border: 'rgba(168, 85, 247, 0.35)',
+                icon: '★',
+                stages: [
+                    { type: 'normal', squeeze: 1, relax: 1, reps: 15 },
+                    { type: 'normal', squeeze: 3, relax: 3, reps: 15 },
+                    { type: 'reverse', squeeze: 5, relax: 5, reps: 10 }
+                ]
+            },
+            nightRecovery: {
+                name: 'Phục Hồi Nhẹ Nhàng',
+                meta: '15 lượt Kegel ngược giãn sàn chậu | 10 lượt thở bụng phục hồi sâu',
+                color: '#8b5cf6',
+                bg: 'rgba(139, 92, 246, 0.15)',
+                border: 'rgba(139, 92, 246, 0.35)',
+                icon: '🌙',
+                stages: [
+                    { type: 'reverse', squeeze: 5, relax: 5, reps: 15 },
+                    { type: 'breathing', squeeze: 5, relax: 10, reps: 10 }
+                ]
+            }
+        }
+    },
+    2: {
+        name: 'Tăng Cường Trương Lực',
+        male: {
+            goodMorning: {
+                name: 'Kích Hoạt Thần Kinh',
+                meta: '30 lượt co thắt phản xạ nhanh 2s - thả 2s kích thích tuần hoàn',
+                color: '#f59e0b',
+                bg: 'rgba(245, 158, 11, 0.15)',
+                border: 'rgba(245, 158, 11, 0.35)',
+                icon: '🌅',
+                stages: [
+                    { type: 'normal', squeeze: 2, relax: 2, reps: 30 }
+                ]
+            },
+            powerCombo: {
+                name: 'Kiểm Soát Cương Cứng',
+                meta: 'Siết 6s - thả 6s 15 lượt | 5 lượt giữ sâu 8s tăng lưu lượng máu',
+                color: 'var(--color-primary)',
+                bg: 'rgba(0, 245, 212, 0.1)',
+                border: 'rgba(0, 245, 212, 0.25)',
+                icon: '★',
+                stages: [
+                    { type: 'normal', squeeze: 6, relax: 6, reps: 15 },
+                    { type: 'normal', squeeze: 8, relax: 8, reps: 5 }
+                ]
+            },
+            nightRecovery: {
+                name: 'Thư Giãn Tuyến Tiền Liệt',
+                meta: '15 lượt Kegel ngược sâu giữ 6s giảm áp lực | 5 lượt thở bụng',
+                color: '#a78bfa',
+                bg: 'rgba(139, 92, 246, 0.15)',
+                border: 'rgba(139, 92, 246, 0.35)',
+                icon: '🌙',
+                stages: [
+                    { type: 'reverse', squeeze: 6, relax: 4, reps: 15 },
+                    { type: 'breathing', squeeze: 5, relax: 10, reps: 5 }
+                ]
+            }
+        },
+        female: {
+            goodMorning: {
+                name: 'Độ Đàn Hồi Âm Đạo',
+                meta: '30 lượt co thắt nhanh 2s - thả 2s tăng nhạy cảm thụ cảm thể',
+                color: '#ec4899',
+                bg: 'rgba(236, 72, 153, 0.15)',
+                border: 'rgba(236, 72, 153, 0.35)',
+                icon: '🌅',
+                stages: [
+                    { type: 'normal', squeeze: 2, relax: 2, reps: 30 }
+                ]
+            },
+            powerCombo: {
+                name: 'Combo Sức Bền Tăng Cường',
+                meta: 'Siết 6s - thả 6s 15 lượt | 5 lượt giữ co thắt sâu 8s',
+                color: '#a855f7',
+                bg: 'rgba(168, 85, 247, 0.15)',
+                border: 'rgba(168, 85, 247, 0.35)',
+                icon: '★',
+                stages: [
+                    { type: 'normal', squeeze: 6, relax: 6, reps: 15 },
+                    { type: 'normal', squeeze: 8, relax: 8, reps: 5 }
+                ]
+            },
+            nightRecovery: {
+                name: 'Giảm Khô Hạn & Phục Hồi',
+                meta: '15 lượt Kegel ngược giãn nở cơ chậu tăng tiết dịch âm đạo',
+                color: '#8b5cf6',
+                bg: 'rgba(139, 92, 246, 0.15)',
+                border: 'rgba(139, 92, 246, 0.35)',
+                icon: '🌙',
+                stages: [
+                    { type: 'reverse', squeeze: 6, relax: 4, reps: 15 },
+                    { type: 'breathing', squeeze: 5, relax: 10, reps: 5 }
+                ]
+            }
+        }
+    },
+    3: {
+        name: 'Sức Bền & Kiểm Soát Phản Xạ',
+        male: {
+            goodMorning: {
+                name: 'Phản Xạ Cơ Hành Hang',
+                meta: '40 lượt co thắt phản xạ nhanh 1s - thả 1s rèn luyện cơ bắp nhanh',
+                color: '#f59e0b',
+                bg: 'rgba(245, 158, 11, 0.15)',
+                border: 'rgba(245, 158, 11, 0.35)',
+                icon: '🌅',
+                stages: [
+                    { type: 'normal', squeeze: 1, relax: 1, reps: 40 }
+                ]
+            },
+            powerCombo: {
+                name: 'Tăng Tải Trương Lực',
+                meta: 'Siết sâu 8s - thả 8s 15 lượt | 5 lượt hít thở co thắt chậu',
+                color: 'var(--color-primary)',
+                bg: 'rgba(0, 245, 212, 0.1)',
+                border: 'rgba(0, 245, 212, 0.25)',
+                icon: '★',
+                stages: [
+                    { type: 'normal', squeeze: 8, relax: 8, reps: 15 },
+                    { type: 'reverse', squeeze: 5, relax: 5, reps: 5 }
+                ]
+            },
+            nightRecovery: {
+                name: 'Điều Hòa Cơ Nâng Hậu Môn',
+                meta: '15 lượt Kegel ngược 7s - thả 5s giảm căng thẳng sàn chậu sâu',
+                color: '#a78bfa',
+                bg: 'rgba(139, 92, 246, 0.15)',
+                border: 'rgba(139, 92, 246, 0.35)',
+                icon: '🌙',
+                stages: [
+                    { type: 'reverse', squeeze: 7, relax: 5, reps: 15 },
+                    { type: 'breathing', squeeze: 5, relax: 10, reps: 5 }
+                ]
+            }
+        },
+        female: {
+            goodMorning: {
+                name: 'Co Thắt Phản Xạ',
+                meta: '40 lượt co thắt phản xạ nhanh 1s - thả 1s săn cơ âm đạo',
+                color: '#ec4899',
+                bg: 'rgba(236, 72, 153, 0.15)',
+                border: 'rgba(236, 72, 153, 0.35)',
+                icon: '🌅',
+                stages: [
+                    { type: 'normal', squeeze: 1, relax: 1, reps: 40 }
+                ]
+            },
+            powerCombo: {
+                name: 'Săn Chắc Sàn Chậu',
+                meta: 'Siết sâu 8s - thả 8s 15 lượt | 5 lượt Kegel ngược thư giãn',
+                color: '#a855f7',
+                bg: 'rgba(168, 85, 247, 0.15)',
+                border: 'rgba(168, 85, 247, 0.35)',
+                icon: '★',
+                stages: [
+                    { type: 'normal', squeeze: 8, relax: 8, reps: 15 },
+                    { type: 'reverse', squeeze: 5, relax: 5, reps: 5 }
+                ]
+            },
+            nightRecovery: {
+                name: 'Giải Tỏa Căng Cơ Chậu',
+                meta: '15 lượt Kegel ngược 7s - thả 5s giúp giảm căng thẳng âm đạo',
+                color: '#8b5cf6',
+                bg: 'rgba(139, 92, 246, 0.15)',
+                border: 'rgba(139, 92, 246, 0.35)',
+                icon: '🌙',
+                stages: [
+                    { type: 'reverse', squeeze: 7, relax: 5, reps: 15 },
+                    { type: 'breathing', squeeze: 5, relax: 10, reps: 5 }
+                ]
+            }
+        }
+    },
+    4: {
+        name: 'Tối Đa Hóa Sức Mạnh Lâm Sàng',
+        male: {
+            goodMorning: {
+                name: 'Khởi Động Năng Lượng',
+                meta: '35 lượt co thắt phản xạ kích hoạt 3s siết - 2s thả',
+                color: '#f59e0b',
+                bg: 'rgba(245, 158, 11, 0.15)',
+                border: 'rgba(245, 158, 11, 0.35)',
+                icon: '🌅',
+                stages: [
+                    { type: 'normal', squeeze: 3, relax: 2, reps: 35 }
+                ]
+            },
+            powerCombo: {
+                name: 'Kiểm Soát Xuất Tinh',
+                meta: 'Siết cô lập cơ mu cụt 10s - thả 8s 12 lượt | 5 lượt siết nhanh phản xạ',
+                color: 'var(--color-primary)',
+                bg: 'rgba(0, 245, 212, 0.1)',
+                border: 'rgba(0, 245, 212, 0.25)',
+                icon: '★',
+                stages: [
+                    { type: 'normal', squeeze: 10, relax: 8, reps: 12 },
+                    { type: 'normal', squeeze: 1, relax: 1, reps: 5 }
+                ]
+            },
+            nightRecovery: {
+                name: 'Tái Tạo Sức Bền Đêm',
+                meta: '12 lượt Kegel ngược giữ lâu 10s điều hòa hệ thần kinh chậu',
+                color: '#a78bfa',
+                bg: 'rgba(139, 92, 246, 0.15)',
+                border: 'rgba(139, 92, 246, 0.35)',
+                icon: '🌙',
+                stages: [
+                    { type: 'reverse', squeeze: 10, relax: 6, reps: 12 },
+                    { type: 'breathing', squeeze: 5, relax: 10, reps: 5 }
+                ]
+            }
+        },
+        female: {
+            goodMorning: {
+                name: 'Kích Hoạt Cơ Sàn Chậu',
+                meta: '35 lượt co thắt phản xạ kích hoạt 3s siết - 2s thả',
+                color: '#ec4899',
+                bg: 'rgba(236, 72, 153, 0.15)',
+                border: 'rgba(236, 72, 153, 0.35)',
+                icon: '🌅',
+                stages: [
+                    { type: 'normal', squeeze: 3, relax: 2, reps: 35 }
+                ]
+            },
+            powerCombo: {
+                name: 'Combo Khít & Săn',
+                meta: 'Siết cô lập cơ âm đạo sâu 10s - thả 8s 12 lượt | 5 lượt phản xạ nhanh',
+                color: '#a855f7',
+                bg: 'rgba(168, 85, 247, 0.15)',
+                border: 'rgba(168, 85, 247, 0.35)',
+                icon: '★',
+                stages: [
+                    { type: 'normal', squeeze: 10, relax: 8, reps: 12 },
+                    { type: 'normal', squeeze: 1, relax: 1, reps: 5 }
+                ]
+            },
+            nightRecovery: {
+                name: 'Nuôi Dưỡng Trẻ Hóa',
+                meta: '12 lượt Kegel ngược giữ lâu 10s tăng sinh collagen sàn chậu',
+                color: '#8b5cf6',
+                bg: 'rgba(139, 92, 246, 0.15)',
+                border: 'rgba(139, 92, 246, 0.35)',
+                icon: '🌙',
+                stages: [
+                    { type: 'reverse', squeeze: 10, relax: 6, reps: 12 },
+                    { type: 'breathing', squeeze: 5, relax: 10, reps: 5 }
+                ]
+            }
+        }
+    },
+    5: {
+        name: 'Bậc Thầy Sàn Chậu & Vượt Giới Hạn',
+        male: {
+            goodMorning: {
+                name: 'Phản Xạ Phóng Tinh Bậc Thầy',
+                meta: '50 lượt co thắt phản xạ siêu nhanh 1s siết - 1s thả cực hạn',
+                color: '#f59e0b',
+                bg: 'rgba(245, 158, 11, 0.15)',
+                border: 'rgba(245, 158, 11, 0.35)',
+                icon: '🌅',
+                stages: [
+                    { type: 'normal', squeeze: 1, relax: 1, reps: 50 }
+                ]
+            },
+            powerCombo: {
+                name: 'Thử Thách Vượt Giới Hạn',
+                meta: 'Siết siêu sâu 12s - thả 10s 10 lượt | 5 lượt co thắt nấc thang',
+                color: 'var(--color-primary)',
+                bg: 'rgba(0, 245, 212, 0.1)',
+                border: 'rgba(0, 245, 212, 0.25)',
+                icon: '★',
+                stages: [
+                    { type: 'normal', squeeze: 12, relax: 10, reps: 10 },
+                    { type: 'normal', squeeze: 8, relax: 8, reps: 5 }
+                ]
+            },
+            nightRecovery: {
+                name: 'Phục Hồi Sàn Chậu Chuyên Sâu',
+                meta: '12 lượt Kegel ngược giữ cực đại 12s phục hồi trương lực cơ chậu sâu',
+                color: '#a78bfa',
+                bg: 'rgba(139, 92, 246, 0.15)',
+                border: 'rgba(139, 92, 246, 0.35)',
+                icon: '🌙',
+                stages: [
+                    { type: 'reverse', squeeze: 12, relax: 8, reps: 12 },
+                    { type: 'breathing', squeeze: 5, relax: 10, reps: 5 }
+                ]
+            }
+        },
+        female: {
+            goodMorning: {
+                name: 'Phục Hồi Đa Điểm',
+                meta: '50 lượt co thắt phản xạ siêu nhanh 1s siết - 1s thả đàn hồi sâu',
+                color: '#ec4899',
+                bg: 'rgba(236, 72, 153, 0.15)',
+                border: 'rgba(236, 72, 153, 0.35)',
+                icon: '🌅',
+                stages: [
+                    { type: 'normal', squeeze: 1, relax: 1, reps: 50 }
+                ]
+            },
+            powerCombo: {
+                name: 'Bậc Thầy Co Thắt',
+                meta: 'Siết siêu sâu 12s - thả 10s 10 lượt | 5 lượt co thắt nấc thang',
+                color: '#a855f7',
+                bg: 'rgba(168, 85, 247, 0.15)',
+                border: 'rgba(168, 85, 247, 0.35)',
+                icon: '★',
+                stages: [
+                    { type: 'normal', squeeze: 12, relax: 10, reps: 10 },
+                    { type: 'normal', squeeze: 8, relax: 8, reps: 5 }
+                ]
+            },
+            nightRecovery: {
+                name: 'Trẻ Hóa Cơ Hệ Sinh Dục',
+                meta: '12 lượt Kegel ngược giữ cực đại 12s làm mới tế bào cơ sàn chậu',
+                color: '#8b5cf6',
+                bg: 'rgba(139, 92, 246, 0.15)',
+                border: 'rgba(139, 92, 246, 0.35)',
+                icon: '🌙',
+                stages: [
+                    { type: 'reverse', squeeze: 12, relax: 8, reps: 12 },
+                    { type: 'breathing', squeeze: 5, relax: 10, reps: 10 }
+                ]
+            }
+        }
+    }
 };
 
 function calculateSqueezes(level, reps) {
@@ -60,16 +442,18 @@ function calculateSqueezes(level, reps) {
         }
         return reps;
     }
-    const isFemale = state.gender === 'female';
-    if (level === 'goodMorning') {
-        return 20; // Nam: 20 siết nhanh. Nữ: 20 siết nhanh
+    
+    const genderKey = state.gender === 'female' ? 'female' : 'male';
+    const levelConfig = clinicalLevels[state.selectedLevelTab]?.[genderKey]?.[level];
+    if (levelConfig && levelConfig.stages) {
+        return levelConfig.stages.reduce((sum, stage) => {
+            if (stage.type === 'normal' || stage.type === 'reverse') {
+                return sum + parseInt(stage.reps || 0);
+            }
+            return sum;
+        }, 0);
     }
-    if (level === 'powerCombo') {
-        return isFemale ? 30 : 54; // Nam: 54 siết cơ. Nữ: 30 siết cơ (15 siết nhanh + 15 siết 3s)
-    }
-    if (level === 'nightRecovery') {
-        return isFemale ? 0 : 15; // Nam: 15 siết nhanh. Nữ: 0 siết cơ
-    }
+    
     return reps;
 }
 
@@ -374,7 +758,7 @@ function selectGender(gender) {
     });
     
     // Cập nhật tên và mô tả bài tập trên giao diện
-    updateWorkoutLevelsUI();
+    renderLevelsList();
     
     // Tự động chọn lại bài tập mặc định theo khung giờ & giới tính
     autoSelectLevelByTime();
@@ -514,7 +898,7 @@ function initApp() {
     
     // Khởi tạo class giới tính cho body
     document.body.classList.add('gender-' + state.gender);
-    updateWorkoutLevelsUI();
+    renderLevelsList();
     
     renderCustomWorkoutsList();
     autoSelectLevelByTime();
@@ -590,24 +974,51 @@ function setupEventHandlers() {
         });
     });
 
-    // 3. Level selection
-    elements.levelItems.forEach(item => {
-        item.addEventListener('click', () => {
+    // 3. Level Selector Tabs (1-5)
+    const levelTabBtns = document.querySelectorAll('.level-tab-btn');
+    levelTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
             const activeStates = ['squeezing', 'relaxing'];
             const isMidWorkout = activeStates.includes(state.workoutState) || state.workoutState.startsWith('paused_');
-            if (isMidWorkout) return; // Prevent change mid-workout
+            if (isMidWorkout) return; // Prevent level switch mid-workout
             
             if (state.workoutState !== 'idle') {
                 resetWorkout();
             }
             
-            elements.levelItems.forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-            state.selectedLevel = item.getAttribute('data-level');
+            levelTabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
             
-            updateUIConfigs();
+            state.selectedLevelTab = parseInt(btn.getAttribute('data-level-tab'));
+            
+            // Re-render the levels list
+            renderLevelsList();
+            
+            // Automatically select the first workout of the new level
+            const firstItem = document.querySelector('#levels-list .level-item');
+            if (firstItem) {
+                selectWorkoutLevel(firstItem);
+            }
         });
     });
+
+    // 3.1 Workout level selection (using event delegation on #levels-list)
+    const levelsContainer = document.getElementById('levels-list');
+    if (levelsContainer) {
+        levelsContainer.addEventListener('click', (e) => {
+            const item = e.target.closest('.level-item');
+            if (!item) return;
+            selectWorkoutLevel(item);
+        });
+    }
+
+    // 3.2 Custom Design Level item click listener (static, outside levels-list)
+    const customLevelItem = document.querySelector('.level-item[data-level="custom"]');
+    if (customLevelItem) {
+        customLevelItem.addEventListener('click', () => {
+            selectWorkoutLevel(customLevelItem);
+        });
+    }
 
     // Custom workout builder events binding
     if (elements.btnAddCustomStage) {
@@ -864,22 +1275,19 @@ function updateUIConfigs() {
         }
     } else {
         elements.customPanel.style.display = 'none';
-        const config = levelConfigs[state.selectedLevel];
-        if (config) {
-            const isFemale = state.gender === 'female';
-            if (isFemale && state.selectedLevel === 'beginner') {
-                state.squeezeDuration = 3;
-                state.relaxDuration = 4; // 4s relax for females
-                state.totalReps = 10;
-            } else if (isFemale && state.selectedLevel === 'intermediate') {
-                state.squeezeDuration = 5;
-                state.relaxDuration = 6; // 6s relax for females
-                state.totalReps = 12;
-            } else {
-                state.squeezeDuration = config.squeeze;
-                state.relaxDuration = config.relax;
-                state.totalReps = config.reps;
-            }
+        const genderKey = state.gender === 'female' ? 'female' : 'male';
+        const config = clinicalLevels[state.selectedLevelTab]?.[genderKey]?.[state.selectedLevel];
+        if (config && config.stages) {
+            state.totalReps = config.stages.reduce((sum, stage) => {
+                if (stage.type === 'normal' || stage.type === 'reverse') {
+                    return sum + parseInt(stage.reps || 0);
+                }
+                return sum;
+            }, 0);
+            
+            const firstStage = config.stages[0];
+            state.squeezeDuration = firstStage ? parseInt(firstStage.squeeze || 5) : 5;
+            state.relaxDuration = firstStage ? parseInt(firstStage.relax || 5) : 5;
         }
     }
 
@@ -972,471 +1380,133 @@ function generateWorkoutSteps(level) {
     if (level && level.startsWith('custom_')) {
         const workout = state.customWorkouts.find(w => w.id === level);
         if (workout && workout.stages) {
-            let repIndex = 1;
-            phases = workout.stages.map((stage, sIdx) => {
-                const repsCount = parseInt(stage.reps || 1);
-                const start = repIndex;
-                const end = repIndex + repsCount - 1;
-                repIndex = end + 1;
-                
-                let phaseName = `Giai đoạn ${sIdx + 1}`;
-                if (stage.type === 'reverse') {
-                    phaseName = `Kegel ngược ${sIdx + 1}`;
-                }
-                
-                for (let r = 1; r <= repsCount; r++) {
-                    const currentRep = start + r - 1;
-                    const stageType = stage.type || 'normal';
-                    
-                    if (stageType === 'normal') {
-                        steps.push({
-                            type: 'squeezing',
-                            duration: Math.max(1, parseInt(stage.squeeze || 5)),
-                            action: 'SIẾT CƠ',
-                            subtext: `Siết chặt cơ PC - Lượt ${r}/${repsCount} (${phaseName})`,
-                            sfx: 'squeeze',
-                            orbClass: 'squeezing',
-                            repIndex: currentRep
-                        });
-                        
-                        if (r === repsCount && sIdx < workout.stages.length - 1 && parseInt(stage.transitionRest || 0) > 0) {
-                            steps.push({
-                                type: 'relaxing',
-                                duration: parseInt(stage.transitionRest),
-                                action: 'NGHỈ CHUYỂN',
-                                subtext: `Nghỉ phục hồi ${stage.transitionRest}s - Chuẩn bị giai đoạn tiếp theo`,
-                                sfx: 'relax',
-                                orbClass: 'resting',
-                                repIndex: currentRep
-                            });
-                        } else {
-                            steps.push({
-                                type: 'relaxing',
-                                duration: Math.max(1, parseInt(stage.relax || 5)),
-                                action: 'THẢ LỎNG',
-                                subtext: `Thả lỏng cơ sàn chậu - Lượt ${r}/${repsCount}`,
-                                sfx: 'relax',
-                                orbClass: 'relaxing',
-                                repIndex: currentRep
-                            });
-                        }
-                    } else if (stageType === 'reverse') {
-                        steps.push({
-                            type: 'squeezing',
-                            duration: Math.max(1, parseInt(stage.squeeze || 5)),
-                            action: 'KEGEL NGƯỢC',
-                            subtext: `Hít vào, đẩy nhẹ cơ PC ra ngoài - Lượt ${r}/${repsCount} (${phaseName})`,
-                            sfx: 'squeeze',
-                            orbClass: 'resting',
-                            repIndex: currentRep
-                        });
-                        
-                        if (r === repsCount && sIdx < workout.stages.length - 1 && parseInt(stage.transitionRest || 0) > 0) {
-                            steps.push({
-                                type: 'relaxing',
-                                duration: parseInt(stage.transitionRest),
-                                action: 'NGHỈ CHUYỂN',
-                                subtext: `Nghỉ phục hồi ${stage.transitionRest}s - Chuẩn bị giai đoạn tiếp theo`,
-                                sfx: 'relax',
-                                orbClass: 'resting',
-                                repIndex: currentRep
-                            });
-                        } else {
-                            steps.push({
-                                type: 'relaxing',
-                                duration: Math.max(1, parseInt(stage.relax || 5)),
-                                action: 'NGHỈ',
-                                subtext: `Thở ra, thả lỏng cơ sàn chậu tự nhiên - Lượt ${r}/${repsCount}`,
-                                sfx: 'relax',
-                                orbClass: 'relaxing',
-                                repIndex: currentRep
-                            });
-                        }
-                    }
-                }
-                
-                return { name: phaseName, start, end };
-            });
-            
-            totalReps = repIndex - 1;
-            return { steps, phases, totalReps };
+            return buildStepsFromStages(workout.stages, workout.name || 'Tùy chỉnh');
         }
-    }
-
-    // Mặc định cho các cấp độ sẵn có
-    if (level === 'goodMorning') {
-        totalReps = 25;
-        phases = [
-            { name: 'Siết 1s', start: 1, end: 20 },
-            { name: 'Kegel ngược', start: 21, end: 25 }
-        ];
-        
-        for (let r = 1; r <= 20; r++) {
-            steps.push({
-                type: 'squeezing',
-                duration: 1,
-                action: 'SIẾT CƠ',
-                subtext: `Co thắt cơ PC chặt nhất có thể - Lượt ${r}/20`,
-                sfx: 'squeeze',
-                orbClass: 'squeezing',
-                repIndex: r
-            });
-            if (r === 20) {
-                steps.push({
-                    type: 'relaxing',
-                    duration: 10,
-                    action: 'CHUẨN BỊ',
-                    subtext: 'Nghỉ phục hồi 10s - Chuẩn bị tập Kegel ngược',
-                    sfx: 'relax',
-                    orbClass: 'resting',
-                    repIndex: r
-                });
-            } else {
-                steps.push({
-                    type: 'relaxing',
-                    duration: 2,
-                    action: 'THẢ LỎNG',
-                    subtext: `Thả lỏng 2 giây - Lượt ${r}/19`,
-                    sfx: 'relax',
-                    orbClass: 'relaxing',
-                    repIndex: r
-                });
-            }
-        }
-        for (let r = 21; r <= 25; r++) {
-            steps.push({
-                type: 'squeezing',
-                duration: 5,
-                action: 'KEGEL NGƯỢC',
-                subtext: `Hít vào - Đẩy nhẹ cơ PC ra ngoài - Lượt ${r - 20}/5`,
-                sfx: 'squeeze',
-                orbClass: 'resting',
-                repIndex: r
-            });
-            steps.push({
-                type: 'relaxing',
-                duration: 5,
-                action: 'NGHỈ',
-                subtext: `Thở ra - Thả lỏng cơ PC tự nhiên - Lượt ${r - 20}/5`,
-                sfx: 'relax',
-                orbClass: 'relaxing',
-                repIndex: r
-            });
-        }
-    } else if (level === 'powerCombo') {
-        totalReps = 59;
-        phases = [
-            { name: 'Siết 1s', start: 1, end: 20 },
-            { name: 'Siết 3s', start: 21, end: 32 },
-            { name: 'Siết 3s', start: 33, end: 44 },
-            { name: 'Siết 5s', start: 45, end: 54 },
-            { name: 'Kegel ngược', start: 55, end: 59 }
-        ];
-        for (let r = 1; r <= 20; r++) {
-            steps.push({
-                type: 'squeezing',
-                duration: 1,
-                action: 'SIẾT CƠ',
-                subtext: `Siết cơ PC chặt nhất có thể - Lượt ${r}/20`,
-                sfx: 'squeeze',
-                orbClass: 'squeezing',
-                repIndex: r
-            });
-            if (r === 20) {
-                steps.push({
-                    type: 'relaxing',
-                    duration: 30,
-                    action: 'NGHỈ NGƠI',
-                    subtext: 'Nghỉ phục hồi 30s - Chuẩn bị Pha 2',
-                    sfx: 'relax',
-                    orbClass: 'resting',
-                    repIndex: r
-                });
-            } else {
-                steps.push({
-                    type: 'relaxing',
-                    duration: 1,
-                    action: 'THẢ LỎNG',
-                    subtext: `Thả lỏng cơ PC hoàn toàn - Lượt ${r}/19`,
-                    sfx: 'relax',
-                    orbClass: 'relaxing',
-                    repIndex: r
-                });
-            }
-        }
-        for (let r = 21; r <= 32; r++) {
-            steps.push({
-                type: 'squeezing',
-                duration: 3,
-                action: 'SIẾT CƠ',
-                subtext: `Pha 2: Siết giữ 3 giây - Lượt ${r - 20}/12`,
-                sfx: 'squeeze',
-                orbClass: 'squeezing',
-                repIndex: r
-            });
-            if (r === 32) {
-                steps.push({
-                    type: 'relaxing',
-                    duration: 30,
-                    action: 'NGHỈ NGƠI',
-                    subtext: 'Nghỉ phục hồi 30s - Chuẩn bị Pha 3',
-                    sfx: 'relax',
-                    orbClass: 'resting',
-                    repIndex: r
-                });
-            } else {
-                steps.push({
-                    type: 'relaxing',
-                    duration: 3,
-                    action: 'THẢ LỎNG',
-                    subtext: `Thả lỏng 3 giây - Lượt ${r - 20}/11`,
-                    sfx: 'relax',
-                    orbClass: 'relaxing',
-                    repIndex: r
-                });
-            }
-        }
-        for (let r = 33; r <= 44; r++) {
-            steps.push({
-                type: 'squeezing',
-                duration: 3,
-                action: 'SIẾT CƠ',
-                subtext: `Pha 3: Siết giữ 3 giây - Lượt ${r - 32}/12`,
-                sfx: 'squeeze',
-                orbClass: 'squeezing',
-                repIndex: r
-            });
-            if (r === 44) {
-                steps.push({
-                    type: 'relaxing',
-                    duration: 60,
-                    action: 'NGHỈ NGƠI',
-                    subtext: 'Nghỉ phục hồi 1 phút - Chuẩn bị Pha 4',
-                    sfx: 'relax',
-                    orbClass: 'resting',
-                    repIndex: r
-                });
-            } else {
-                steps.push({
-                    type: 'relaxing',
-                    duration: 3,
-                    action: 'THẢ LỎNG',
-                    subtext: `Thả lỏng 3 giây - Lượt ${r - 32}/11`,
-                    sfx: 'relax',
-                    orbClass: 'relaxing',
-                    repIndex: r
-                });
-            }
-        }
-        for (let r = 45; r <= 54; r++) {
-            steps.push({
-                type: 'squeezing',
-                duration: 5,
-                action: 'SIẾT CƠ',
-                subtext: `Pha 4: Cực hạn - Siết giữ 5 giây - Lượt ${r - 44}/10`,
-                sfx: 'squeeze',
-                orbClass: 'squeezing',
-                repIndex: r
-            });
-            if (r === 54) {
-                steps.push({
-                    type: 'relaxing',
-                    duration: 10,
-                    action: 'CHUẨN BỊ',
-                    subtext: 'Nghỉ phục hồi 10s - Chuẩn bị tập Kegel ngược',
-                    sfx: 'relax',
-                    orbClass: 'resting',
-                    repIndex: r
-                });
-            } else {
-                steps.push({
-                    type: 'relaxing',
-                    duration: 5,
-                    action: 'THẢ LỎNG',
-                    subtext: `Thả lỏng hoàn toàn 5 giây - Lượt ${r - 44}/9`,
-                    sfx: 'relax',
-                    orbClass: 'relaxing',
-                    repIndex: r
-                });
-            }
-        }
-        for (let r = 55; r <= 59; r++) {
-            steps.push({
-                type: 'squeezing',
-                duration: 5,
-                action: 'KEGEL NGƯỢC',
-                subtext: `Hít vào - Đẩy nhẹ cơ PC ra ngoài - Lượt ${r - 54}/5`,
-                sfx: 'squeeze',
-                orbClass: 'resting',
-                repIndex: r
-            });
-            steps.push({
-                type: 'relaxing',
-                duration: 5,
-                action: 'NGHỈ',
-                subtext: `Thở ra - Thả lỏng cơ PC tự nhiên - Lượt ${r - 54}/5`,
-                sfx: 'relax',
-                orbClass: 'relaxing',
-                repIndex: r
-            });
-        }
-    } else if (level === 'nightRecovery') {
-        totalReps = 30;
-        phases = [
-            { name: 'Siết 1s', start: 1, end: 15 },
-            { name: 'Kegel ngược', start: 16, end: 25 },
-            { name: 'Thở bụng', start: 26, end: 30 }
-        ];
-        for (let r = 1; r <= 15; r++) {
-            steps.push({
-                type: 'squeezing',
-                duration: 1,
-                action: 'SIẾT CƠ',
-                subtext: `Pha 1: Siết nhanh - Hít thở tự nhiên - Lượt ${r}/15`,
-                sfx: 'squeeze',
-                orbClass: 'squeezing',
-                repIndex: r
-            });
-            if (r === 15) {
-                steps.push({
-                    type: 'relaxing',
-                    duration: 5,
-                    action: 'CHUẨN BỊ',
-                    subtext: 'Nghỉ phục hồi 5s - Chuẩn bị tập Kegel ngược',
-                    sfx: 'relax',
-                    orbClass: 'resting',
-                    repIndex: r
-                });
-            } else {
-                steps.push({
-                    type: 'relaxing',
-                    duration: 1,
-                    action: 'THẢ LỎNG',
-                    subtext: `Thả lỏng cơ sàn chậu hoàn toàn - Lượt ${r}/14`,
-                    sfx: 'relax',
-                    orbClass: 'relaxing',
-                    repIndex: r
-                });
-            }
-        }
-        for (let r = 16; r <= 25; r++) {
-            steps.push({
-                type: 'squeezing',
-                duration: 5,
-                action: 'KEGEL NGƯỢC',
-                subtext: `Hít vào - Đẩy nhẹ cơ PC ra ngoài - Lượt ${r - 15}/10`,
-                sfx: 'squeeze',
-                orbClass: 'resting',
-                repIndex: r
-            });
-            steps.push({
-                type: 'relaxing',
-                duration: 5,
-                action: 'NGHỈ',
-                subtext: `Thở ra - Thả lỏng cơ PC tự nhiên - Lượt ${r - 15}/10`,
-                sfx: 'relax',
-                orbClass: 'relaxing',
-                repIndex: r
-            });
-        }
-        for (let r = 26; r <= 30; r++) {
-            steps.push({
-                type: 'squeezing',
-                duration: 5,
-                action: 'HÍT VÀO',
-                subtext: `Pha 3: Hít sâu chậm rãi bằng bụng - Lượt ${r - 25}/5`,
-                sfx: 'squeeze',
-                orbClass: 'relaxing',
-                repIndex: r
-            });
-            steps.push({
-                type: 'relaxing',
-                duration: 10,
-                action: 'THỞ RA',
-                subtext: `Thở ra chậm rãi, xẹp bụng - Lượt ${r - 25}/5`,
-                sfx: 'relax',
-                orbClass: 'relaxing',
-                repIndex: r
-            });
-        }
+    } else if (level === 'custom') {
+        return buildStepsFromStages([{ type: 'normal', squeeze: 5, relax: 5, reps: 10 }], 'Thiết kế mới');
     } else {
-        const config = levelConfigs[level] || { squeeze: 5, relax: 5, reps: 10 };
-        totalReps = config.reps;
-        phases = [
-            { name: 'Luyện tập', start: 1, end: totalReps }
-        ];
-        
-        for (let r = 1; r <= totalReps; r++) {
-            let squeezeText = 'Co thắt cơ PC chặt nhất có thể';
-            let relaxText = 'Thả lỏng cơ sàn chậu hoàn toàn';
-            let squeezeDur = config.squeeze;
-            let relaxDur = config.relax;
-            
-            if (level === 'ladder') {
-                squeezeText = 'Siết nhẹ 30% lực';
-            } else if (level === 'mixed') {
-                if ((r >= 1 && r <= 3) || (r >= 9 && r <= 11)) {
-                    squeezeDur = 8;
-                    relaxDur = 8;
-                    squeezeText = 'Nhịp chậm: Siết sâu & giữ';
-                } else {
-                    squeezeDur = 1;
-                    relaxDur = 1;
-                    squeezeText = 'Nhịp nhanh: Nhấp nhanh cơ PC';
-                    relaxText = 'Thả nhanh';
-                }
-            } else if (level === 'pyramidMixed') {
-                const squeezeMap = { 1: 3, 2: 1, 3: 6, 4: 1, 5: 9, 6: 1, 7: 12, 8: 1, 9: 6, 10: 3 };
-                const relaxMap = { 1: 3, 2: 1, 3: 6, 4: 1, 5: 9, 6: 1, 7: 10, 8: 1, 9: 6, 10: 3 };
-                squeezeDur = squeezeMap[r] || 3;
-                relaxDur = relaxMap[r] || 3;
-                
-                if (squeezeDur === 12) {
-                    squeezeText = 'Đỉnh tháp: Siết tối đa 12 giây!';
-                } else if (squeezeDur === 1) {
-                    squeezeText = 'Nhịp nhanh: Co thắt nhanh 1s';
-                    relaxText = 'Thả nhanh';
-                } else {
-                    squeezeText = `Kim tự tháp: Siết sâu ${squeezeDur}s`;
-                }
-            } else if (level === 'reflexMixed') {
-                if (r <= 4) {
-                    squeezeDur = 10;
-                    relaxDur = 5;
-                    squeezeText = 'Sức bền: Giữ co thắt 10 giây';
-                } else if (r <= 8) {
-                    squeezeDur = 1;
-                    relaxDur = 1;
-                    squeezeText = 'Phản xạ: Nhấp nhanh liên tục 1s';
-                    relaxText = 'Thả nhanh';
-                } else {
-                    squeezeDur = 5;
-                    relaxDur = 3;
-                    squeezeText = 'Phục hồi: Giữ trung bình 5 giây';
-                }
-            }
-
-            steps.push({
-                type: 'squeezing',
-                duration: squeezeDur,
-                action: 'SIẾT CƠ',
-                subtext: `${squeezeText} - Lượt ${r}/${totalReps}`,
-                sfx: 'squeeze',
-                orbClass: 'squeezing',
-                repIndex: r
-            });
-            steps.push({
-                type: 'relaxing',
-                duration: relaxDur,
-                action: 'THẢ LỎNG',
-                subtext: `${relaxText} - Lượt ${r}/${totalReps}`,
-                sfx: 'relax',
-                orbClass: 'relaxing',
-                repIndex: r
-            });
+        const genderKey = state.gender === 'female' ? 'female' : 'male';
+        const config = clinicalLevels[state.selectedLevelTab]?.[genderKey]?.[level];
+        if (config && config.stages) {
+            return buildStepsFromStages(config.stages, config.name);
         }
     }
 
+    return { steps, phases, totalReps };
+}
+
+function buildStepsFromStages(stages, workoutName) {
+    let steps = [];
+    let phases = [];
+    let repIndex = 1;
+
+    phases = stages.map((stage, sIdx) => {
+        const repsCount = parseInt(stage.reps || 1);
+        const start = repIndex;
+        const end = repIndex + repsCount - 1;
+        repIndex = end + 1;
+        
+        let phaseName = stage.name || `Giai đoạn ${sIdx + 1}`;
+        if (stage.type === 'reverse') {
+            phaseName = `Kegel ngược ${sIdx + 1}`;
+        } else if (stage.type === 'breathing') {
+            phaseName = `Thở bụng phục hồi ${sIdx + 1}`;
+        }
+        
+        for (let r = 1; r <= repsCount; r++) {
+            const currentRep = start + r - 1;
+            const stageType = stage.type || 'normal';
+            
+            if (stageType === 'normal') {
+                steps.push({
+                    type: 'squeezing',
+                    duration: Math.max(1, parseInt(stage.squeeze || 5)),
+                    action: 'SIẾT CƠ',
+                    subtext: `Siết chặt cơ sàn chậu - Lượt ${r}/${repsCount} (${phaseName})`,
+                    sfx: 'squeeze',
+                    orbClass: 'squeezing',
+                    repIndex: currentRep
+                });
+                
+                if (r === repsCount && sIdx < stages.length - 1 && parseInt(stage.transitionRest || 0) > 0) {
+                    steps.push({
+                        type: 'relaxing',
+                        duration: parseInt(stage.transitionRest),
+                        action: 'NGHỈ CHUYỂN',
+                        subtext: `Nghỉ phục hồi ${stage.transitionRest}s - Chuẩn bị giai đoạn tiếp theo`,
+                        sfx: 'relax',
+                        orbClass: 'resting',
+                        repIndex: currentRep
+                    });
+                } else {
+                    steps.push({
+                        type: 'relaxing',
+                        duration: Math.max(1, parseInt(stage.relax || 5)),
+                        action: 'THẢ LỎNG',
+                        subtext: `Thả lỏng cơ sàn chậu - Lượt ${r}/${repsCount}`,
+                        sfx: 'relax',
+                        orbClass: 'relaxing',
+                        repIndex: currentRep
+                    });
+                }
+            } else if (stageType === 'reverse') {
+                steps.push({
+                    type: 'squeezing',
+                    duration: Math.max(1, parseInt(stage.squeeze || 5)),
+                    action: 'KEGEL NGƯỢC',
+                    subtext: `Hít vào, đẩy nhẹ cơ PC ra ngoài - Lượt ${r}/${repsCount} (${phaseName})`,
+                    sfx: 'squeeze',
+                    orbClass: 'resting',
+                    repIndex: currentRep
+                });
+                
+                if (r === repsCount && sIdx < stages.length - 1 && parseInt(stage.transitionRest || 0) > 0) {
+                    steps.push({
+                        type: 'relaxing',
+                        duration: parseInt(stage.transitionRest),
+                        action: 'NGHỈ CHUYỂN',
+                        subtext: `Nghỉ phục hồi ${stage.transitionRest}s - Chuẩn bị giai đoạn tiếp theo`,
+                        sfx: 'relax',
+                        orbClass: 'resting',
+                        repIndex: currentRep
+                    });
+                } else {
+                    steps.push({
+                        type: 'relaxing',
+                        duration: Math.max(1, parseInt(stage.relax || 5)),
+                        action: 'NGHỈ',
+                        subtext: `Thở ra, thả lỏng cơ sàn chậu tự nhiên - Lượt ${r}/${repsCount}`,
+                        sfx: 'relax',
+                        orbClass: 'relaxing',
+                        repIndex: currentRep
+                    });
+                }
+            } else if (stageType === 'breathing') {
+                steps.push({
+                    type: 'squeezing',
+                    duration: Math.max(1, parseInt(stage.squeeze || 5)),
+                    action: 'HÍT VÀO',
+                    subtext: `Hít sâu chậm bằng bụng - Lượt ${r}/${repsCount} (${phaseName})`,
+                    sfx: 'squeeze',
+                    orbClass: 'relaxing',
+                    repIndex: currentRep
+                });
+                steps.push({
+                    type: 'relaxing',
+                    duration: Math.max(1, parseInt(stage.relax || 10)),
+                    action: 'THỞ RA',
+                    subtext: `Thở ra chậm rãi, xẹp bụng - Lượt ${r}/${repsCount}`,
+                    sfx: 'relax',
+                    orbClass: 'relaxing',
+                    repIndex: currentRep
+                });
+            }
+        }
+        
+        return { name: phaseName, start, end };
+    });
+    
+    const totalReps = repIndex - 1;
     return { steps, phases, totalReps };
 }
 

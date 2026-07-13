@@ -2963,3 +2963,63 @@ body.gender-female .male-only {
     display: none !important;
 }
 
+/* Level Selector Bar Styles */
+.level-selector-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1rem;
+    margin-bottom: 1.25rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 0.5rem 0.85rem;
+    border-radius: 12px;
+}
+
+.level-selector-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.level-selector-btns {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.level-tab-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.level-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-text-primary);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.level-tab-btn.active {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    color: #0f172a;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(0, 245, 212, 0.2);
+}
+
+/* Adjust colors for active button based on active body gender classes */
+body.gender-female .level-tab-btn.active {
+    background: linear-gradient(135deg, #ec4899, #8b5cf6);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.2);
+}
+

@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.1.37">
+    <link rel="stylesheet" href="styles.css?v=1.1.38">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -167,7 +167,19 @@
                             <button class="gender-btn btn-gender-female" id="btn-gender-female" data-gender="female">Nữ giới</button>
                         </div>
                         
-                        <div class="levels-list">
+                        <!-- Level Selector Bar -->
+                        <div class="level-selector-bar">
+                            <span class="level-selector-label">Cấp độ:</span>
+                            <div class="level-selector-btns">
+                                <button class="level-tab-btn active" data-level-tab="1">1</button>
+                                <button class="level-tab-btn" data-level-tab="2">2</button>
+                                <button class="level-tab-btn" data-level-tab="3">3</button>
+                                <button class="level-tab-btn" data-level-tab="4">4</button>
+                                <button class="level-tab-btn" data-level-tab="5">5</button>
+                            </div>
+                        </div>
+                        
+                        <div class="levels-list" id="levels-list">
                             <!-- Chào Buổi Sáng -->
                             <div class="level-item active" data-level="goodMorning">
                                 <div class="level-icon level-pow" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.35);">🌅</div>
@@ -194,98 +206,16 @@
                                     <span class="level-meta">15 lượt siết nhanh + nghỉ 5s | 10 lượt Kegel ngược | 5 lượt hít thở phục hồi</span>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Các cấp độ khác -->
-                            <details class="other-levels-details">
-                                <summary class="other-levels-summary">
-                                    <span>Các cấp độ khác</span>
-                                    <svg class="summary-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="6 9 12 15 18 9"></polyline>
-                                    </svg>
-                                </summary>
-                                <div class="other-levels-content">
-                                    <!-- Beginner Level -->
-                            <div class="level-item" data-level="beginner">
-                                <div class="level-icon level-beg">1</div>
-                                <div class="level-info">
-                                    <span class="level-name">Cấp độ 1: Đánh Thức (Sơ cấp)</span>
-                                    <span class="level-meta">Siết: 3s | Thả: 3s | 10 Lượt (Tổng: 1 phút)</span>
-                                </div>
+                        <!-- Custom Design Workout (Always visible at bottom) -->
+                        <div class="level-item" data-level="custom" style="margin-top: 1rem; border: 1px dashed rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.01);">
+                            <div class="level-icon level-cus">C</div>
+                            <div class="level-info">
+                                <span class="level-name" style="font-weight: 600;">Thiết Kế Bài Tập Mới</span>
+                                <span class="level-meta">Tùy chỉnh đa giai đoạn, nghỉ chuyển chặng & Kegel ngược</span>
                             </div>
-
-                            <!-- Intermediate Level -->
-                            <div class="level-item" data-level="intermediate">
-                                <div class="level-icon level-int">2</div>
-                                <div class="level-info">
-                                    <span class="level-name">Cấp độ 2: Sức Bền (Trung cấp)</span>
-                                    <span class="level-meta">Siết: 5s | Thả: 5s | 12 Lượt (Tổng: 2 phút)</span>
-                                </div>
-                            </div>
-
-                            <!-- Advanced Level -->
-                            <div class="level-item" data-level="advanced">
-                                <div class="level-icon level-adv">3</div>
-                                <div class="level-info">
-                                    <span class="level-name">Cấp độ 3: Sức Mạnh (Nâng cao)</span>
-                                    <span class="level-meta">Siết: 10s | Thả: 10s | 10 Lượt (Tổng: 3 phút 20 giây)</span>
-                                </div>
-                            </div>
-
-                            <!-- Fast Flicks Level -->
-                            <div class="level-item" data-level="fastFlicks">
-                                <div class="level-icon level-adv" style="background: rgba(239, 68, 68, 0.1); color: #f87171; border-color: rgba(239, 68, 68, 0.2);">4</div>
-                                <div class="level-info">
-                                    <span class="level-name">Cấp độ 4: Nhấp Nháy Nhanh (Phản Xạ)</span>
-                                    <span class="level-meta">Siết: 1s | Thả: 1s | 20 Lượt (Tổng: 40 giây)</span>
-                                </div>
-                            </div>
-
-                            <!-- Ladder Level -->
-                            <div class="level-item" data-level="ladder">
-                                <div class="level-icon level-adv" style="background: rgba(16, 185, 129, 0.1); color: #34d399; border-color: rgba(16, 185, 129, 0.2);">5</div>
-                                <div class="level-info">
-                                    <span class="level-name">Cấp độ 5: Co Thắt Nấc Thang (Kiểm Soát)</span>
-                                    <span class="level-meta">Siết tăng dần: 9s | Thả: 8s | 8 Lượt</span>
-                                </div>
-                            </div>
-
-                            <!-- Mixed Level -->
-                            <div class="level-item" data-level="mixed">
-                                <div class="level-icon level-adv" style="background: rgba(139, 92, 246, 0.1); color: #c084fc; border-color: rgba(139, 92, 246, 0.2);">6</div>
-                                <div class="level-info">
-                                    <span class="level-name">Cấp độ 6: Hỗn Hợp Lâm Sàng (Bậc Thầy)</span>
-                                    <span class="level-meta">Xen kẽ Siết lâu & Nhấp nhanh | 11 Lượt</span>
-                                </div>
-                            </div>
-
-                            <!-- Pyramid Mixed Level -->
-                            <div class="level-item" data-level="pyramidMixed">
-                                <div class="level-icon level-adv" style="background: rgba(245, 158, 11, 0.1); color: #fbbf24; border-color: rgba(245, 158, 11, 0.2);">7</div>
-                                <div class="level-info">
-                                    <span class="level-name">Cấp độ 7: Hỗn Hợp Kim Tự Tháp (Thử Thách)</span>
-                                    <span class="level-meta">Siết tăng dần (3s -> 12s) xen kẽ Nhấp nhanh | 10 Lượt</span>
-                                </div>
-                            </div>
-
-                            <!-- Reflex Mixed Level -->
-                            <div class="level-item" data-level="reflexMixed">
-                                <div class="level-icon level-adv" style="background: rgba(236, 72, 153, 0.1); color: #f472b6; border-color: rgba(236, 72, 153, 0.2);">8</div>
-                                <div class="level-info">
-                                    <span class="level-name">Cấp độ 8: Phản Xạ Sinh Lý (Vượt Giới Hạn)</span>
-                                    <span class="level-meta">Siết lâu xen kẽ Nhấp nhanh phản xạ | 12 Lượt</span>
-                                </div>
-                            </div>
-
-                            <!-- Custom Level -->
-                            <div class="level-item" data-level="custom">
-                                <div class="level-icon level-cus">C</div>
-                                <div class="level-info">
-                                    <span class="level-name">Thiết Kế Bài Tập Mới</span>
-                                    <span class="level-meta">Tùy chỉnh đa giai đoạn, nghỉ chuyển chặng & Kegel ngược</span>
-                                </div>
-                            </div>
-                                </div>
-                            </details>
+                        </div>
 
                             <!-- Custom Workouts Section -->
                             <div class="custom-workouts-section" id="custom-workouts-section" style="margin-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1rem; display: none;">
@@ -294,8 +224,7 @@
                                     <!-- Rendered custom workouts go here -->
                                 </div>
                             </div>
-                        </div>
-
+                        
                         <!-- Custom Level Controls Panel -->
                         <div class="custom-controls-panel" id="custom-controls-panel" style="display: none;">
                             <h4 id="custom-panel-title" style="margin: 0 0 1rem 0; font-size: 0.95rem; color: var(--color-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Thiết Kế Bài Tập Đa Giai Đoạn</h4>
@@ -514,6 +443,26 @@
                                     <h5>Q: Có nên tập cơ PC khi đang cương cứng không?</h5>
                                     <p>A: Có thể tập khi cương cứng để nâng cao độ khó (vì lúc này việc cảm nhận và giữ dòng máu trong thể hang sẽ rõ ràng hơn). Tuy nhiên đối với người mới bắt đầu, hãy tập lúc dương vật mềm để nắm vững cơ chế co bóp cơ trước.</p>
                                 </div>
+                                <div class="faq-item">
+                                    <h5>Q: Tập cơ PC có hỗ trợ điều trị rối loạn cương dương không?</h5>
+                                    <p>A: Có. Sàn chậu yếu là nguyên nhân chính dẫn đến rò rỉ tĩnh mạch (máu bơm vào thể hang nhưng thoát ra sớm). Cơ PC khỏe mạnh, đặc biệt là cơ hành hang (Bulbospongiosus) khi co thắt chặt sẽ kẹp tĩnh mạch sâu ở gốc dương vật, khóa giữ máu lưu lại thể hang lâu hơn, giúp duy trì độ cứng tối đa.</p>
+                                </div>
+                                <div class="faq-item">
+                                    <h5>Q: Sự khác biệt giữa co thắt cơ PC (Kegel) và tập Kegel ngược (Reverse Kegel) là gì?</h5>
+                                    <p>A: Kegel xuôi là co thắt (sắp xếp và nâng sàn chậu) giúp tăng sức siết tối đa. Kegel ngược là chủ động thư giãn sâu (đẩy nhẹ cơ chậu ra ngoài như khi đi tiểu) để hạ trương lực cơ sàn chậu. Đối với nam giới bị nhạy cảm quá mức dẫn đến xuất tinh sớm, Kegel ngược là bài tập vàng để hạ nhiệt hưng phấn.</p>
+                                </div>
+                                <div class="faq-item">
+                                    <h5>Q: Tập cơ PC quá mức có gây hại gì không và làm thế nào để tránh quá tải?</h5>
+                                    <p>A: Tập quá đà hoặc quên thả lỏng sẽ dẫn đến chứng co cứng cơ sàn chậu quá mức (Hypertonic Pelvic Floor), gây đau buốt vùng chậu, tiểu rắt. Hãy luôn tuân thủ nguyên tắc: thời gian thả lỏng phải bằng hoặc gấp đôi thời gian siết cơ, kết hợp tập bài Phục Hồi Ban Đêm để giãn cơ.</p>
+                                </div>
+                                <div class="faq-item">
+                                    <h5>Q: Làm thế nào để phân biệt cơ PC và cơ nâng hậu môn khi tập?</h5>
+                                    <p>A: Khi thực hiện động tác "nín tiểu", cơ PC ở vùng trước (gốc dương vật và niệu đạo) sẽ co thắt mạnh hơn. Khi thực hiện động tác "nín trung tiện", cơ nâng hậu môn vùng sau (quanh hậu môn) sẽ co lại. Để kiểm soát phản xạ sinh dục nam, hãy tập trung điều khiển lực co thắt ở vùng trước.</p>
+                                </div>
+                                <div class="faq-item">
+                                    <h5>Q: Có nên nhịn tiểu để tập Kegel trong lúc đi vệ sinh không?</h5>
+                                    <p>A: Tuyệt đối không. Hành động chặn dòng nước tiểu khi đang đi vệ sinh chỉ dùng 1-2 lần đầu để nhận biết vị trí cơ PC. Nếu lặp lại thường xuyên sẽ phá vỡ phản xạ tiểu tiện tự nhiên của bàng quang, gây ứ đọng nước tiểu ngược dòng và tăng nguy cơ nhiễm trùng đường niệu.</p>
+                                </div>
                             </div>
                         </div>
                         
@@ -548,6 +497,26 @@
                                 <div class="faq-item">
                                     <h5>Q: Tôi có cần tập Kegel khi bước vào độ tuổi tiền mãn kinh hoặc mãn kinh không?</h5>
                                     <p>A: Rất cần thiết. Sự sụt giảm nội tiết tố estrogen trong giai đoạn này làm teo và suy yếu cơ sàn chậu nhanh chóng, dẫn đến són tiểu và sa sinh dục. Tập luyện tích cực giúp làm dày thành âm đạo, củng cố bệ đỡ vững chắc cho tử cung và cổ bàng quang, bảo vệ sức khỏe phụ khoa lâu dài.</p>
+                                </div>
+                                <div class="faq-item">
+                                    <h5>Q: Sa tử cung hoặc sa bàng quang (Sa sinh dục) có thể chữa khỏi bằng cách tập Kegel không?</h5>
+                                    <p>A: Đối với sa sinh dục độ 1 và độ 2 (giai đoạn nhẹ, tạng chưa lồi ra ngoài âm đạo), tập Kegel đúng kỹ thuật giúp phục hồi đáng kể trương lực cơ, kéo tạng sa về vị trí cũ và ngăn tiến triển bệnh mà không cần phẫu thuật. Đối với độ 3-4, Kegel chỉ hỗ trợ giảm triệu chứng, cần can thiệp ngoại khoa.</p>
+                                </div>
+                                <div class="faq-item">
+                                    <h5>Q: Bài tập Kegel ngược (Reverse Kegel) mang lại lợi ích gì cho phụ nữ?</h5>
+                                    <p>A: Nhiều phụ nữ bị căng thẳng vùng chậu mãn tính do ngồi nhiều, gây đau khi quan hệ hoặc khó sinh. Kegel ngược giúp chủ động giãn mở cơ nâng chậu, làm tăng độ đàn hồi mô cơ âm đạo, giúp cuộc sinh nở tự nhiên diễn ra dễ dàng hơn và giải tỏa các cơn đau co thắt vùng chậu.</p>
+                                </div>
+                                <div class="faq-item">
+                                    <h5>Q: Tại sao tập Kegel lại giúp cải thiện són tiểu khi ho, hắt hơi?</h5>
+                                    <p>A: Khi ho hoặc hắt hơi, áp lực ổ bụng tăng đột ngột đè lên bàng quang. Nếu cơ sàn chậu yếu, niệu đạo không được ép đủ chặt để đóng kín, gây són tiểu. Tập Kegel củng cố cơ vòng niệu đạo và cơ nâng sàn chậu tạo ra một bệ đỡ cơ học vững chắc chống lại áp lực tăng đột ngột này.</p>
+                                </div>
+                                <div class="faq-item">
+                                    <h5>Q: Tôi có thể tập Kegel trong những ngày chu kỳ kinh nguyệt hay không?</h5>
+                                    <p>A: Hoàn toàn có thể tập bình thường nếu cơ thể không quá mệt mỏi. Tập luyện nhẹ nhàng giúp tăng tuần hoàn máu chậu, hỗ trợ co bóp tử cung đào thải kinh huyết tốt hơn và giảm đau lưng, đầy bụng. Nếu bạn bị đau bụng kinh dữ dội, hãy tạm nghỉ trong 1-2 ngày đầu.</p>
+                                </div>
+                                <div class="faq-item">
+                                    <h5>Q: Tư thế nào tập Kegel mang lại hiệu quả tốt nhất cho người mới bắt đầu?</h5>
+                                    <p>A: Tư thế nằm ngửa, co hai đầu gối và đặt hai bàn chân phẳng trên sàn (tư thế cây cầu thấp) là tốt nhất. Trọng lực lúc này không đè nặng lên cơ sàn chậu, giúp bạn dễ dàng cô lập và tập trung cảm nhận vùng cơ âm đạo/hậu môn mà không bị gồng cơ đùi hay mông.</p>
                                 </div>
                             </div>
                         </div>
@@ -723,7 +692,7 @@
 
             <!-- Footer showing version and check for updates -->
             <footer class="app-footer">
-                <span class="app-version">Phiên bản v1.1.37</span>
+                <span class="app-version">Phiên bản v1.1.38</span>
                 <button class="btn-check-update" id="btn-check-update">
                     <svg class="icon-refresh" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
                         <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
@@ -787,6 +756,6 @@
         <button id="btn-pwa-update">Cập nhật ngay</button>
     </div>
 
-    <script src="app.js?v=1.1.37"></script>
+    <script src="app.js?v=1.1.38"></script>
 </body>
 </html>
