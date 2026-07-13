@@ -1953,11 +1953,15 @@ function buildPhasesFromStages(stages) {
         const end = repIndex + repsCount - 1;
         repIndex = end + 1;
         
-        let phaseName = stage.name || `Giai đoạn ${sIdx + 1}`;
-        if (stage.type === 'reverse') {
-            phaseName = `Kegel ngược ${sIdx + 1}`;
-        } else if (stage.type === 'breathing') {
-            phaseName = `Thở bụng phục hồi ${sIdx + 1}`;
+        let phaseName = stage.name;
+        if (!phaseName) {
+            if (stage.type === 'reverse') {
+                phaseName = `Kegel ngược ${stage.squeeze}s`;
+            } else if (stage.type === 'breathing') {
+                phaseName = 'Thở bụng';
+            } else {
+                phaseName = `Siết ${stage.squeeze}s`;
+            }
         }
         return { name: phaseName, start, end };
     });
