@@ -1466,6 +1466,20 @@ body {
         text-align: center;
     }
     
+    .practice-header {
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+    
+    .header-indicators {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: center !important;
+        flex-wrap: nowrap !important;
+        width: 100% !important;
+        margin-top: 0.5rem;
+    }
+    
     .header-section h1 {
         font-size: 1.75rem;
     }
@@ -2931,6 +2945,11 @@ body {
 
 .gender-icon {
     font-size: 1.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transform: translateY(-1px);
 }
 
 /* Gender-specific visibility rules */
