@@ -767,130 +767,57 @@ function selectGender(gender) {
     updateUIConfigs();
 }
 
-function updateWorkoutLevelsUI() {
-    const isFemale = state.gender === 'female';
+function renderLevelsList() {
+    const container = document.getElementById('levels-list');
+    if (!container) return;
     
-    // 1. Chào Buổi Sáng / Bình Minh Tươi Trẻ
-    const morningItem = document.querySelector('.level-item[data-level="goodMorning"]');
-    if (morningItem) {
-        const nameEl = morningItem.querySelector('.level-name');
-        const metaEl = morningItem.querySelector('.level-meta');
-        const iconEl = morningItem.querySelector('.level-icon');
-        if (nameEl && metaEl) {
-            if (isFemale) {
-                nameEl.textContent = "Bình Minh Tươi Trẻ";
-                nameEl.style.color = "#ec4899";
-                metaEl.textContent = "20 lượt siết nhanh 1s - thả 2s | 5 lượt Kegel ngược giãn chậu";
-                if (iconEl) {
-                    iconEl.style.background = "rgba(236, 72, 153, 0.15)";
-                    iconEl.style.color = "#ec4899";
-                    iconEl.style.borderColor = "rgba(236, 72, 153, 0.35)";
-                }
-            } else {
-                nameEl.textContent = "Chào Buổi Sáng";
-                nameEl.style.color = "#f59e0b";
-                metaEl.textContent = "20 lượt siết 1s - thả 2s | 5 lượt Kegel ngược giãn chậu";
-                if (iconEl) {
-                    iconEl.style.background = "rgba(245, 158, 11, 0.15)";
-                    iconEl.style.color = "#f59e0b";
-                    iconEl.style.borderColor = "rgba(245, 158, 11, 0.35)";
-                }
-            }
-        }
-    }
+    const genderKey = state.gender === 'female' ? 'female' : 'male';
+    const activeLevelConfig = clinicalLevels[state.selectedLevelTab]?.[genderKey] || {};
     
-    // 2. Combo Sức Mạnh / Combo Sức Bền
-    const powerItem = document.querySelector('.level-item[data-level="powerCombo"]');
-    if (powerItem) {
-        const nameEl = powerItem.querySelector('.level-name');
-        const metaEl = powerItem.querySelector('.level-meta');
-        const iconEl = powerItem.querySelector('.level-icon');
-        if (nameEl && metaEl) {
-            if (isFemale) {
-                nameEl.textContent = "Combo Sức Bền";
-                nameEl.style.color = "#a855f7"; // Tím hồng
-                metaEl.textContent = "15 lượt siết nhanh 1s | 15 lượt siết giữ 3s | 10 lượt Kegel ngược";
-                if (iconEl) {
-                    iconEl.style.background = "rgba(168, 85, 247, 0.15)";
-                    iconEl.style.color = "#a855f7";
-                    iconEl.style.borderColor = "rgba(168, 85, 247, 0.35)";
-                }
-            } else {
-                nameEl.textContent = "Combo Sức Mạnh";
-                nameEl.style.color = "var(--color-primary)";
-                metaEl.textContent = "Siết nhanh 20 lượt 1s | Giữ 24 lượt 3s | Giữ 10 lượt 5s + Nghỉ phục hồi & Cooldown Kegel ngược";
-                if (iconEl) {
-                    iconEl.style.background = "";
-                    iconEl.style.color = "";
-                    iconEl.style.borderColor = "";
-                }
-            }
-        }
-    }
+    container.innerHTML = '';
     
-    // 3. Phục Hồi Ban Đêm / Phục Hồi Nhẹ Nhàng
-    const nightItem = document.querySelector('.level-item[data-level="nightRecovery"]');
-    if (nightItem) {
-        const nameEl = nightItem.querySelector('.level-name');
-        const metaEl = nightItem.querySelector('.level-meta');
-        if (nameEl && metaEl) {
-            if (isFemale) {
-                nameEl.textContent = "Phục Hồi Nhẹ Nhàng";
-                metaEl.textContent = "15 lượt Kegel ngược giãn sàn chậu | 10 lượt thở bụng phục hồi sâu";
-            } else {
-                nameEl.textContent = "Phục Hồi Ban Đêm";
-                metaEl.textContent = "15 lượt siết nhanh + nghỉ 5s | 10 lượt Kegel ngược | 5 lượt hít thở phục hồi";
-            }
-        }
-    }
-    
-    // 4. Cấp độ 1: Sơ cấp (Nhận diện cơ)
-    const beginnerItem = document.querySelector('.level-item[data-level="beginner"]');
-    if (beginnerItem) {
-        const nameEl = beginnerItem.querySelector('.level-name');
-        const metaEl = beginnerItem.querySelector('.level-meta');
-        if (nameEl && metaEl) {
-            if (isFemale) {
-                nameEl.textContent = "Cấp độ 1: Nhận Diện Cơ (Sơ Cấp)";
-                metaEl.textContent = "Siết nhẹ 3s | Thả lỏng 4s | 10 lượt (Xác định & cô lập cơ sàn chậu)";
-            } else {
-                nameEl.textContent = "Cấp độ 1: Nhận Diện Lực (Sơ cấp)";
-                metaEl.textContent = "Siết: 3s | Thả: 3s | 10 Lượt (Tổng: 1 phút)";
-            }
-        }
-    }
+    // Render 3 daily clinical workouts
+    const workoutKeys = ['goodMorning', 'powerCombo', 'nightRecovery'];
+    workoutKeys.forEach(key => {
+        const config = activeLevelConfig[key];
+        if (!config) return;
+        
+        const item = document.createElement('div');
+        const isActive = state.selectedLevel === key;
+        item.className = `level-item${isActive ? ' active' : ''}`;
+        item.setAttribute('data-level', key);
+        
+        const borderStyle = config.border ? `border: 1px solid ${config.border};` : '';
+        const bgStyle = config.bg ? `background: ${config.bg};` : '';
+        const colorStyle = config.color ? `color: ${config.color};` : '';
+        
+        item.innerHTML = `
+            <div class="level-icon level-pow" style="${bgStyle} ${colorStyle} ${borderStyle}">${config.icon || '★'}</div>
+            <div class="level-info">
+                <span class="level-name" style="${colorStyle} font-weight: 700;">${config.name}</span>
+                <span class="level-meta">${config.meta}</span>
+            </div>
+        `;
+        
+        container.appendChild(item);
+    });
+}
 
-    // 5. Cấp độ 2: Trung cấp (Phối hợp & Sức bền)
-    const intermediateItem = document.querySelector('.level-item[data-level="intermediate"]');
-    if (intermediateItem) {
-        const nameEl = intermediateItem.querySelector('.level-name');
-        const metaEl = intermediateItem.querySelector('.level-meta');
-        if (nameEl && metaEl) {
-            if (isFemale) {
-                nameEl.textContent = "Cấp độ 2: Phối Hợp Lực (Trung Cấp)";
-                metaEl.textContent = "Siết giữ 5s | Thả lỏng 6s | 12 lượt (Duy trì lực giữ ổn định)";
-            } else {
-                nameEl.textContent = "Cấp độ 2: Phối Hợp Lực Bền (Trung cấp)";
-                metaEl.textContent = "Siết: 5s | Thả: 5s | 12 Lượt (Tổng: 2 phút)";
-            }
-        }
+function selectWorkoutLevel(item) {
+    const activeStates = ['squeezing', 'relaxing'];
+    const isMidWorkout = activeStates.includes(state.workoutState) || state.workoutState.startsWith('paused_');
+    if (isMidWorkout) return; // Prevent change mid-workout
+    
+    if (state.workoutState !== 'idle') {
+        resetWorkout();
     }
-
-    // 6. Cấp độ 3: Cao cấp (Sức bền tối đa)
-    const advancedItem = document.querySelector('.level-item[data-level="advanced"]');
-    if (advancedItem) {
-        const nameEl = advancedItem.querySelector('.level-name');
-        const metaEl = advancedItem.querySelector('.level-meta');
-        if (nameEl && metaEl) {
-            if (isFemale) {
-                nameEl.textContent = "Cấp độ 3: Sức Bền Tối Đa (Cao Cấp)";
-                metaEl.textContent = "Siết sâu 10s | Thả lỏng 10s | 10 lượt (Nâng cao trương lực sàn chậu)";
-            } else {
-                nameEl.textContent = "Cấp độ 3: Sức Mạnh (Nâng cao)";
-                metaEl.textContent = "Siết: 10s | Thả: 10s | 10 Lượt (Tổng: 3 phút 20 giây)";
-            }
-        }
-    }
+    
+    // Clear active class from all level items
+    document.querySelectorAll('.level-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    state.selectedLevel = item.getAttribute('data-level');
+    
+    updateUIConfigs();
 }
 
 function initApp() {
@@ -1107,7 +1034,7 @@ function setupEventHandlers() {
             state.selectedLevel = targetLevel;
             
             // Update config cards UI active class
-            elements.levelItems.forEach(item => {
+            document.querySelectorAll('.level-item').forEach(item => {
                 if (item.getAttribute('data-level') === targetLevel) {
                     item.classList.add('active');
                 } else {
@@ -1924,7 +1851,7 @@ function startWorkout() {
         <rect x="14" y="4" width="4" height="16"/>
     `;
     
-    elements.levelItems.forEach(item => item.style.pointerEvents = 'none');
+    document.querySelectorAll('.level-item').forEach(item => item.style.pointerEvents = 'none');
     
     renderProgressSegments();
     executeWorkoutStep();
@@ -1972,7 +1899,7 @@ function resetWorkout() {
     state.workoutState = 'idle';
     releaseWakeLock();
     
-    elements.levelItems.forEach(item => item.style.pointerEvents = 'auto');
+    document.querySelectorAll('.level-item').forEach(item => item.style.pointerEvents = 'auto');
     
     elements.btnReset.disabled = true;
     elements.btnStart.disabled = false;
