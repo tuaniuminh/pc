@@ -813,6 +813,18 @@ function selectWorkoutLevel(item) {
     const isMidWorkout = activeStates.includes(state.workoutState) || state.workoutState.startsWith('paused_');
     if (isMidWorkout) return; // Prevent change mid-workout
     
+    const targetLevel = item.getAttribute('data-level');
+    
+    // If clicking the ALREADY selected workout level, toggle it off!
+    if (state.selectedLevel === targetLevel) {
+        if (targetLevel === 'custom') {
+            cancelCustomWorkoutEdit();
+            autoSelectLevelByTime();
+            updateUIConfigs();
+            return;
+        }
+    }
+    
     if (state.workoutState !== 'idle') {
         resetWorkout();
     }
@@ -820,7 +832,7 @@ function selectWorkoutLevel(item) {
     // Clear active class from all level items
     document.querySelectorAll('.level-item').forEach(i => i.classList.remove('active'));
     item.classList.add('active');
-    state.selectedLevel = item.getAttribute('data-level');
+    state.selectedLevel = targetLevel;
     
     updateUIConfigs();
 }
@@ -1933,41 +1945,40 @@ function tick() {
     }
 }
 
+function buildPhasesFromStages(stages) {
+    let repIndex = 1;
+    return stages.map((stage, sIdx) => {
+        const repsCount = parseInt(stage.reps || 1);
+        const start = repIndex;
+        const end = repIndex + repsCount - 1;
+        repIndex = end + 1;
+        
+        let phaseName = stage.name || `Giai đoạn ${sIdx + 1}`;
+        if (stage.type === 'reverse') {
+            phaseName = `Kegel ngược ${sIdx + 1}`;
+        } else if (stage.type === 'breathing') {
+            phaseName = `Thở bụng phục hồi ${sIdx + 1}`;
+        }
+        return { name: phaseName, start, end };
+    });
+}
+
 function getWorkoutPhases(level, totalReps) {
-    const isFemale = state.gender === 'female';
-    if (level === 'goodMorning') {
-        return isFemale ? [
-            { name: 'Siết nhanh 1s', start: 1, end: 20 },
-            { name: 'Kegel ngược', start: 21, end: 25 }
-        ] : [
-            { name: 'Siết 1s', start: 1, end: 20 },
-            { name: 'Kegel ngược', start: 21, end: 25 }
-        ];
+    if (level && level.startsWith('custom_')) {
+        const workout = state.customWorkouts.find(w => w.id === level);
+        if (workout && workout.stages) {
+            return buildPhasesFromStages(workout.stages);
+        }
+    } else if (level === 'custom') {
+        return buildPhasesFromStages([{ type: 'normal', squeeze: 5, relax: 5, reps: 10 }]);
+    } else {
+        const genderKey = state.gender === 'female' ? 'female' : 'male';
+        const config = clinicalLevels[state.selectedLevelTab]?.[genderKey]?.[level];
+        if (config && config.stages) {
+            return buildPhasesFromStages(config.stages);
+        }
     }
-    if (level === 'powerCombo') {
-        return isFemale ? [
-            { name: 'Siết nhanh 1s', start: 1, end: 15 },
-            { name: 'Sức bền 3s', start: 16, end: 30 },
-            { name: 'Kegel ngược', start: 31, end: 40 }
-        ] : [
-            { name: 'Siết 1s', start: 1, end: 20 },
-            { name: 'Siết 3s', start: 21, end: 32 },
-            { name: 'Siết 3s', start: 33, end: 44 },
-            { name: 'Siết 5s', start: 45, end: 54 },
-            { name: 'Kegel ngược', start: 55, end: 59 }
-        ];
-    }
-    if (level === 'nightRecovery') {
-        return isFemale ? [
-            { name: 'Kegel ngược 4s', start: 1, end: 15 },
-            { name: 'Thở bụng sâu', start: 16, end: 25 }
-        ] : [
-            { name: 'Siết 1s', start: 1, end: 15 },
-            { name: 'Kegel ngược', start: 16, end: 25 },
-            { name: 'Thở bụng', start: 26, end: 30 }
-        ];
-    }
-    // For other levels, return a single phase representing the whole workout
+    
     return [
         { name: 'Luyện tập', start: 1, end: totalReps }
     ];
@@ -2093,6 +2104,7 @@ function saveWorkoutLog() {
         id: 'session_' + Date.now(),
         timestamp: new Date().toISOString(),
         level: state.selectedLevel,
+        levelTab: (state.selectedLevel === 'custom' || state.selectedLevel.startsWith('custom_')) ? null : state.selectedLevelTab,
         config: {
             squeeze: state.squeezeDuration,
             relax: state.relaxDuration,
@@ -2201,7 +2213,8 @@ function updateBadges() {
         'badge-streak-7': state.streak >= 7,
         'badge-sessions-10': state.totalSessions >= 10,
         'badge-sessions-30': state.totalSessions >= 30,
-        'badge-level-8': state.history.some(log => log.level === 'reflexMixed')
+        'badge-level-5': state.history.some(log => log.levelTab === 5 || log.level === 'reflexMixed'),
+        'badge-custom': state.history.some(log => log.level && (log.level === 'custom' || log.level.startsWith('custom_')))
     };
     
     for (const [badgeId, isUnlocked] of Object.entries(badges)) {
