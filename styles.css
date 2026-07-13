@@ -2952,15 +2952,7 @@ body {
     box-shadow: 0 4px 15px rgba(236, 72, 153, 0.25);
 }
 
-.gender-icon {
-    font-size: 1.05rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    transform: translateY(-3px);
-    margin-right: 0.35rem;
-}
+
 
 /* Gender-specific visibility rules */
 body.gender-male .female-only {

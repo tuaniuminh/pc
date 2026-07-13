@@ -935,7 +935,7 @@ function updateUIConfigs() {
     if (state.selectedLevel === 'goodMorning') {
         elements.orbSubText.textContent = state.gender === 'female' ? 'Bấm Bắt đầu để tập Bình Minh Tươi Trẻ - 25 lượt' : 'Bấm Bắt đầu để tập Chào Buổi Sáng - 25 lượt';
     } else if (state.selectedLevel === 'powerCombo') {
-        elements.orbSubText.textContent = state.gender === 'female' ? 'Bấm Bắt đầu để tập Combo Sức Bền - 40 lượt' : 'Bấm Bắt đầu để tập Combo Sức Mạng - 59 lượt';
+        elements.orbSubText.textContent = state.gender === 'female' ? 'Bấm Bắt đầu để tập Combo Sức Bền - 40 lượt' : 'Bấm Bắt đầu để tập Combo Sức Mạnh - 59 lượt';
     } else if (state.selectedLevel === 'nightRecovery') {
         elements.orbSubText.textContent = state.gender === 'female' ? 'Bấm Bắt đầu để tập Phục Hồi Nhẹ Nhàng - 25 lượt' : 'Bấm Bắt đầu để tập Phục Hồi Ban Đêm - 30 lượt';
     } else if (state.selectedLevel === 'mixed') {
