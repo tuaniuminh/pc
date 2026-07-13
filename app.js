@@ -21,6 +21,7 @@ const state = {
     streak: 0,
     totalSessions: 0,
     totalRepsCompleted: 0,
+    gender: 'male', // male, female
     
     // Custom workout builder state
     customWorkouts: [],
@@ -59,14 +60,15 @@ function calculateSqueezes(level, reps) {
         }
         return reps;
     }
+    const isFemale = state.gender === 'female';
     if (level === 'goodMorning') {
-        return 20; // 20 siết nhanh, 5 Kegel ngược
+        return 20; // Nam: 20 siết nhanh. Nữ: 20 siết nhanh
     }
     if (level === 'powerCombo') {
-        return 54; // 20 + 12 + 12 + 10 siết cơ, còn lại là nghỉ & Kegel ngược
+        return isFemale ? 30 : 54; // Nam: 54 siết cơ. Nữ: 30 siết cơ (15 siết nhanh + 15 siết 3s)
     }
     if (level === 'nightRecovery') {
-        return 15; // 15 siết nhanh, 15 Kegel ngược, 5 hít thở
+        return isFemale ? 0 : 15; // Nam: 15 siết nhanh. Nữ: 0 siết cơ
     }
     return reps;
 }
@@ -342,14 +344,191 @@ const elements = {
 };
 
 // --- INITIALIZE THE APP ---
+
+// --- GENDER SELECTION LOGIC ---
+function selectGender(gender) {
+    state.gender = gender;
+    saveData();
+    
+    // Cập nhật class trên body
+    document.body.classList.remove('gender-male', 'gender-female');
+    document.body.classList.add('gender-' + gender);
+    
+    // Cập nhật trạng thái active cho nút giới tính
+    const btnMale = document.getElementById('btn-gender-male');
+    const btnFemale = document.getElementById('btn-gender-female');
+    if (btnMale && btnFemale) {
+        if (gender === 'male') {
+            btnMale.classList.add('active');
+            btnFemale.classList.remove('active');
+        } else {
+            btnMale.classList.remove('active');
+            btnFemale.classList.add('active');
+        }
+    }
+    
+    // Cập nhật tên và mô tả bài tập trên giao diện
+    updateWorkoutLevelsUI();
+    
+    // Tự động chọn lại bài tập mặc định theo khung giờ & giới tính
+    autoSelectLevelByTime();
+    
+    // Cập nhật UI cấu hình
+    updateUIConfigs();
+}
+
+function updateWorkoutLevelsUI() {
+    const isFemale = state.gender === 'female';
+    
+    // 1. Chào Buổi Sáng / Bình Minh Tươi Trẻ
+    const morningItem = document.querySelector('.level-item[data-level="goodMorning"]');
+    if (morningItem) {
+        const nameEl = morningItem.querySelector('.level-name');
+        const metaEl = morningItem.querySelector('.level-meta');
+        const iconEl = morningItem.querySelector('.level-icon');
+        if (nameEl && metaEl) {
+            if (isFemale) {
+                nameEl.textContent = "Bình Minh Tươi Trẻ";
+                nameEl.style.color = "#ec4899";
+                metaEl.textContent = "20 lượt siết nhanh 1s - thả 2s | 5 lượt Kegel ngược giãn chậu";
+                if (iconEl) {
+                    iconEl.style.background = "rgba(236, 72, 153, 0.15)";
+                    iconEl.style.color = "#ec4899";
+                    iconEl.style.borderColor = "rgba(236, 72, 153, 0.35)";
+                }
+            } else {
+                nameEl.textContent = "Chào Buổi Sáng";
+                nameEl.style.color = "#f59e0b";
+                metaEl.textContent = "20 lượt siết 1s - thả 2s | 5 lượt Kegel ngược giãn chậu";
+                if (iconEl) {
+                    iconEl.style.background = "rgba(245, 158, 11, 0.15)";
+                    iconEl.style.color = "#f59e0b";
+                    iconEl.style.borderColor = "rgba(245, 158, 11, 0.35)";
+                }
+            }
+        }
+    }
+    
+    // 2. Combo Sức Mạnh / Combo Sức Bền
+    const powerItem = document.querySelector('.level-item[data-level="powerCombo"]');
+    if (powerItem) {
+        const nameEl = powerItem.querySelector('.level-name');
+        const metaEl = powerItem.querySelector('.level-meta');
+        const iconEl = powerItem.querySelector('.level-icon');
+        if (nameEl && metaEl) {
+            if (isFemale) {
+                nameEl.textContent = "Combo Sức Bền";
+                nameEl.style.color = "#a855f7"; // Tím hồng
+                metaEl.textContent = "15 lượt siết nhanh 1s | 15 lượt siết giữ 3s | 10 lượt Kegel ngược";
+                if (iconEl) {
+                    iconEl.style.background = "rgba(168, 85, 247, 0.15)";
+                    iconEl.style.color = "#a855f7";
+                    iconEl.style.borderColor = "rgba(168, 85, 247, 0.35)";
+                }
+            } else {
+                nameEl.textContent = "Combo Sức Mạnh";
+                nameEl.style.color = "var(--color-primary)";
+                metaEl.textContent = "Siết nhanh 20 lượt 1s | Giữ 24 lượt 3s | Giữ 10 lượt 5s + Nghỉ phục hồi & Cooldown Kegel ngược";
+                if (iconEl) {
+                    iconEl.style.background = "";
+                    iconEl.style.color = "";
+                    iconEl.style.borderColor = "";
+                }
+            }
+        }
+    }
+    
+    // 3. Phục Hồi Ban Đêm / Phục Hồi Nhẹ Nhàng
+    const nightItem = document.querySelector('.level-item[data-level="nightRecovery"]');
+    if (nightItem) {
+        const nameEl = nightItem.querySelector('.level-name');
+        const metaEl = nightItem.querySelector('.level-meta');
+        if (nameEl && metaEl) {
+            if (isFemale) {
+                nameEl.textContent = "Phục Hồi Nhẹ Nhàng";
+                metaEl.textContent = "15 lượt Kegel ngược giãn sàn chậu | 10 lượt thở bụng phục hồi sâu";
+            } else {
+                nameEl.textContent = "Phục Hồi Ban Đêm";
+                metaEl.textContent = "15 lượt siết nhanh + nghỉ 5s | 10 lượt Kegel ngược | 5 lượt hít thở phục hồi";
+            }
+        }
+    }
+    
+    // 4. Cấp độ 1: Sơ cấp (Nhận diện cơ)
+    const beginnerItem = document.querySelector('.level-item[data-level="beginner"]');
+    if (beginnerItem) {
+        const nameEl = beginnerItem.querySelector('.level-name');
+        const metaEl = beginnerItem.querySelector('.level-meta');
+        if (nameEl && metaEl) {
+            if (isFemale) {
+                nameEl.textContent = "Cấp độ 1: Nhận Diện Cơ (Sơ Cấp)";
+                metaEl.textContent = "Siết nhẹ 3s | Thả lỏng 4s | 10 lượt (Xác định & cô lập cơ sàn chậu)";
+            } else {
+                nameEl.textContent = "Cấp độ 1: Nhận Diện Lực (Sơ cấp)";
+                metaEl.textContent = "Siết: 3s | Thả: 3s | 10 Lượt (Tổng: 1 phút)";
+            }
+        }
+    }
+
+    // 5. Cấp độ 2: Trung cấp (Phối hợp & Sức bền)
+    const intermediateItem = document.querySelector('.level-item[data-level="intermediate"]');
+    if (intermediateItem) {
+        const nameEl = intermediateItem.querySelector('.level-name');
+        const metaEl = intermediateItem.querySelector('.level-meta');
+        if (nameEl && metaEl) {
+            if (isFemale) {
+                nameEl.textContent = "Cấp độ 2: Phối Hợp Lực (Trung Cấp)";
+                metaEl.textContent = "Siết giữ 5s | Thả lỏng 6s | 12 lượt (Duy trì lực giữ ổn định)";
+            } else {
+                nameEl.textContent = "Cấp độ 2: Phối Hợp Lực Bền (Trung cấp)";
+                metaEl.textContent = "Siết: 5s | Thả: 5s | 12 Lượt (Tổng: 2 phút)";
+            }
+        }
+    }
+
+    // 6. Cấp độ 3: Cao cấp (Sức bền tối đa)
+    const advancedItem = document.querySelector('.level-item[data-level="advanced"]');
+    if (advancedItem) {
+        const nameEl = advancedItem.querySelector('.level-name');
+        const metaEl = advancedItem.querySelector('.level-meta');
+        if (nameEl && metaEl) {
+            if (isFemale) {
+                nameEl.textContent = "Cấp độ 3: Sức Bền Tối Đa (Cao Cấp)";
+                metaEl.textContent = "Siết sâu 10s | Thả lỏng 10s | 10 lượt (Nâng cao trương lực sàn chậu)";
+            } else {
+                nameEl.textContent = "Cấp độ 3: Sức Mạnh (Nâng cao)";
+                metaEl.textContent = "Siết: 10s | Thả: 10s | 10 Lượt (Tổng: 3 phút 20 giây)";
+            }
+        }
+    }
+}
+
 function initApp() {
     loadData();
+    
+    // Khởi tạo class giới tính cho body
+    document.body.classList.add('gender-' + state.gender);
+    updateWorkoutLevelsUI();
+    
     renderCustomWorkoutsList();
     autoSelectLevelByTime();
     setupEventHandlers();
     updateUIConfigs();
     renderStats();
     initSupabaseConnection();
+    
+    // Đảm bảo nút giới tính hiển thị đúng active state ban đầu
+    const btnMale = document.getElementById('btn-gender-male');
+    const btnFemale = document.getElementById('btn-gender-female');
+    if (btnMale && btnFemale) {
+        if (state.gender === 'male') {
+            btnMale.classList.add('active');
+            btnFemale.classList.remove('active');
+        } else {
+            btnMale.classList.remove('active');
+            btnFemale.classList.add('active');
+        }
+    }
 }
 
 // Automatically select default workout level based on the time of day
@@ -706,9 +885,20 @@ function updateUIConfigs() {
         elements.customPanel.style.display = 'none';
         const config = levelConfigs[state.selectedLevel];
         if (config) {
-            state.squeezeDuration = config.squeeze;
-            state.relaxDuration = config.relax;
-            state.totalReps = config.reps;
+            const isFemale = state.gender === 'female';
+            if (isFemale && state.selectedLevel === 'beginner') {
+                state.squeezeDuration = 3;
+                state.relaxDuration = 4; // 4s relax for females
+                state.totalReps = 10;
+            } else if (isFemale && state.selectedLevel === 'intermediate') {
+                state.squeezeDuration = 5;
+                state.relaxDuration = 6; // 6s relax for females
+                state.totalReps = 12;
+            } else {
+                state.squeezeDuration = config.squeeze;
+                state.relaxDuration = config.relax;
+                state.totalReps = config.reps;
+            }
         }
     }
 
@@ -721,17 +911,23 @@ function updateUIConfigs() {
     elements.orbAction.textContent = 'SẴN SÀNG';
     
     if (state.selectedLevel === 'goodMorning') {
-        elements.orbSubText.textContent = 'Bấm Bắt đầu để tập Chào Buổi Sáng - 25 lượt';
+        elements.orbSubText.textContent = state.gender === 'female' ? 'Bấm Bắt đầu để tập Bình Minh Tươi Trẻ - 25 lượt' : 'Bấm Bắt đầu để tập Chào Buổi Sáng - 25 lượt';
     } else if (state.selectedLevel === 'powerCombo') {
-        elements.orbSubText.textContent = 'Bấm Bắt đầu để tập Combo Sức Mạnh - 59 lượt';
+        elements.orbSubText.textContent = state.gender === 'female' ? 'Bấm Bắt đầu để tập Combo Sức Bền - 40 lượt' : 'Bấm Bắt đầu để tập Combo Sức Mạng - 59 lượt';
     } else if (state.selectedLevel === 'nightRecovery') {
-        elements.orbSubText.textContent = 'Bấm Bắt đầu để tập Phục Hồi Ban Đêm - 30 lượt';
+        elements.orbSubText.textContent = state.gender === 'female' ? 'Bấm Bắt đầu để tập Phục Hồi Nhẹ Nhàng - 25 lượt' : 'Bấm Bắt đầu để tập Phục Hồi Ban Đêm - 30 lượt';
     } else if (state.selectedLevel === 'mixed') {
         elements.orbSubText.textContent = 'Bấm Bắt đầu để tập Cấp độ Hỗn hợp Lâm Sàng (11 lượt)';
     } else if (state.selectedLevel === 'pyramidMixed') {
         elements.orbSubText.textContent = 'Bấm Bắt đầu để tập Hỗn hợp Kim Tự Tháp (10 lượt)';
     } else if (state.selectedLevel === 'reflexMixed') {
         elements.orbSubText.textContent = 'Bấm Bắt đầu để tập Hỗn hợp Phản Xạ Sinh Lý (12 lượt)';
+    } else if (state.selectedLevel === 'beginner') {
+        elements.orbSubText.textContent = state.gender === 'female' ? 'Tập Sơ cấp Nữ: Cố gắng thả lỏng hoàn toàn cơ mông, bụng và đùi' : 'Bấm Bắt đầu để tập Cấp độ 1: Sơ cấp (10 lượt)';
+    } else if (state.selectedLevel === 'intermediate') {
+        elements.orbSubText.textContent = state.gender === 'female' ? 'Tập Trung cấp Nữ: Giữ nhịp siết đều đặn và duy trì hơi thở ổn định' : 'Bấm Bắt đầu để tập Cấp độ 2: Trung cấp (12 lượt)';
+    } else if (state.selectedLevel === 'advanced') {
+        elements.orbSubText.textContent = state.gender === 'female' ? 'Tập Cao cấp Nữ: Giữ siết sâu và thả lỏng sâu để hồi phục trương lực' : 'Bấm Bắt đầu để tập Cấp độ 3: Cao cấp (10 lượt)';
     } else if (state.selectedLevel === 'custom') {
         elements.orbSubText.textContent = 'Đang thiết kế bài tập tùy chỉnh mới';
     } else if (state.selectedLevel && state.selectedLevel.startsWith('custom_')) {
@@ -1755,14 +1951,22 @@ function tick() {
 }
 
 function getWorkoutPhases(level, totalReps) {
+    const isFemale = state.gender === 'female';
     if (level === 'goodMorning') {
-        return [
+        return isFemale ? [
+            { name: 'Siết nhanh 1s', start: 1, end: 20 },
+            { name: 'Kegel ngược', start: 21, end: 25 }
+        ] : [
             { name: 'Siết 1s', start: 1, end: 20 },
             { name: 'Kegel ngược', start: 21, end: 25 }
         ];
     }
     if (level === 'powerCombo') {
-        return [
+        return isFemale ? [
+            { name: 'Siết nhanh 1s', start: 1, end: 15 },
+            { name: 'Sức bền 3s', start: 16, end: 30 },
+            { name: 'Kegel ngược', start: 31, end: 40 }
+        ] : [
             { name: 'Siết 1s', start: 1, end: 20 },
             { name: 'Siết 3s', start: 21, end: 32 },
             { name: 'Siết 3s', start: 33, end: 44 },
@@ -1771,7 +1975,10 @@ function getWorkoutPhases(level, totalReps) {
         ];
     }
     if (level === 'nightRecovery') {
-        return [
+        return isFemale ? [
+            { name: 'Kegel ngược 4s', start: 1, end: 15 },
+            { name: 'Thở bụng sâu', start: 16, end: 25 }
+        ] : [
             { name: 'Siết 1s', start: 1, end: 15 },
             { name: 'Kegel ngược', start: 16, end: 25 },
             { name: 'Thở bụng', start: 26, end: 30 }
@@ -1989,6 +2196,7 @@ function loadData() {
         state.streak = parseInt(localStorage.getItem('pc_flex_streak')) || 0;
         state.totalSessions = parseInt(localStorage.getItem('pc_flex_total_sessions')) || 0;
         state.customWorkouts = JSON.parse(localStorage.getItem('pc_flex_custom_workouts')) || [];
+        state.gender = localStorage.getItem('pc_flex_gender') || 'male';
         state.totalRepsCompleted = state.history.reduce((sum, log) => {
             const level = log.level;
             const reps = log.config ? (log.config.reps || 0) : (log.reps || 0);
