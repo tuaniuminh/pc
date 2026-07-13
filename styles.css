@@ -95,28 +95,60 @@ body {
     margin-bottom: 3.5rem;
 }
 
-.logo-icon {
+.logo-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
-    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    width: 50px;
+    height: 50px;
     border-radius: 12px;
-    color: var(--bg-dark);
-    box-shadow: 0 4px 15px rgba(0, 245, 212, 0.3);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    padding: 2px;
 }
 
-.brand h2 {
-    font-size: 1.5rem;
-    font-weight: 800;
-    letter-spacing: -0.5px;
+.brand-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
-.brand h2 span {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.version-update-container {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    background: rgba(0, 245, 212, 0.06);
+    border: 1px solid rgba(0, 245, 212, 0.25);
+    border-radius: 30px;
+    color: var(--color-primary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    text-shadow: 0 0 10px rgba(0, 245, 212, 0.25);
+}
+
+.version-update-container:hover {
+    background: rgba(0, 245, 212, 0.12);
+    border-color: rgba(0, 245, 212, 0.45);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 245, 212, 0.2);
+}
+
+.version-update-container:active {
+    transform: translateY(0);
+}
+
+.version-update-container.checking {
+    background: rgba(245, 158, 11, 0.08) !important;
+    border-color: rgba(245, 158, 11, 0.35) !important;
+    color: #f59e0b !important;
+    text-shadow: 0 0 10px rgba(245, 158, 11, 0.25) !important;
+    cursor: not-allowed;
 }
 
 .nav-menu {
@@ -1337,7 +1369,7 @@ body {
         padding: 2rem 0.75rem;
         align-items: center;
     }
-    .brand h2, .nav-item span, .user-quick-stats {
+    .brand h2, .version-update-container, .nav-item span, .user-quick-stats {
         display: none;
     }
     .brand {
