@@ -2949,7 +2949,8 @@ body {
     align-items: center;
     justify-content: center;
     line-height: 1;
-    transform: translateY(-2.5px);
+    transform: translateY(-3px);
+    margin-right: 0.35rem;
 }
 
 /* Gender-specific visibility rules */
