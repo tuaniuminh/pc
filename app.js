@@ -135,19 +135,20 @@ const clinicalLevels = {
             },
             powerCombo: {
                 name: 'Kiểm Soát Cương Cứng',
-                meta: 'Siết 6s - thả 6s 15 lượt | 5 lượt giữ sâu 8s tăng lưu lượng máu',
+                meta: 'Siết 6s - thả 6s 15 lượt | Giữ 8s 5 lượt tăng áp lực thể hang | 5 lượt Kegel ngược',
                 color: 'var(--color-primary)',
                 bg: 'rgba(0, 245, 212, 0.1)',
                 border: 'rgba(0, 245, 212, 0.25)',
                 icon: '★',
                 stages: [
                     { type: 'normal', squeeze: 6, relax: 6, reps: 15 },
-                    { type: 'normal', squeeze: 8, relax: 8, reps: 5 }
+                    { type: 'normal', squeeze: 8, relax: 8, reps: 5 },
+                    { type: 'reverse', squeeze: 5, relax: 5, reps: 5 }
                 ]
             },
             nightRecovery: {
                 name: 'Thư Giãn Tuyến Tiền Liệt',
-                meta: '15 lượt Kegel ngược sâu giữ 6s giảm áp lực | 5 lượt thở bụng',
+                meta: '15 lượt Kegel ngược sâu giữ 6s giảm áp lực chậu | 5 lượt thở bụng',
                 color: '#a78bfa',
                 bg: 'rgba(139, 92, 246, 0.15)',
                 border: 'rgba(139, 92, 246, 0.35)',
@@ -161,37 +162,38 @@ const clinicalLevels = {
         female: {
             goodMorning: {
                 name: 'Độ Đàn Hồi Âm Đạo',
-                meta: '30 lượt co thắt nhanh 2s - thả 2s tăng nhạy cảm thụ cảm thể',
+                meta: '35 lượt co thắt nhịp nhàng 2s - thả 2s duy trì độ đàn hồi âm đạo',
                 color: '#ec4899',
                 bg: 'rgba(236, 72, 153, 0.15)',
                 border: 'rgba(236, 72, 153, 0.35)',
                 icon: '🌅',
                 stages: [
-                    { type: 'normal', squeeze: 2, relax: 2, reps: 30 }
+                    { type: 'normal', squeeze: 2, relax: 2, reps: 35 }
                 ]
             },
             powerCombo: {
                 name: 'Combo Sức Bền Tăng Cường',
-                meta: 'Siết 6s - thả 6s 15 lượt | 5 lượt giữ co thắt sâu 8s',
+                meta: 'Siết 5s - thả 5s 18 lượt | Giữ 7s 6 lượt | 8 lượt Kegel ngược thư giãn cơ chậu',
                 color: '#a855f7',
                 bg: 'rgba(168, 85, 247, 0.15)',
                 border: 'rgba(168, 85, 247, 0.35)',
                 icon: '★',
                 stages: [
-                    { type: 'normal', squeeze: 6, relax: 6, reps: 15 },
-                    { type: 'normal', squeeze: 8, relax: 8, reps: 5 }
+                    { type: 'normal', squeeze: 5, relax: 5, reps: 18 },
+                    { type: 'normal', squeeze: 7, relax: 7, reps: 6 },
+                    { type: 'reverse', squeeze: 5, relax: 5, reps: 8 }
                 ]
             },
             nightRecovery: {
                 name: 'Giảm Khô Hạn & Phục Hồi',
-                meta: '15 lượt Kegel ngược giãn nở cơ chậu tăng tiết dịch âm đạo',
+                meta: '12 lượt Kegel ngược giãn cơ chậu tăng tiết dịch | 8 lượt thở bụng sâu',
                 color: '#8b5cf6',
                 bg: 'rgba(139, 92, 246, 0.15)',
                 border: 'rgba(139, 92, 246, 0.35)',
                 icon: '🌙',
                 stages: [
-                    { type: 'reverse', squeeze: 6, relax: 4, reps: 15 },
-                    { type: 'breathing', squeeze: 5, relax: 10, reps: 5 }
+                    { type: 'reverse', squeeze: 6, relax: 5, reps: 12 },
+                    { type: 'breathing', squeeze: 5, relax: 10, reps: 8 }
                 ]
             }
         }
@@ -201,7 +203,7 @@ const clinicalLevels = {
         male: {
             goodMorning: {
                 name: 'Phản Xạ Cơ Hành Hang',
-                meta: '40 lượt co thắt phản xạ nhanh 1s - thả 1s rèn luyện cơ bắp nhanh',
+                meta: '40 lượt co thắt phản xạ nhanh 1s - thả 1s kiểm soát cơ gốc dương vật',
                 color: '#f59e0b',
                 bg: 'rgba(245, 158, 11, 0.15)',
                 border: 'rgba(245, 158, 11, 0.35)',
@@ -211,20 +213,20 @@ const clinicalLevels = {
                 ]
             },
             powerCombo: {
-                name: 'Tăng Tải Trương Lực',
-                meta: 'Siết sâu 8s - thả 8s 15 lượt | 5 lượt hít thở co thắt chậu',
+                name: 'Làm Chủ Hưng Phấn',
+                meta: 'Siết bền 8s 12 lượt kiểm soát kích thích | 8 lượt Kegel ngược hạ nhiệt phản xạ',
                 color: 'var(--color-primary)',
                 bg: 'rgba(0, 245, 212, 0.1)',
                 border: 'rgba(0, 245, 212, 0.25)',
                 icon: '★',
                 stages: [
-                    { type: 'normal', squeeze: 8, relax: 8, reps: 15 },
-                    { type: 'reverse', squeeze: 5, relax: 5, reps: 5 }
+                    { type: 'normal', squeeze: 8, relax: 8, reps: 12 },
+                    { type: 'reverse', squeeze: 3, relax: 3, reps: 8 }
                 ]
             },
             nightRecovery: {
                 name: 'Điều Hòa Cơ Nâng Hậu Môn',
-                meta: '15 lượt Kegel ngược 7s - thả 5s giảm căng thẳng sàn chậu sâu',
+                meta: '15 lượt Kegel ngược sâu 7s - thả 5s giảm căng thẳng cơ chậu sâu',
                 color: '#a78bfa',
                 bg: 'rgba(139, 92, 246, 0.15)',
                 border: 'rgba(139, 92, 246, 0.35)',
@@ -237,19 +239,19 @@ const clinicalLevels = {
         },
         female: {
             goodMorning: {
-                name: 'Co Thắt Phản Xạ',
-                meta: '40 lượt co thắt phản xạ nhanh 1s - thả 1s săn cơ âm đạo',
+                name: 'Co Thắt Đàn Hồi',
+                meta: '30 lượt co thắt sâu 3s - thả 3s tăng cường nhạy cảm và săn chắc',
                 color: '#ec4899',
                 bg: 'rgba(236, 72, 153, 0.15)',
                 border: 'rgba(236, 72, 153, 0.35)',
                 icon: '🌅',
                 stages: [
-                    { type: 'normal', squeeze: 1, relax: 1, reps: 40 }
+                    { type: 'normal', squeeze: 3, relax: 3, reps: 30 }
                 ]
             },
             powerCombo: {
                 name: 'Săn Chắc Sàn Chậu',
-                meta: 'Siết sâu 8s - thả 8s 15 lượt | 5 lượt Kegel ngược thư giãn',
+                meta: 'Siết giữ 8s 15 lượt tăng cơ nâng đỡ | 5 lượt Kegel ngược xả cơ tránh căng cứng',
                 color: '#a855f7',
                 bg: 'rgba(168, 85, 247, 0.15)',
                 border: 'rgba(168, 85, 247, 0.35)',
@@ -260,15 +262,15 @@ const clinicalLevels = {
                 ]
             },
             nightRecovery: {
-                name: 'Giải Tỏa Căng Cơ Chậu',
-                meta: '15 lượt Kegel ngược 7s - thả 5s giúp giảm căng thẳng âm đạo',
+                name: 'Phục Hồi Cơ Vòng',
+                meta: '15 lượt Kegel ngược 6s - thả 4s phục hồi độ giãn sàn chậu | 8 lượt thở sâu',
                 color: '#8b5cf6',
                 bg: 'rgba(139, 92, 246, 0.15)',
                 border: 'rgba(139, 92, 246, 0.35)',
                 icon: '🌙',
                 stages: [
-                    { type: 'reverse', squeeze: 7, relax: 5, reps: 15 },
-                    { type: 'breathing', squeeze: 5, relax: 10, reps: 5 }
+                    { type: 'reverse', squeeze: 6, relax: 4, reps: 15 },
+                    { type: 'breathing', squeeze: 5, relax: 10, reps: 8 }
                 ]
             }
         }
@@ -278,7 +280,7 @@ const clinicalLevels = {
         male: {
             goodMorning: {
                 name: 'Khởi Động Năng Lượng',
-                meta: '35 lượt co thắt phản xạ kích hoạt 3s siết - 2s thả',
+                meta: '35 lượt co thắt phản xạ kích hoạt 3s siết - 2s thả kích thích cơ PC',
                 color: '#f59e0b',
                 bg: 'rgba(245, 158, 11, 0.15)',
                 border: 'rgba(245, 158, 11, 0.35)',
@@ -288,20 +290,21 @@ const clinicalLevels = {
                 ]
             },
             powerCombo: {
-                name: 'Kiểm Soát Xuất Tinh',
-                meta: 'Siết cô lập cơ mu cụt 10s - thả 8s 12 lượt | 5 lượt siết nhanh phản xạ',
+                name: 'Kiểm Soát Xuất Tinh Chuyên Sâu',
+                meta: 'Siết cô lập cơ mu cụt 10s 10 lượt | 8 lượt Kegel ngược 4s | 5 lượt siết nhanh 1s',
                 color: 'var(--color-primary)',
                 bg: 'rgba(0, 245, 212, 0.1)',
                 border: 'rgba(0, 245, 212, 0.25)',
                 icon: '★',
                 stages: [
-                    { type: 'normal', squeeze: 10, relax: 8, reps: 12 },
+                    { type: 'normal', squeeze: 10, relax: 10, reps: 10 },
+                    { type: 'reverse', squeeze: 4, relax: 4, reps: 8 },
                     { type: 'normal', squeeze: 1, relax: 1, reps: 5 }
                 ]
             },
             nightRecovery: {
                 name: 'Tái Tạo Sức Bền Đêm',
-                meta: '12 lượt Kegel ngược giữ lâu 10s điều hòa hệ thần kinh chậu',
+                meta: '12 lượt Kegel ngược giữ lâu 10s điều hòa hệ thần kinh chậu | 5 lượt thở sâu',
                 color: '#a78bfa',
                 bg: 'rgba(139, 92, 246, 0.15)',
                 border: 'rgba(139, 92, 246, 0.35)',
@@ -314,38 +317,39 @@ const clinicalLevels = {
         },
         female: {
             goodMorning: {
-                name: 'Kích Hoạt Cơ Sàn Chậu',
-                meta: '35 lượt co thắt phản xạ kích hoạt 3s siết - 2s thả',
+                name: 'Kích Hoạt Trục Core - Chậu',
+                meta: '25 lượt co thắt giữ 4s - thả 4s phối hợp cơ hoành chậu và cơ bụng',
                 color: '#ec4899',
                 bg: 'rgba(236, 72, 153, 0.15)',
                 border: 'rgba(236, 72, 153, 0.35)',
                 icon: '🌅',
                 stages: [
-                    { type: 'normal', squeeze: 3, relax: 2, reps: 35 }
+                    { type: 'normal', squeeze: 4, relax: 4, reps: 25 }
                 ]
             },
             powerCombo: {
-                name: 'Combo Khít & Săn',
-                meta: 'Siết cô lập cơ âm đạo sâu 10s - thả 8s 12 lượt | 5 lượt phản xạ nhanh',
+                name: 'Khít & Săn Cơ Sâu (Elevator)',
+                meta: '10 lượt siết giữ sâu 10s phục hồi âm đạo sau sinh | 5 lượt Kegel ngược | 8 lượt thở bụng',
                 color: '#a855f7',
                 bg: 'rgba(168, 85, 247, 0.15)',
                 border: 'rgba(168, 85, 247, 0.35)',
                 icon: '★',
                 stages: [
-                    { type: 'normal', squeeze: 10, relax: 8, reps: 12 },
-                    { type: 'normal', squeeze: 1, relax: 1, reps: 5 }
+                    { type: 'normal', squeeze: 10, relax: 8, reps: 10 },
+                    { type: 'reverse', squeeze: 6, relax: 6, reps: 5 },
+                    { type: 'breathing', squeeze: 5, relax: 10, reps: 8 }
                 ]
             },
             nightRecovery: {
                 name: 'Nuôi Dưỡng Trẻ Hóa',
-                meta: '12 lượt Kegel ngược giữ lâu 10s tăng sinh collagen sàn chậu',
+                meta: '12 lượt Kegel ngược 8s - thả 6s tăng tuần hoàn trẻ hóa âm đạo | 10 lượt thở phục hồi',
                 color: '#8b5cf6',
                 bg: 'rgba(139, 92, 246, 0.15)',
                 border: 'rgba(139, 92, 246, 0.35)',
                 icon: '🌙',
                 stages: [
-                    { type: 'reverse', squeeze: 10, relax: 6, reps: 12 },
-                    { type: 'breathing', squeeze: 5, relax: 10, reps: 5 }
+                    { type: 'reverse', squeeze: 8, relax: 6, reps: 12 },
+                    { type: 'breathing', squeeze: 5, relax: 10, reps: 10 }
                 ]
             }
         }
@@ -354,8 +358,8 @@ const clinicalLevels = {
         name: 'Bậc Thầy Sàn Chậu & Vượt Giới Hạn',
         male: {
             goodMorning: {
-                name: 'Phản Xạ Phóng Tinh Bậc Thầy',
-                meta: '50 lượt co thắt phản xạ siêu nhanh 1s siết - 1s thả cực hạn',
+                name: 'Phản Xạ Xuất Tinh Bậc Thầy',
+                meta: '50 lượt co thắt phản xạ siêu nhanh 1s siết - 1s thả cực hạn cơ mu cụt',
                 color: '#f59e0b',
                 bg: 'rgba(245, 158, 11, 0.15)',
                 border: 'rgba(245, 158, 11, 0.35)',
@@ -365,34 +369,34 @@ const clinicalLevels = {
                 ]
             },
             powerCombo: {
-                name: 'Thử Thách Vượt Giới Hạn',
-                meta: 'Siết siêu sâu 12s - thả 10s 10 lượt | 5 lượt co thắt nấc thang',
+                name: 'Thử Thách Vượt Giới Hạn (PC Master)',
+                meta: 'Siết siêu sâu 15s 8 lượt (tải lực tối đa) | 10 lượt Kegel ngược xả căng thẳng 5s',
                 color: 'var(--color-primary)',
                 bg: 'rgba(0, 245, 212, 0.1)',
                 border: 'rgba(0, 245, 212, 0.25)',
                 icon: '★',
                 stages: [
-                    { type: 'normal', squeeze: 12, relax: 10, reps: 10 },
-                    { type: 'normal', squeeze: 8, relax: 8, reps: 5 }
+                    { type: 'normal', squeeze: 15, relax: 12, reps: 8 },
+                    { type: 'reverse', squeeze: 5, relax: 5, reps: 10 }
                 ]
             },
             nightRecovery: {
-                name: 'Phục Hồi Sàn Chậu Chuyên Sâu',
-                meta: '12 lượt Kegel ngược giữ cực đại 12s phục hồi trương lực cơ chậu sâu',
+                name: 'Giải Tỏa Hệ Thần Kinh Sàn Chậu',
+                meta: '15 lượt Kegel ngược giữ cực đại 12s điều hòa toàn diện cơ đáy chậu | 5 lượt thở sâu',
                 color: '#a78bfa',
                 bg: 'rgba(139, 92, 246, 0.15)',
                 border: 'rgba(139, 92, 246, 0.35)',
                 icon: '🌙',
                 stages: [
-                    { type: 'reverse', squeeze: 12, relax: 8, reps: 12 },
+                    { type: 'reverse', squeeze: 12, relax: 8, reps: 15 },
                     { type: 'breathing', squeeze: 5, relax: 10, reps: 5 }
                 ]
             }
         },
         female: {
             goodMorning: {
-                name: 'Phục Hồi Đa Điểm',
-                meta: '50 lượt co thắt phản xạ siêu nhanh 1s siết - 1s thả đàn hồi sâu',
+                name: 'Đàn Hồi Tối Đa',
+                meta: '50 lượt nhấp phản xạ siêu nhanh 1s siết - 1s thả rèn độ săn chắc đàn hồi chậu',
                 color: '#ec4899',
                 bg: 'rgba(236, 72, 153, 0.15)',
                 border: 'rgba(236, 72, 153, 0.35)',
@@ -402,27 +406,28 @@ const clinicalLevels = {
                 ]
             },
             powerCombo: {
-                name: 'Bậc Thầy Co Thắt',
-                meta: 'Siết siêu sâu 12s - thả 10s 10 lượt | 5 lượt co thắt nấc thang',
+                name: 'Bậc Thầy Co Thắt & Thư Giãn',
+                meta: 'Siết giữ cực hạn 12s 8 lượt | 10 lượt Kegel ngược sâu 8s | 5 lượt thở phục hồi',
                 color: '#a855f7',
                 bg: 'rgba(168, 85, 247, 0.15)',
                 border: 'rgba(168, 85, 247, 0.35)',
                 icon: '★',
                 stages: [
-                    { type: 'normal', squeeze: 12, relax: 10, reps: 10 },
-                    { type: 'normal', squeeze: 8, relax: 8, reps: 5 }
+                    { type: 'normal', squeeze: 12, relax: 12, reps: 8 },
+                    { type: 'reverse', squeeze: 8, relax: 6, reps: 10 },
+                    { type: 'breathing', squeeze: 5, relax: 10, reps: 5 }
                 ]
             },
             nightRecovery: {
-                name: 'Trẻ Hóa Cơ Hệ Sinh Dục',
-                meta: '12 lượt Kegel ngược giữ cực đại 12s làm mới tế bào cơ sàn chậu',
+                name: 'Trẻ Hóa Hệ Sinh Dục Toàn Diện',
+                meta: '15 lượt Kegel ngược cực đại 12s giải tỏa căng thẳng tử cung chậu | 8 lượt thở sâu',
                 color: '#8b5cf6',
                 bg: 'rgba(139, 92, 246, 0.15)',
                 border: 'rgba(139, 92, 246, 0.35)',
                 icon: '🌙',
                 stages: [
-                    { type: 'reverse', squeeze: 12, relax: 8, reps: 12 },
-                    { type: 'breathing', squeeze: 5, relax: 10, reps: 10 }
+                    { type: 'reverse', squeeze: 12, relax: 8, reps: 15 },
+                    { type: 'breathing', squeeze: 5, relax: 10, reps: 8 }
                 ]
             }
         }
