@@ -2971,7 +2971,7 @@ function bindPWAUpdateChecker() {
                             
                             setTimeout(() => {
                                 btnChecks.forEach(b => {
-                                    b.innerHTML = `VER v1.1.47 PRO`;
+                                    b.innerHTML = `VER v1.1.48 PRO`;
                                 });
                             }, 2500);
                         }, 1200);
@@ -2979,14 +2979,14 @@ function bindPWAUpdateChecker() {
                         console.warn('Lỗi kiểm tra cập nhật:', err);
                         btnChecks.forEach(b => {
                             b.classList.remove('checking');
-                            b.innerHTML = `VER v1.1.47 PRO`;
+                            b.innerHTML = `VER v1.1.48 PRO`;
                         });
                     });
                 }).catch(err => {
                     console.warn('Service worker không sẵn sàng:', err);
                     btnChecks.forEach(b => {
                         b.classList.remove('checking');
-                        b.innerHTML = `VER v1.1.47 PRO`;
+                        b.innerHTML = `VER v1.1.48 PRO`;
                     });
                 });
             } else {
@@ -2994,7 +2994,7 @@ function bindPWAUpdateChecker() {
                     btnChecks.forEach(b => {
                         b.classList.remove('checking');
                         b.innerHTML = `Không hỗ trợ PWA`;
-                        setTimeout(() => { b.innerHTML = `VER v1.1.47 PRO`; }, 2500);
+                        setTimeout(() => { b.innerHTML = `VER v1.1.48 PRO`; }, 2500);
                     });
                 }, 1000);
             }
