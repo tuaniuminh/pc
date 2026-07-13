@@ -3055,3 +3055,34 @@ body.gender-female .level-tab-btn.active {
     box-shadow: 0 4px 12px rgba(236, 72, 153, 0.2);
 }
 
+
+/* --- MOBILE TOP BAR STYLES --- */
+.mobile-top-bar {
+    display: none;
+}
+
+@media (max-width: 1024px) {
+    .mobile-top-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+        background: rgba(10, 15, 30, 0.85);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border-color);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        margin: -2rem -2rem 2rem -2rem;
+        width: calc(100% + 4rem);
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 768px) {
+    .mobile-top-bar {
+        margin: -1.5rem -1rem 1.5rem -1rem;
+        width: calc(100% + 2rem);
+    }
+}

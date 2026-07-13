@@ -2923,86 +2923,81 @@ function showPWAUpdateToast(worker) {
 }
 
 function bindPWAUpdateChecker() {
-    const btnCheck = document.getElementById('btn-check-update');
-    if (!btnCheck) return;
-    
-    btnCheck.addEventListener('click', () => {
-        if (btnCheck.classList.contains('checking')) return;
-        
-        btnCheck.classList.add('checking');
-        const originalContent = btnCheck.innerHTML;
-        
-        // Cập nhật giao diện nút đang kiểm tra
-        btnCheck.innerHTML = `
-            <svg class="icon-refresh" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; animation: spin 1s linear infinite;">
-                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-            </svg>Đang kiểm tra...
-        `;
-        
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.ready.then(reg => {
-                // Đăng ký một biến theo dõi xem có phát hiện updatefound không
-                let updateFound = false;
-                
-                const onUpdateFound = () => {
-                    updateFound = true;
-                };
-                
-                reg.addEventListener('updatefound', onUpdateFound);
-                
-                // Thực hiện kiểm tra cập nhật từ server
-                reg.update().then(() => {
-                    setTimeout(() => {
-                        reg.removeEventListener('updatefound', onUpdateFound);
-                        btnCheck.classList.remove('checking');
-                        
-                        if (updateFound || reg.waiting || reg.installing) {
-                            btnCheck.innerHTML = `
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
-                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                                    <polyline points="22 4 12 14.01 9 11.01"/>
-                                </svg>Có bản mới!
-                            `;
-                            // Show update toast if it didn't trigger automatically
-                            if (reg.waiting) showPWAUpdateToast(reg.waiting);
-                            if (reg.installing) {
-                                reg.installing.addEventListener('statechange', () => {
-                                    if (reg.installing.state === 'installed') {
-                                        showPWAUpdateToast(reg.installing);
-                                    }
+    const btnChecks = document.querySelectorAll('.version-update-container');
+    btnChecks.forEach(btnCheck => {
+        btnCheck.addEventListener('click', () => {
+            if (btnCheck.classList.contains('checking')) return;
+            
+            btnChecks.forEach(b => {
+                b.classList.add('checking');
+                b.innerHTML = `
+                    <svg class="icon-refresh" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; animation: spin 1s linear infinite;">
+                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                    </svg>Đang kiểm tra...
+                `;
+            });
+            
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.ready.then(reg => {
+                    let updateFound = false;
+                    const onUpdateFound = () => { updateFound = true; };
+                    reg.addEventListener('updatefound', onUpdateFound);
+                    
+                    reg.update().then(() => {
+                        setTimeout(() => {
+                            reg.removeEventListener('updatefound', onUpdateFound);
+                            btnChecks.forEach(b => b.classList.remove('checking'));
+                            
+                            if (updateFound || reg.waiting || reg.installing) {
+                                btnChecks.forEach(b => {
+                                    b.innerHTML = `
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
+                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                            <polyline points="22 4 12 14.01 9 11.01"/>
+                                        </svg>Có bản mới!
+                                    `;
+                                });
+                                if (reg.waiting) showPWAUpdateToast(reg.waiting);
+                            } else {
+                                btnChecks.forEach(b => {
+                                    b.innerHTML = `
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
+                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                            <polyline points="22 4 12 14.01 9 11.01"/>
+                                        </svg>Bản mới nhất
+                                    `;
                                 });
                             }
-                        } else {
-                            btnCheck.innerHTML = `
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
-                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                                    <polyline points="22 4 12 14.01 9 11.01"/>
-                                </svg>Bản mới nhất
-                            `;
-                        }
-                        
-                        // Khôi phục nút sau 2.5 giây
-                        setTimeout(() => {
-                            btnCheck.innerHTML = originalContent;
-                        }, 2500);
-                        
-                    }, 1200); // Tạo độ trễ mượt mà để hiển thị hiệu ứng xoay icon
+                            
+                            setTimeout(() => {
+                                btnChecks.forEach(b => {
+                                    b.innerHTML = `VER v1.1.46 PRO`;
+                                });
+                            }, 2500);
+                        }, 1200);
+                    }).catch(err => {
+                        console.warn('Lỗi kiểm tra cập nhật:', err);
+                        btnChecks.forEach(b => {
+                            b.classList.remove('checking');
+                            b.innerHTML = `VER v1.1.46 PRO`;
+                        });
+                    });
                 }).catch(err => {
-                    console.warn('Lỗi kiểm tra cập nhật:', err);
-                    btnCheck.classList.remove('checking');
-                    btnCheck.innerHTML = originalContent;
+                    console.warn('Service worker không sẵn sàng:', err);
+                    btnChecks.forEach(b => {
+                        b.classList.remove('checking');
+                        b.innerHTML = `VER v1.1.46 PRO`;
+                    });
                 });
-            }).catch(err => {
-                console.warn('Service worker không sẵn sàng:', err);
-                btnCheck.classList.remove('checking');
-                btnCheck.innerHTML = originalContent;
-            });
-        } else {
-            setTimeout(() => {
-                btnCheck.classList.remove('checking');
-                btnCheck.innerHTML = `Không hỗ trợ PWA`;
-                setTimeout(() => { btnCheck.innerHTML = originalContent; }, 2500);
-            }, 1000);
-        }
+            } else {
+                setTimeout(() => {
+                    btnChecks.forEach(b => {
+                        b.classList.remove('checking');
+                        b.innerHTML = `Không hỗ trợ PWA`;
+                        setTimeout(() => { b.innerHTML = `VER v1.1.46 PRO`; }, 2500);
+                    });
+                }, 1000);
+            }
+        });
     });
 }
