@@ -2349,7 +2349,7 @@ function renderStats() {
             return;
         }
 
-        elements.historyLogBody.innerHTML = state.history.slice(0, 10).map(log => {
+        elements.historyLogBody.innerHTML = state.history.map(log => {
             const date = new Date(log.timestamp);
             const timeStr = `${date.toLocaleDateString('vi-VN')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
             
