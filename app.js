@@ -23,6 +23,8 @@ const state = {
     totalSessions: 0,
     totalRepsCompleted: 0,
     gender: 'male', // male, female
+    birthYear: null,
+    geminiApiKey: null,
     
     // Custom workout builder state
     customWorkouts: [],
@@ -870,6 +872,8 @@ function initApp() {
             btn.classList.remove('active');
         }
     });
+    
+    initProfileAndAI();
 }
 
 // Automatically select default workout level based on the time of day
@@ -2187,6 +2191,9 @@ function saveData() {
     localStorage.setItem('pc_flex_total_sessions', state.totalSessions);
     localStorage.setItem('pc_flex_total_reps', state.totalRepsCompleted);
     localStorage.setItem('pc_flex_custom_workouts', JSON.stringify(state.customWorkouts));
+    localStorage.setItem('pc_flex_gender', state.gender);
+    localStorage.setItem('pc_flex_birth_year', state.birthYear || '');
+    localStorage.setItem('pc_flex_gemini_key', state.geminiApiKey || '');
 }
 
 function loadData() {
@@ -2196,6 +2203,8 @@ function loadData() {
         state.totalSessions = parseInt(localStorage.getItem('pc_flex_total_sessions')) || 0;
         state.customWorkouts = JSON.parse(localStorage.getItem('pc_flex_custom_workouts')) || [];
         state.gender = localStorage.getItem('pc_flex_gender') || 'male';
+        state.birthYear = localStorage.getItem('pc_flex_birth_year') || '';
+        state.geminiApiKey = localStorage.getItem('pc_flex_gemini_key') || '';
         state.totalRepsCompleted = state.history.reduce((sum, log) => {
             const level = log.level;
             const reps = log.config ? (log.config.reps || 0) : (log.reps || 0);
@@ -2921,6 +2930,247 @@ function showPWAUpdateToast(worker) {
         };
     }
 }
+
+function initProfileAndAI() {
+    const birthYearInput = document.getElementById('profile-birth-year');
+    const geminiKeyInput = document.getElementById('profile-gemini-key');
+    
+    if (birthYearInput) {
+        birthYearInput.value = state.birthYear || '';
+    }
+    if (geminiKeyInput) {
+        geminiKeyInput.value = state.geminiApiKey || '';
+    }
+
+    const btnSaveProfile = document.getElementById('btn-save-profile');
+    if (btnSaveProfile) {
+        btnSaveProfile.addEventListener('click', () => {
+            // Save birth year
+            const yearVal = birthYearInput ? birthYearInput.value.trim() : '';
+            if (yearVal) {
+                const yearInt = parseInt(yearVal);
+                const currentYear = new Date().getFullYear();
+                if (isNaN(yearInt) || yearInt < 1920 || yearInt > currentYear) {
+                    alert('Vui lòng nhập năm sinh hợp lệ (ví dụ: 1995)!');
+                    return;
+                }
+                state.birthYear = yearVal;
+            } else {
+                state.birthYear = null;
+            }
+
+            // Save Gemini API Key
+            const keyVal = geminiKeyInput ? geminiKeyInput.value.trim() : '';
+            state.geminiApiKey = keyVal || null;
+
+            saveData();
+            alert('Hồ sơ tập luyện đã được lưu trữ thành công!');
+        });
+    }
+
+    // AI Analysis Event Listeners
+    const btnAIAnalyze = document.getElementById('btn-ai-analyze');
+    if (btnAIAnalyze) {
+        btnAIAnalyze.addEventListener('click', () => {
+            triggerAIAnalysis();
+        });
+    }
+
+    const closeButtons = [
+        document.getElementById('btn-close-ai-modal'),
+        document.getElementById('btn-close-ai-modal-footer')
+    ];
+    closeButtons.forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const modal = document.getElementById('ai-modal');
+                if (modal) modal.style.display = 'none';
+            });
+        }
+    });
+}
+
+let isQueryingAI = false;
+async function triggerAIAnalysis() {
+    if (isQueryingAI) return;
+    
+    const modal = document.getElementById('ai-modal');
+    const contentContainer = document.getElementById('ai-analysis-content');
+    
+    if (!modal || !contentContainer) return;
+    
+    // Open Modal
+    modal.style.display = 'flex';
+    
+    // Show Loading
+    contentContainer.innerHTML = `
+        <div class="ai-loading-container">
+            <div class="ai-pulse-orb">🤖</div>
+            <div style="color: var(--text-light); font-weight: 500; font-size: 0.95rem;">Đang kết nối với Trợ lý A.I...</div>
+            <p style="color: var(--text-muted); font-size: 0.8rem; max-width: 340px; margin: 0; line-height: 1.5;">
+                Trí tuệ nhân tạo đang tổng hợp chuỗi chặng co thắt cơ sàn chậu và phân tích sinh lý học lâm sàng của bạn.
+            </p>
+        </div>
+    `;
+    
+    isQueryingAI = true;
+    
+    try {
+        const apiKey = state.geminiApiKey;
+        if (!apiKey) {
+            contentContainer.innerHTML = `
+                <div style="padding: 1.5rem; text-align: center; color: #ef4444;">
+                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">🔑</div>
+                    <h4 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; color: #f87171;">Chưa Có Gemini API Key</h4>
+                    <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.55;">Vui lòng điền mã khóa Gemini API Key của bạn ở khung "Hồ Sơ Tập Luyện" ở trên và nhấn "Lưu hồ sơ" trước khi chạy phân tích.</p>
+                </div>
+            `;
+            isQueryingAI = false;
+            return;
+        }
+        
+        // Prepare variables for prompt
+        const ageStr = state.birthYear ? `${new Date().getFullYear() - parseInt(state.birthYear)} tuổi` : "Không rõ";
+        const genderStr = state.gender === 'female' ? 'Nữ giới' : 'Nam giới';
+        
+        // Format history summary
+        let historyText = "";
+        if (!state.history || state.history.length === 0) {
+            historyText = "Không có lịch sử luyện tập nào được ghi nhận. Người dùng chưa tập luyện buổi nào.";
+        } else {
+            historyText = state.history.slice(-30).map(log => {
+                const date = log.timestamp ? log.timestamp.split('T')[0] : 'Không rõ';
+                
+                let levelName = log.level;
+                if (log.level === 'goodMorning') {
+                    levelName = state.gender === 'female' ? 'Bình Minh Tươi Trẻ' : 'Chào Buổi Sáng';
+                } else if (log.level === 'powerCombo') {
+                    levelName = state.gender === 'female' ? 'Combo Sức Bền' : 'Combo Sức Mạnh';
+                } else if (log.level === 'nightRecovery') {
+                    levelName = state.gender === 'female' ? 'Phục Hồi Nhẹ Nhàng' : 'Phục Hồi Ban Đêm';
+                } else if (log.level && log.level.startsWith('custom_')) {
+                    levelName = 'Bài tập tự thiết kế';
+                } else if (log.level === 'custom') {
+                    levelName = 'Bài tập tùy chỉnh';
+                }
+                
+                const config = log.config ? `(Siết: ${log.config.squeeze}s, Thả: ${log.config.relax}s, Lượt: ${log.config.reps})` : '';
+                return `- Ngày ${date}: Tập bài "${levelName}" ${config}`;
+            }).join('\n');
+        }
+
+        const systemPrompt = `Bạn là một Bác sĩ chuyên khoa đầu ngành về Nam khoa và Phụ khoa, đồng thời là chuyên gia vật lý trị liệu phục hồi chức năng cơ sàn chậu (cơ mu cụt - PC).
+Nhiệm vụ của bạn là phân tích dữ liệu luyện tập của người dùng, đưa ra những nhận xét lâm sàng chuyên nghiệp, chính xác, mang tính động viên và hướng dẫn chuyên khoa hữu ích.
+
+Thông tin người dùng:
+- Giới tính sinh học: ${genderStr}
+- Độ tuổi: ${ageStr}
+
+Nhật ký 30 buổi tập gần nhất:
+${historyText}
+
+Hãy viết một báo cáo nhận định chi tiết bằng tiếng Việt, định dạng Markdown chuẩn với các phần cụ thể sau:
+1. **📊 Phân tích Tiến Trình**: Nhận xét về tần suất, mức độ kiên trì và khối lượng bài tập tích lũy. Đánh giá xem cường độ tập đã hợp lý với nhóm tuổi và giới tính sinh học chưa.
+2. **🩺 Nhận Định Sinh Lý Lâm Sàng**: Giải thích cơ chế sinh học: Việc tập luyện như hiện tại mang lại lợi ích cụ thể gì cho nhóm cơ sàn chậu của họ (Nam: Kiểm soát phản xạ xuất tinh, tăng áp lực thể hang cải thiện độ cứng, ngừa phì đại tuyến tiền liệt; Nữ: Củng cố cơ chậu nâng đỡ bàng quang, tử cung ngăn sa tạng, tăng đàn hồi âm đạo, kiểm soát són tiểu stress).
+3. **💡 Khuyên Nghị Chuyên Khoa**: Đề xuất hướng đi tiếp theo (có nên nâng cấp cấp độ tập không, nên tăng thời gian siết hay tăng thời gian nghỉ chuyển, các lưu ý về tư thế và kết hợp nhịp thở cơ hoành khi luyện tập).
+
+Hãy giữ giọng điệu bác sĩ ân cần, nghiêm túc, khoa học và giàu chuyên môn. Sử dụng các icon emoji thích hợp để văn bản trực quan.`;
+
+        // Direct fetch call to Gemini 3.5 Flash API
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
+        
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                contents: [
+                    {
+                        parts: [
+                            {
+                                text: systemPrompt
+                            }
+                        ]
+                    }
+                ]
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Gemini API returned status code: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const markdown = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không thể phản hồi từ Gemini 3.5 Flash. Vui lòng kiểm tra API Key.";
+        
+        // Render Markdown to HTML and inject
+        contentContainer.innerHTML = renderMarkdownToHTML(markdown);
+        
+    } catch(err) {
+        console.error('Error calling Gemini direct API:', err);
+        contentContainer.innerHTML = `
+            <div style="padding: 1.5rem; text-align: center; color: #ef4444;">
+                <div style="font-size: 2.5rem; margin-bottom: 1rem;">❌</div>
+                <h4 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; color: #f87171;">Lỗi Kết Nối Phân Tích</h4>
+                <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.55;">
+                    Có lỗi xảy ra khi truyền tải dữ liệu hoặc gọi Gemini 3.5 Flash: ${err.message}.<br>
+                    Vui lòng đảm bảo thiết bị đã kết nối Internet và API Key của bạn hợp lệ.
+                </p>
+            </div>
+        `;
+    } finally {
+        isQueryingAI = false;
+    }
+}
+
+function renderMarkdownToHTML(markdown) {
+    if (!markdown) return '';
+    let html = markdown;
+    
+    // Replace Headers ###
+    html = html.replace(/^### (.*?)$/gm, '<h4 style="color: var(--color-primary); font-size: 1rem; font-weight: 700; margin-top: 1.25rem; margin-bottom: 0.5rem;">$1</h4>');
+    // Replace Headers ##
+    html = html.replace(/^## (.*?)$/gm, '<h3 style="color: var(--color-primary); font-size: 1.1rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 4px;">$1</h3>');
+    // Replace Bold Text **text**
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--text-light); font-weight: 700;">$1</strong>');
+    // Replace Bullets (- or *)
+    html = html.replace(/^\- (.*?)$/gm, '<li style="margin-left: 1.25rem; margin-bottom: 0.4rem; list-style-type: disc;">$1</li>');
+    html = html.replace(/^\* (.*?)$/gm, '<li style="margin-left: 1.25rem; margin-bottom: 0.4rem; list-style-type: disc;">$1</li>');
+    
+    // Wrap lists <li> in <ul>
+    const lines = html.split('\n');
+    let inList = false;
+    const processedLines = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith('<li')) {
+            if (!inList) {
+                processedLines.push('<ul style="margin-bottom: 0.85rem; margin-top: 0.25rem;">');
+                inList = true;
+            }
+            processedLines.push(lines[i]);
+        } else {
+            if (inList) {
+                processedLines.push('</ul>');
+                inList = false;
+            }
+            if (line && !line.startsWith('<h')) {
+                processedLines.push(`<p style="margin-bottom: 0.85rem;">${lines[i]}</p>`);
+            } else {
+                processedLines.push(lines[i]);
+            }
+        }
+    }
+    if (inList) {
+        processedLines.push('</ul>');
+    }
+    
+    return processedLines.join('\n');
+}
+
+
 
 function bindPWAUpdateChecker() {
     const btnChecks = document.querySelectorAll('.version-update-container');

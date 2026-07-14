@@ -3085,3 +3085,199 @@ body.gender-female .level-tab-btn.active {
         width: calc(100% + 2rem);
     }
 }
+
+
+/* --- USER PROFILE CARD STYLES (Tiến Độ Tab) --- */
+.profile-card {
+    background: linear-gradient(135deg, rgba(16, 23, 42, 0.45), rgba(8, 12, 24, 0.45));
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.profile-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-light);
+    margin: 0;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.profile-desc {
+    font-size: 0.825rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0;
+    margin-bottom: 1.25rem;
+}
+
+.profile-form-grid {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.profile-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.profile-form-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.profile-input {
+    padding: 0.55rem 1rem;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background: rgba(4, 6, 12, 0.4);
+    color: var(--text-light);
+    font-size: 0.875rem;
+    width: 130px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.profile-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 10px rgba(0, 245, 212, 0.15);
+}
+
+.btn-profile-save {
+    padding: 0.55rem 1.5rem !important;
+    border-radius: 10px !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    color: #c4b5fd;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-profile-save:hover {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: rgba(139, 92, 246, 0.5);
+    transform: translateY(-1px);
+}
+
+.btn-profile-save:active {
+    transform: translateY(0);
+}
+
+/* --- AI MODAL STYLES --- */
+.ai-modal-card {
+    background: linear-gradient(135deg, rgba(16, 23, 42, 0.98), rgba(8, 12, 24, 0.98));
+    border: 1px solid rgba(0, 245, 212, 0.15);
+    border-radius: 28px;
+    width: 100%;
+    max-width: 600px;
+    padding: 2.25rem;
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 245, 212, 0.08);
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    animation: authScaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.ai-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.ai-header-icon {
+    font-size: 1.75rem;
+    background: rgba(0, 245, 212, 0.08);
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(0, 245, 212, 0.2);
+    box-shadow: 0 0 15px rgba(0, 245, 212, 0.1);
+}
+
+.ai-header-text h3 {
+    color: var(--text-light);
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.ai-header-text p {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    margin: 0;
+    margin-top: 2px;
+}
+
+.ai-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    line-height: 1.65;
+    margin-bottom: 1.25rem;
+    padding-right: 0.5rem;
+    scrollbar-width: thin;
+}
+
+.ai-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 1rem;
+}
+
+/* AI PULSING LOADING STATE */
+.ai-loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    gap: 1.5rem;
+    text-align: center;
+}
+
+.ai-pulse-orb {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--color-primary), transparent 70%);
+    animation: aiPulse 1.5s infinite ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    border: 1px solid rgba(0, 245, 212, 0.3);
+}
+
+@keyframes aiPulse {
+    0% { transform: scale(0.92); opacity: 0.65; box-shadow: 0 0 10px rgba(0, 245, 212, 0.3); }
+    50% { transform: scale(1.08); opacity: 1; box-shadow: 0 0 30px rgba(0, 245, 212, 0.7); }
+    100% { transform: scale(0.92); opacity: 0.65; box-shadow: 0 0 10px rgba(0, 245, 212, 0.3); }
+}

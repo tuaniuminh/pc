@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.1.48">
+    <link rel="stylesheet" href="styles.css?v=1.1.50">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -20,7 +20,7 @@
                     <img src="./logo.png" alt="PC Flex Logo" class="brand-logo">
                 </div>
                 <div class="version-update-container" id="btn-check-update" title="Kiểm tra bản cập nhật">
-                    VER v1.1.48 PRO
+                    VER v1.1.50 PRO
                 </div>
             </div>
             
@@ -68,7 +68,7 @@
                     <img src="./logo.png" alt="PC Flex Logo" class="brand-logo">
                 </div>
                 <div class="version-update-container" title="Kiểm tra bản cập nhật">
-                    VER v1.1.48 PRO
+                    VER v1.1.50 PRO
                 </div>
             </header>
             
@@ -668,6 +668,40 @@
                     </div>
                 </div>
 
+                <!-- User Profile Card (Nam/Nữ & Năm sinh) -->
+                <div class="profile-card">
+                    <h3 class="profile-title">👤 Hồ Sơ Tập Luyện</h3>
+                    <p class="profile-desc">Cung cấp giới tính sinh học và năm sinh chính xác để Trợ lý A.I nhận xét sinh lý học lâm sàng sát thực tế nhất.</p>
+                    
+                    <div class="profile-form-grid">
+                        <!-- Gender Selection -->
+                        <div class="profile-form-group">
+                            <label class="profile-form-label">Giới tính sinh học:</label>
+                            <div class="gender-selector" style="margin: 0;">
+                                <button class="gender-btn active btn-gender-male" id="btn-profile-gender-male" data-gender="male">Nam giới</button>
+                                <button class="gender-btn btn-gender-female" id="btn-profile-gender-female" data-gender="female">Nữ giới</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Birth Year Input -->
+                        <div class="profile-form-group">
+                            <label for="profile-birth-year" class="profile-form-label">Năm sinh:</label>
+                            <input type="number" id="profile-birth-year" class="profile-input" placeholder="Ví dụ: 1995" min="1930" max="2020">
+                        </div>
+                        
+                        <!-- Gemini API Key Input -->
+                        <div class="profile-form-group" style="flex: 1; min-width: 260px;">
+                            <label for="profile-gemini-key" class="profile-form-label">Gemini API Key:</label>
+                            <input type="password" id="profile-gemini-key" class="profile-input" style="width: 100%; box-sizing: border-box;" placeholder="Nhập khóa API (AIzaSy...)">
+                        </div>
+                        
+                        <!-- Save Button -->
+                        <div class="profile-form-group profile-submit-group">
+                            <button class="btn btn-profile-save" id="btn-save-profile">Lưu hồ sơ</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- History Log Table Card -->
                 <div class="history-card">
                     <div class="history-header">
@@ -678,6 +712,14 @@
                                     <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
                                 </svg>
                                 <span id="cloud-sync-status-text">Đồng bộ Cloud</span>
+                            </button>
+                            <button class="btn btn-secondary btn-ai-analyze-trigger" id="btn-ai-analyze" style="padding: 0.5rem 1rem !important; border-radius: 10px !important; font-size: 0.85rem !important; font-weight: 500 !important; display: flex; align-items: center; gap: 0.4rem; background: rgba(0, 245, 212, 0.08); border: 1px solid rgba(0, 245, 212, 0.2); color: var(--color-primary); cursor: pointer; transition: all 0.2s ease;">
+                                <svg class="icon-ai" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                                    <line x1="12" y1="22.08" x2="12" y2="12"/>
+                                </svg>
+                                <span>Phân tích A.I</span>
                             </button>
                             <button class="btn btn-secondary-danger" id="btn-clear-data">Xóa dữ liệu</button>
                         </div>
@@ -755,12 +797,36 @@
         </div>
     </div>
 
+    <!-- Modal: AI Analysis Report -->
+    <div class="modal-backdrop" id="ai-modal" style="display: none;">
+        <div class="ai-modal-card">
+            <button class="modal-close-btn" id="btn-close-ai-modal">&times;</button>
+            
+            <div class="ai-modal-header">
+                <span class="ai-header-icon">🤖</span>
+                <div class="ai-header-text">
+                    <h3>Nhận Định Y Khoa A.I</h3>
+                    <p>Phân tích sinh lý chuyên khoa tự động bởi Gemini 3.5 Flash</p>
+                </div>
+            </div>
+            
+            <!-- AI Content (Scrollable) -->
+            <div class="ai-modal-body" id="ai-analysis-content">
+                <!-- Content will be injected dynamically -->
+            </div>
+            
+            <div class="ai-modal-footer">
+                <button class="btn btn-secondary" id="btn-close-ai-modal-footer">Đóng</button>
+            </div>
+        </div>
+    </div>
+
     <!-- PWA Update Toast -->
     <div class="pwa-update-toast" id="pwa-update-toast">
         <span>Ứng dụng đã có phiên bản mới!</span>
         <button id="btn-pwa-update">Cập nhật ngay</button>
     </div>
 
-    <script src="app.js?v=1.1.48"></script>
+    <script src="app.js?v=1.1.50"></script>
 </body>
 </html>
