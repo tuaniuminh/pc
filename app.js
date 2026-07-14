@@ -2383,27 +2383,29 @@ function renderStats() {
             const timeStr = `${date.toLocaleDateString('vi-VN')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
             
             let levelLabel = '';
-            switch(log.level) {
-                case 'goodMorning': 
-                    levelLabel = state.gender === 'female' ? 'Bình Minh Tươi Trẻ' : 'Chào Buổi Sáng';
-                    break;
-                case 'powerCombo':
-                    levelLabel = state.gender === 'female' ? 'Combo Sức Bền' : 'Combo Sức Mạnh';
-                    break;
-                case 'nightRecovery':
-                    levelLabel = state.gender === 'female' ? 'Phục Hồi Nhẹ Nhàng' : 'Phục Hồi Ban Đêm';
-                    break;
-                case 'beginner': levelLabel = 'Cấp độ 1 (Nhập Môn)'; break;
-                case 'intermediate': levelLabel = 'Cấp độ 2 (Tăng Cường)'; break;
-                case 'advanced': levelLabel = 'Cấp độ 3 (Sức Bền)'; break;
-                case 'fastFlicks': levelLabel = 'Cấp độ 4 (Phản Xạ)'; break;
-                case 'ladder': levelLabel = 'Cấp độ 5 (Bậc Thầy)'; break;
-                default: 
-                    if (log.level && log.level.startsWith('custom_')) {
-                        levelLabel = 'Thiết kế riêng';
-                    } else {
-                        levelLabel = 'Tự do / Tùy chỉnh';
-                    }
+            const resolvedTab = resolveLevelTab(log);
+            if (resolvedTab) {
+                const genderKey = state.gender === 'female' ? 'female' : 'male';
+                const levelConfig = clinicalLevels[resolvedTab]?.[genderKey]?.[log.level];
+                if (levelConfig) {
+                    levelLabel = levelConfig.name;
+                }
+            }
+            
+            if (!levelLabel) {
+                switch(log.level) {
+                    case 'beginner': levelLabel = 'Cấp độ 1 (Nhập Môn)'; break;
+                    case 'intermediate': levelLabel = 'Cấp độ 2 (Tăng Cường)'; break;
+                    case 'advanced': levelLabel = 'Cấp độ 3 (Sức Bền)'; break;
+                    case 'fastFlicks': levelLabel = 'Cấp độ 4 (Phản Xạ)'; break;
+                    case 'ladder': levelLabel = 'Cấp độ 5 (Bậc Thầy)'; break;
+                    default: 
+                        if (log.level && log.level.startsWith('custom_')) {
+                            levelLabel = 'Thiết kế riêng';
+                        } else {
+                            levelLabel = 'Tự do / Tùy chỉnh';
+                        }
+                }
             }
 
             const reverseReps = getReverseRepsCount(log);
@@ -2994,14 +2996,16 @@ function showPWAUpdateToast(worker) {
 
 function getWorkoutTimingDescription(log) {
     let stages = [];
+    const levelTab = resolveLevelTab(log);
+    
     if (log.level && log.level.startsWith('custom_')) {
         const workout = state.customWorkouts.find(w => w.id === log.level);
         if (workout && workout.stages) {
             stages = workout.stages;
         }
-    } else if (log.level && log.level !== 'custom' && log.levelTab) {
+    } else if (log.level && log.level !== 'custom' && levelTab) {
         const genderKey = state.gender === 'female' ? 'female' : 'male';
-        const levelConfig = clinicalLevels[log.levelTab]?.[genderKey]?.[log.level];
+        const levelConfig = clinicalLevels[levelTab]?.[genderKey]?.[log.level];
         if (levelConfig && levelConfig.stages) {
             stages = levelConfig.stages;
         }
@@ -3026,15 +3030,38 @@ function getWorkoutTimingDescription(log) {
     return `Siết: <strong>${sq}s</strong> <span class="divider">•</span> Thả: <strong>${rx}s</strong>`;
 }
 
+function resolveLevelTab(log) {
+    if (log.levelTab) return log.levelTab;
+    
+    if (log.level === 'goodMorning' || log.level === 'powerCombo' || log.level === 'nightRecovery') {
+        const genderKey = state.gender === 'female' ? 'female' : 'male';
+        const totalReps = log.config ? log.config.reps : 0;
+        
+        for (let tab = 1; tab <= 5; tab++) {
+            const levelConfig = clinicalLevels[tab]?.[genderKey]?.[log.level];
+            if (levelConfig && levelConfig.stages) {
+                const calculatedReps = levelConfig.stages.reduce((sum, stage) => sum + (stage.reps || 0), 0);
+                if (calculatedReps === totalReps) {
+                    return tab;
+                }
+            }
+        }
+        return 1; // Default fallback to Level 1
+    }
+    return null;
+}
+
 function getReverseRepsCount(log) {
     if (log.config && typeof log.config.reverseReps === 'number') {
         return log.config.reverseReps;
     }
     
+    const levelTab = resolveLevelTab(log);
+    
     // Fallback: look up in clinicalLevels
-    if (log.level && !log.level.startsWith('custom_') && log.level !== 'custom' && log.levelTab) {
+    if (log.level && !log.level.startsWith('custom_') && log.level !== 'custom' && levelTab) {
         const genderKey = state.gender === 'female' ? 'female' : 'male';
-        const levelConfig = clinicalLevels[log.levelTab]?.[genderKey]?.[log.level];
+        const levelConfig = clinicalLevels[levelTab]?.[genderKey]?.[log.level];
         if (levelConfig && levelConfig.stages) {
             return levelConfig.stages.reduce((sum, stage) => {
                 return sum + (stage.type === 'reverse' ? (stage.reps || 0) : 0);
