@@ -2415,22 +2415,31 @@ function renderStats() {
             ` : '';
 
             return `
-                <div class="history-item">
-                    <div class="history-item-left">
-                        <div class="history-item-icon">🏆</div>
-                        <div class="history-item-meta">
-                            <span class="history-item-level">${levelLabel}</span>
-                            <span class="history-item-time">${timeStr}</span>
+                <div class="history-item" onclick="this.classList.toggle('expanded')">
+                    <div class="history-item-summary">
+                        <div class="history-item-left">
+                            <div class="history-item-icon">🏆</div>
+                            <div class="history-item-meta">
+                                <span class="history-item-level">${levelLabel}</span>
+                                <span class="history-item-time">${timeStr}</span>
+                            </div>
+                        </div>
+                        <div class="history-item-chevron">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
                         </div>
                     </div>
-                    <div class="history-item-right">
-                        <div class="history-item-config">
-                            ${getWorkoutTimingDescription(log)}
-                            <span class="divider">•</span>
-                            <span>Hiệp: <strong>${log.config.reps}</strong> lượt</span>
-                            ${reverseHtml}
+                    <div class="history-item-details">
+                        <div class="history-item-details-content">
+                            <div class="history-item-config">
+                                ${getWorkoutTimingDescription(log)}
+                                <span class="divider">•</span>
+                                <span>Hiệp: <strong>${log.config.reps}</strong> lượt</span>
+                                ${reverseHtml}
+                            </div>
+                            <span class="badge badge-success">Hoàn thành</span>
                         </div>
-                        <span class="badge badge-success">Hoàn thành</span>
                     </div>
                 </div>
             `;
