@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.1.52">
+    <link rel="stylesheet" href="styles.css?v=1.1.53">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -20,7 +20,7 @@
                     <img src="./logo.png" alt="PC Flex Logo" class="brand-logo">
                 </div>
                 <div class="version-update-container" id="btn-check-update" title="Kiểm tra bản cập nhật">
-                    VER v1.1.52 PRO
+                    VER v1.1.53 PRO
                 </div>
             </div>
             
@@ -68,7 +68,7 @@
                     <img src="./logo.png" alt="PC Flex Logo" class="brand-logo">
                 </div>
                 <div class="version-update-container" title="Kiểm tra bản cập nhật">
-                    VER v1.1.52 PRO
+                    VER v1.1.53 PRO
                 </div>
             </header>
             
@@ -691,7 +691,10 @@
                         
                         <!-- Gemini API Key Input -->
                         <div class="profile-form-group" style="flex: 1; min-width: 260px;">
-                            <label for="profile-gemini-key" class="profile-form-label">Gemini API Key:</label>
+                            <label for="profile-gemini-key" class="profile-form-label" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                Gemini API Key:
+                                <a href="https://aistudio.google.com/" target="_blank" style="color: var(--color-primary); font-size: 0.725rem; font-weight: 500; text-decoration: underline; text-transform: none; letter-spacing: 0;">Lấy key tại đây</a>
+                            </label>
                             <input type="password" id="profile-gemini-key" class="profile-input" style="width: 100%; box-sizing: border-box;" placeholder="Nhập khóa API (AIzaSy...)">
                         </div>
                         
@@ -725,23 +728,10 @@
                         </div>
                     </div>
                     
-                    <div class="table-container">
-                        <table class="history-table">
-                            <thead>
-                                <tr>
-                                    <th>Thời Gian</th>
-                                    <th>Cấp Độ</th>
-                                    <th>Cấu Hình (Siết / Thả / Lượt)</th>
-                                    <th>Trạng Thái</th>
-                                </tr>
-                            </thead>
-                            <tbody id="history-log-body">
-                                <tr>
-                                    <td colspan="4" class="no-data">Chưa có lịch sử luyện tập. Hãy bắt đầu hiệp tập đầu tiên của bạn!</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div id="history-log-body" class="history-list">
+                        <!-- History logs will be dynamically inserted here -->
                     </div>
+                    <div id="history-pagination-container"></div>
                 </div>
             </section>
 
@@ -827,6 +817,6 @@
         <button id="btn-pwa-update">Cập nhật ngay</button>
     </div>
 
-    <script src="app.js?v=1.1.52"></script>
+    <script src="app.js?v=1.1.53"></script>
 </body>
 </html>

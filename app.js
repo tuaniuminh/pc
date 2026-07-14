@@ -25,6 +25,7 @@ const state = {
     gender: 'male', // male, female
     birthYear: null,
     geminiApiKey: null,
+    historyPage: 1,
     
     // Custom workout builder state
     customWorkouts: [],
@@ -2108,6 +2109,25 @@ function finishWorkout() {
 
 // --- DATA PERSISTENCE & STATISTICS ---
 function saveWorkoutLog() {
+    // Resolve workout stages to calculate reverse reps
+    let stages = [];
+    if (state.selectedLevel && state.selectedLevel.startsWith('custom_')) {
+        const workout = state.customWorkouts.find(w => w.id === state.selectedLevel);
+        if (workout && workout.stages) {
+            stages = workout.stages;
+        }
+    } else if (state.selectedLevel === 'custom') {
+        stages = [{ type: 'normal', squeeze: state.squeezeDuration, relax: state.relaxDuration, reps: state.totalReps }];
+    } else {
+        const genderKey = state.gender === 'female' ? 'female' : 'male';
+        const config = clinicalLevels[state.selectedLevelTab]?.[genderKey]?.[state.selectedLevel];
+        if (config && config.stages) {
+            stages = config.stages;
+        }
+    }
+
+    const totalReverseReps = stages.reduce((sum, stage) => sum + (stage.type === 'reverse' ? (stage.reps || 0) : 0), 0);
+
     const logEntry = {
         id: 'session_' + Date.now(),
         timestamp: new Date().toISOString(),
@@ -2116,11 +2136,13 @@ function saveWorkoutLog() {
         config: {
             squeeze: state.squeezeDuration,
             relax: state.relaxDuration,
-            reps: state.totalReps
+            reps: state.totalReps,
+            reverseReps: totalReverseReps
         },
         completed: true
     };
     
+    state.historyPage = 1; // Reset to page 1 on new workout
     state.history.unshift(logEntry); // Add to the front
     
     // Calculate Streak & Totals
@@ -2325,18 +2347,14 @@ function renderStats() {
     if (elements.historyLogBody) {
         if (state.history.length === 0) {
             elements.historyLogBody.innerHTML = `
-                <tr>
-                    <td colspan="4" class="no-data">
-                        <div class="empty-history-visual" style="padding: 2.5rem 1rem; text-align: center;">
-                            <div class="empty-icon" style="font-size: 2.8rem; margin-bottom: 0.75rem;">📊</div>
-                            <h4 style="color: var(--color-text-primary); margin-bottom: 0.5rem; font-size: 1.15rem; font-weight: 700; letter-spacing: -0.2px;">Chưa Có Nhật Ký Luyện Tập</h4>
-                            <p style="color: var(--color-text-secondary); max-width: 440px; margin: 0 auto 1.5rem auto; font-size: 0.85rem; line-height: 1.6; font-family: var(--font-secondary);">
-                                Trang "Tiến độ" này tự động ghi nhận chuỗi ngày tập liên tục (Streak), tổng số hiệp đã tập hoàn chỉnh và lịch hoạt động tuần. Hãy chọn một cấp độ ở tab <strong>Luyện tập</strong> và thực hiện trọn vẹn đến khi kết thúc hiệp, dữ liệu của bạn sẽ ngay lập tức được lưu trữ và hiển thị tại đây.
-                            </p>
-                            <button class="btn btn-primary btn-sm btn-go-practice" style="max-width: 200px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0, 245, 212, 0.25);">Bắt đầu hiệp tập ngay</button>
-                        </div>
-                    </td>
-                </tr>
+                <div class="empty-history-visual" style="padding: 2.5rem 1rem; text-align: center; width: 100%;">
+                    <div class="empty-icon" style="font-size: 2.8rem; margin-bottom: 0.75rem;">📊</div>
+                    <h4 style="color: var(--color-text-primary); margin-bottom: 0.5rem; font-size: 1.15rem; font-weight: 700; letter-spacing: -0.2px;">Chưa Có Nhật Ký Luyện Tập</h4>
+                    <p style="color: var(--color-text-secondary); max-width: 440px; margin: 0 auto 1.5rem auto; font-size: 0.85rem; line-height: 1.6; font-family: var(--font-secondary);">
+                        Trang "Tiến độ" này tự động ghi nhận chuỗi ngày tập liên tục (Streak), tổng số hiệp đã tập hoàn chỉnh và lịch hoạt động tuần. Hãy chọn một cấp độ ở tab <strong>Luyện tập</strong> và thực hiện trọn vẹn đến khi kết thúc hiệp, dữ liệu của bạn sẽ ngay lập tức được lưu trữ và hiển thị tại đây.
+                    </p>
+                    <button class="btn btn-primary btn-sm btn-go-practice" style="max-width: 200px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0, 245, 212, 0.25);">Bắt đầu hiệp tập ngay</button>
+                </div>
             `;
             setTimeout(() => {
                 const btn = document.querySelector('.btn-go-practice');
@@ -2349,32 +2367,76 @@ function renderStats() {
             return;
         }
 
-        elements.historyLogBody.innerHTML = state.history.map(log => {
+        // Guard against page out of bounds
+        const totalPages = Math.ceil(state.history.length / 15) || 1;
+        if (state.historyPage > totalPages) {
+            state.historyPage = totalPages;
+        }
+
+        const pageSize = 15;
+        const startIndex = (state.historyPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const pageHistory = state.history.slice(startIndex, endIndex);
+
+        elements.historyLogBody.innerHTML = pageHistory.map(log => {
             const date = new Date(log.timestamp);
             const timeStr = `${date.toLocaleDateString('vi-VN')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
             
             let levelLabel = '';
             switch(log.level) {
-                case 'beginner': levelLabel = 'Sơ cấp (C1)'; break;
-                case 'intermediate': levelLabel = 'Trung cấp (C2)'; break;
-                case 'advanced': levelLabel = 'Nâng cao (C3)'; break;
-                case 'fastFlicks': levelLabel = 'Nhấp nhanh (C4)'; break;
-                case 'ladder': levelLabel = 'Nấc thang (C5)'; break;
-                case 'mixed': levelLabel = 'Hỗn hợp (C6)'; break;
-                case 'pyramidMixed': levelLabel = 'Hỗn hợp (C7)'; break;
-                case 'reflexMixed': levelLabel = 'Hỗn hợp (C8)'; break;
-                default: levelLabel = 'Tự do';
+                case 'goodMorning': 
+                    levelLabel = state.gender === 'female' ? 'Bình Minh Tươi Trẻ' : 'Chào Buổi Sáng';
+                    break;
+                case 'powerCombo':
+                    levelLabel = state.gender === 'female' ? 'Combo Sức Bền' : 'Combo Sức Mạnh';
+                    break;
+                case 'nightRecovery':
+                    levelLabel = state.gender === 'female' ? 'Phục Hồi Nhẹ Nhàng' : 'Phục Hồi Ban Đêm';
+                    break;
+                case 'beginner': levelLabel = 'Cấp độ 1 (Nhập Môn)'; break;
+                case 'intermediate': levelLabel = 'Cấp độ 2 (Tăng Cường)'; break;
+                case 'advanced': levelLabel = 'Cấp độ 3 (Sức Bền)'; break;
+                case 'fastFlicks': levelLabel = 'Cấp độ 4 (Phản Xạ)'; break;
+                case 'ladder': levelLabel = 'Cấp độ 5 (Bậc Thầy)'; break;
+                default: 
+                    if (log.level && log.level.startsWith('custom_')) {
+                        levelLabel = 'Thiết kế riêng';
+                    } else {
+                        levelLabel = 'Tự do / Tùy chỉnh';
+                    }
             }
 
+            const reverseReps = getReverseRepsCount(log);
+            const reverseHtml = reverseReps > 0 ? `
+                <span class="divider">•</span>
+                <span style="color: #c4b5fd; font-weight: 500;">Ngược: <strong style="color: #ddd;">${reverseReps}</strong></span>
+            ` : '';
+
             return `
-                <tr>
-                    <td>${timeStr}</td>
-                    <td><span class="badge badge-level">${levelLabel}</span></td>
-                    <td>Siết: ${log.config.squeeze}s | Thả: ${log.config.relax}s | Lượt: ${log.config.reps}</td>
-                    <td><span class="badge badge-success">Hoàn thành</span></td>
-                </tr>
+                <div class="history-item">
+                    <div class="history-item-left">
+                        <div class="history-item-icon">🏆</div>
+                        <div class="history-item-meta">
+                            <span class="history-item-level">${levelLabel}</span>
+                            <span class="history-item-time">${timeStr}</span>
+                        </div>
+                    </div>
+                    <div class="history-item-right">
+                        <div class="history-item-config">
+                            <span>Siết: <strong>${log.config.squeeze}s</strong></span>
+                            <span class="divider">•</span>
+                            <span>Thả: <strong>${log.config.relax}s</strong></span>
+                            <span class="divider">•</span>
+                            <span>Hiệp: <strong>${log.config.reps}</strong> lượt</span>
+                            ${reverseHtml}
+                        </div>
+                        <span class="badge badge-success">Hoàn thành</span>
+                    </div>
+                </div>
             `;
         }).join('');
+
+        renderHistoryPagination(state.history.length);
     }
 }
 
@@ -2383,6 +2445,7 @@ function clearAllData() {
     state.history = [];
     state.streak = 0;
     state.totalSessions = 0;
+    state.historyPage = 1;
     state.totalRepsCompleted = 0;
     
     renderStats();
@@ -2928,6 +2991,71 @@ function showPWAUpdateToast(worker) {
             worker.postMessage('SKIP_WAITING');
             toast.classList.remove('show');
         };
+    }
+}
+
+function getReverseRepsCount(log) {
+    if (log.config && typeof log.config.reverseReps === 'number') {
+        return log.config.reverseReps;
+    }
+    
+    // Fallback: look up in clinicalLevels
+    if (log.level && !log.level.startsWith('custom_') && log.level !== 'custom' && log.levelTab) {
+        const genderKey = state.gender === 'female' ? 'female' : 'male';
+        const levelConfig = clinicalLevels[log.levelTab]?.[genderKey]?.[log.level];
+        if (levelConfig && levelConfig.stages) {
+            return levelConfig.stages.reduce((sum, stage) => {
+                return sum + (stage.type === 'reverse' ? (stage.reps || 0) : 0);
+            }, 0);
+        }
+    } else if (log.level && log.level.startsWith('custom_')) {
+        const workout = state.customWorkouts.find(w => w.id === log.level);
+        if (workout && workout.stages) {
+            return workout.stages.reduce((sum, stage) => {
+                return sum + (stage.type === 'reverse' ? (stage.reps || 0) : 0);
+            }, 0);
+        }
+    }
+    return 0;
+}
+
+function renderHistoryPagination(totalItems) {
+    const container = document.getElementById('history-pagination-container');
+    if (!container) return;
+    
+    const totalPages = Math.ceil(totalItems / 15) || 1;
+    
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="history-pagination" style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+            <button class="btn btn-secondary btn-sm" id="btn-history-prev" ${state.historyPage === 1 ? 'disabled' : ''} style="padding: 0.35rem 0.85rem !important; font-size: 0.8rem !important; border-radius: 8px !important; opacity: ${state.historyPage === 1 ? 0.4 : 1}; cursor: ${state.historyPage === 1 ? 'not-allowed' : 'pointer'};">Trước</button>
+            <span id="history-page-info" style="font-size: 0.825rem; color: var(--text-muted); font-weight: 500;">Trang ${state.historyPage} / ${totalPages}</span>
+            <button class="btn btn-secondary btn-sm" id="btn-history-next" ${state.historyPage === totalPages ? 'disabled' : ''} style="padding: 0.35rem 0.85rem !important; font-size: 0.8rem !important; border-radius: 8px !important; opacity: ${state.historyPage === totalPages ? 0.4 : 1}; cursor: ${state.historyPage === totalPages ? 'not-allowed' : 'pointer'};">Sau</button>
+        </div>
+    `;
+    
+    // Bind events
+    const btnPrev = document.getElementById('btn-history-prev');
+    const btnNext = document.getElementById('btn-history-next');
+    
+    if (btnPrev && state.historyPage > 1) {
+        btnPrev.addEventListener('click', () => {
+            state.historyPage--;
+            renderStats();
+            document.getElementById('history-log-body').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+    }
+    
+    if (btnNext && state.historyPage < totalPages) {
+        btnNext.addEventListener('click', () => {
+            state.historyPage++;
+            renderStats();
+            document.getElementById('history-log-body').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
     }
 }
 
