@@ -3118,6 +3118,33 @@ function renderHistoryPagination(totalItems) {
     }
 }
 
+function getWorkoutAIDescription(log) {
+    const resolvedTab = resolveLevelTab(log);
+    let levelName = log.level;
+    let timingDesc = '';
+    let reverseReps = getReverseRepsCount(log);
+    
+    if (log.level && log.level.startsWith('custom_')) {
+        levelName = 'Bài tập tự thiết kế';
+        timingDesc = getWorkoutTimingDescription(log);
+    } else if (log.level === 'custom') {
+        levelName = 'Bài tập tùy chỉnh';
+        timingDesc = getWorkoutTimingDescription(log);
+    } else if (resolvedTab) {
+        const genderKey = state.gender === 'female' ? 'female' : 'male';
+        const levelConfig = clinicalLevels[resolvedTab]?.[genderKey]?.[log.level];
+        if (levelConfig) {
+            levelName = `Cấp độ ${resolvedTab} (${clinicalLevels[resolvedTab].name}) - ${levelConfig.name}`;
+            timingDesc = getWorkoutTimingDescription(log);
+        }
+    }
+    
+    const timingClean = timingDesc ? timingDesc.replace(/<\/?strong>/g, '') : `Siết: ${log.config.squeeze}s • Thả: ${log.config.relax}s`;
+    const reverseStr = reverseReps > 0 ? ` • Kegel ngược: ${reverseReps} lượt` : '';
+    
+    return `"${levelName}" (${timingClean} • Tổng lượt: ${log.config.reps}${reverseStr})`;
+}
+
 function initProfileAndAI() {
     const birthYearInput = document.getElementById('profile-birth-year');
     const geminiKeyInput = document.getElementById('profile-gemini-key');
@@ -3227,22 +3254,7 @@ async function triggerAIAnalysis() {
         } else {
             historyText = state.history.slice(-30).map(log => {
                 const date = log.timestamp ? log.timestamp.split('T')[0] : 'Không rõ';
-                
-                let levelName = log.level;
-                if (log.level === 'goodMorning') {
-                    levelName = state.gender === 'female' ? 'Bình Minh Tươi Trẻ' : 'Chào Buổi Sáng';
-                } else if (log.level === 'powerCombo') {
-                    levelName = state.gender === 'female' ? 'Combo Sức Bền' : 'Combo Sức Mạnh';
-                } else if (log.level === 'nightRecovery') {
-                    levelName = state.gender === 'female' ? 'Phục Hồi Nhẹ Nhàng' : 'Phục Hồi Ban Đêm';
-                } else if (log.level && log.level.startsWith('custom_')) {
-                    levelName = 'Bài tập tự thiết kế';
-                } else if (log.level === 'custom') {
-                    levelName = 'Bài tập tùy chỉnh';
-                }
-                
-                const config = log.config ? `(Siết: ${log.config.squeeze}s, Thả: ${log.config.relax}s, Lượt: ${log.config.reps})` : '';
-                return `- Ngày ${date}: Tập bài "${levelName}" ${config}`;
+                return `- Ngày ${date}: Tập bài ${getWorkoutAIDescription(log)}`;
             }).join('\n');
         }
 
