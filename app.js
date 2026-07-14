@@ -2423,9 +2423,7 @@ function renderStats() {
                     </div>
                     <div class="history-item-right">
                         <div class="history-item-config">
-                            <span>Siết: <strong>${log.config.squeeze}s</strong></span>
-                            <span class="divider">•</span>
-                            <span>Thả: <strong>${log.config.relax}s</strong></span>
+                            ${getWorkoutTimingDescription(log)}
                             <span class="divider">•</span>
                             <span>Hiệp: <strong>${log.config.reps}</strong> lượt</span>
                             ${reverseHtml}
@@ -2992,6 +2990,40 @@ function showPWAUpdateToast(worker) {
             toast.classList.remove('show');
         };
     }
+}
+
+function getWorkoutTimingDescription(log) {
+    let stages = [];
+    if (log.level && log.level.startsWith('custom_')) {
+        const workout = state.customWorkouts.find(w => w.id === log.level);
+        if (workout && workout.stages) {
+            stages = workout.stages;
+        }
+    } else if (log.level && log.level !== 'custom' && log.levelTab) {
+        const genderKey = state.gender === 'female' ? 'female' : 'male';
+        const levelConfig = clinicalLevels[log.levelTab]?.[genderKey]?.[log.level];
+        if (levelConfig && levelConfig.stages) {
+            stages = levelConfig.stages;
+        }
+    }
+    
+    if (stages.length > 0) {
+        const normalStages = stages.filter(s => s.type === 'normal');
+        if (normalStages.length > 0) {
+            const uniqueSqueezes = [...new Set(normalStages.map(s => s.squeeze))].sort((a,b)=>a-b);
+            const uniqueRelaxes = [...new Set(normalStages.map(s => s.relax))].sort((a,b)=>a-b);
+            
+            const squeezeStr = uniqueSqueezes.map(s => s + 's').join('/');
+            const relaxStr = uniqueRelaxes.map(r => r + 's').join('/');
+            
+            return `Siết: <strong>${squeezeStr}</strong> <span class="divider">•</span> Thả: <strong>${relaxStr}</strong>`;
+        }
+    }
+    
+    // Fallback
+    const sq = log.config && typeof log.config.squeeze === 'number' ? log.config.squeeze : 5;
+    const rx = log.config && typeof log.config.relax === 'number' ? log.config.relax : 5;
+    return `Siết: <strong>${sq}s</strong> <span class="divider">•</span> Thả: <strong>${rx}s</strong>`;
 }
 
 function getReverseRepsCount(log) {
