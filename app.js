@@ -1344,6 +1344,42 @@ function generateWorkoutSteps(level) {
     return { steps, phases, totalReps };
 }
 
+function getTransitionRestDuration(stage, nextStage, workoutName) {
+    const currentType = stage.type || 'normal';
+    const nextType = nextStage.type || 'normal';
+    const currentSqueeze = parseInt(stage.squeeze || 0);
+    const nextSqueeze = parseInt(nextStage.squeeze || 0);
+    const nameLower = (workoutName || '').toLowerCase();
+
+    // 1. Chuyển từ bài siết sang kegel ngược sẽ nghỉ 10 giây
+    if (currentType === 'normal' && nextType === 'reverse') {
+        return 10;
+    }
+
+    // 2. Chuyển từ siết 3s sang siết 3s nghỉ 30s
+    if (currentType === 'normal' && nextType === 'normal' && currentSqueeze === 3 && nextSqueeze === 3) {
+        return 30;
+    }
+
+    // 3. Chuyển từ siết 3s sang siết 5s nghỉ 1 phút (bài combo sức mạnh)
+    if (currentType === 'normal' && nextType === 'normal' && currentSqueeze === 3 && nextSqueeze === 5) {
+        return 60;
+    }
+
+    // 4. Ở bài kiểm soát cương cứng thì thời gian nghỉ chuyển bài từ siết 6s sang 8s là 1 phút
+    if (currentType === 'normal' && nextType === 'normal' && currentSqueeze === 6 && nextSqueeze === 8 && 
+        (nameLower.includes('kiểm soát cương cứng') || nameLower.includes('cương cứng'))) {
+        return 60;
+    }
+
+    // Fallback to custom transitionRest if specified in the stage
+    if (parseInt(stage.transitionRest || 0) > 0) {
+        return parseInt(stage.transitionRest);
+    }
+
+    return 0;
+}
+
 function buildStepsFromStages(stages, workoutName) {
     let steps = [];
     let phases = [];
@@ -1377,12 +1413,15 @@ function buildStepsFromStages(stages, workoutName) {
                     repIndex: currentRep
                 });
                 
-                if (r === repsCount && sIdx < stages.length - 1 && parseInt(stage.transitionRest || 0) > 0) {
+                const nextStage = sIdx < stages.length - 1 ? stages[sIdx + 1] : null;
+                const tRest = (r === repsCount && nextStage) ? getTransitionRestDuration(stage, nextStage, workoutName) : 0;
+                
+                if (tRest > 0) {
                     steps.push({
                         type: 'relaxing',
-                        duration: parseInt(stage.transitionRest),
+                        duration: tRest,
                         action: 'NGHỈ CHUYỂN',
-                        subtext: `Nghỉ phục hồi ${stage.transitionRest}s - Chuẩn bị giai đoạn tiếp theo`,
+                        subtext: `Nghỉ chuyển bài ${tRest}s - Chuẩn bị giai đoạn tiếp theo`,
                         sfx: 'relax',
                         orbClass: 'resting',
                         repIndex: currentRep
@@ -1409,12 +1448,15 @@ function buildStepsFromStages(stages, workoutName) {
                     repIndex: currentRep
                 });
                 
-                if (r === repsCount && sIdx < stages.length - 1 && parseInt(stage.transitionRest || 0) > 0) {
+                const nextStage = sIdx < stages.length - 1 ? stages[sIdx + 1] : null;
+                const tRest = (r === repsCount && nextStage) ? getTransitionRestDuration(stage, nextStage, workoutName) : 0;
+                
+                if (tRest > 0) {
                     steps.push({
                         type: 'relaxing',
-                        duration: parseInt(stage.transitionRest),
+                        duration: tRest,
                         action: 'NGHỈ CHUYỂN',
-                        subtext: `Nghỉ phục hồi ${stage.transitionRest}s - Chuẩn bị giai đoạn tiếp theo`,
+                        subtext: `Nghỉ chuyển bài ${tRest}s - Chuẩn bị giai đoạn tiếp theo`,
                         sfx: 'relax',
                         orbClass: 'resting',
                         repIndex: currentRep
@@ -1440,15 +1482,31 @@ function buildStepsFromStages(stages, workoutName) {
                     orbClass: 'relaxing',
                     repIndex: currentRep
                 });
-                steps.push({
-                    type: 'relaxing',
-                    duration: Math.max(1, parseInt(stage.relax || 10)),
-                    action: 'THỞ RA',
-                    subtext: `Thở ra chậm rãi, xẹp bụng - Lượt ${r}/${repsCount}`,
-                    sfx: 'relax',
-                    orbClass: 'relaxing',
-                    repIndex: currentRep
-                });
+                
+                const nextStage = sIdx < stages.length - 1 ? stages[sIdx + 1] : null;
+                const tRest = (r === repsCount && nextStage) ? getTransitionRestDuration(stage, nextStage, workoutName) : 0;
+                
+                if (tRest > 0) {
+                    steps.push({
+                        type: 'relaxing',
+                        duration: tRest,
+                        action: 'NGHỈ CHUYỂN',
+                        subtext: `Nghỉ chuyển bài ${tRest}s - Chuẩn bị giai đoạn tiếp theo`,
+                        sfx: 'relax',
+                        orbClass: 'resting',
+                        repIndex: currentRep
+                    });
+                } else {
+                    steps.push({
+                        type: 'relaxing',
+                        duration: Math.max(1, parseInt(stage.relax || 10)),
+                        action: 'THỞ RA',
+                        subtext: `Thở ra chậm rãi, xẹp bụng - Lượt ${r}/${repsCount}`,
+                        sfx: 'relax',
+                        orbClass: 'relaxing',
+                        repIndex: currentRep
+                    });
+                }
             }
         }
         
@@ -3261,7 +3319,7 @@ async function triggerAIAnalysis() {
         if (!state.history || state.history.length === 0) {
             historyText = "Không có lịch sử luyện tập nào được ghi nhận. Người dùng chưa tập luyện buổi nào.";
         } else {
-            historyText = state.history.slice(-30).map(log => {
+            historyText = state.history.map(log => {
                 const date = log.timestamp ? log.timestamp.split('T')[0] : 'Không rõ';
                 return `- Ngày ${date}: Tập bài ${getWorkoutAIDescription(log)}`;
             }).join('\n');
@@ -3274,7 +3332,7 @@ Thông tin người dùng:
 - Giới tính sinh học: ${genderStr}
 - Độ tuổi: ${ageStr}
 
-Nhật ký 30 buổi tập gần nhất:
+Nhật ký toàn bộ buổi tập:
 ${historyText}
 
 Hãy viết một báo cáo nhận định chi tiết bằng tiếng Việt, định dạng Markdown chuẩn với các phần cụ thể sau:
