@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PC Flex - Giáo Trình & Ứng Dụng Luyện Tập Cơ PC Nam Giới</title>
+    <title>PC Flex - Luyện Tập Cơ Sàn Chậu Nam Giới</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.1.58">
+    <link rel="stylesheet" href="styles.css?v=1.1.59">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -20,7 +20,7 @@
                     <img src="./logo.png" alt="PC Flex Logo" class="brand-logo">
                 </div>
                 <div class="version-update-container" id="btn-check-update" title="Kiểm tra bản cập nhật">
-                    VER v1.1.58 PRO
+                    VER v1.1.59 PRO
                 </div>
             </div>
             
@@ -68,7 +68,7 @@
                     <img src="./logo.png" alt="PC Flex Logo" class="brand-logo">
                 </div>
                 <div class="version-update-container" title="Kiểm tra bản cập nhật">
-                    VER v1.1.58 PRO
+                    VER v1.1.59 PRO
                 </div>
             </header>
             
@@ -705,6 +705,33 @@
                     </div>
                 </div>
 
+                <!-- Data Management Card -->
+                <div class="profile-card" id="data-management-card">
+                    <h3 class="profile-title">💾 Quản Lý Dữ Liệu</h3>
+                    <p class="profile-desc">Sao lưu dữ liệu luyện tập và hồ sơ cá nhân của bạn thành tệp tin JSON hoặc khôi phục dữ liệu từ tệp tin đã sao lưu.</p>
+                    
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem;">
+                        <button class="btn btn-secondary" id="btn-backup-data" style="padding: 0.5rem 1rem !important; border-radius: 10px !important; font-size: 0.85rem !important; font-weight: 500 !important; display: flex; align-items: center; gap: 0.4rem; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); color: #93c5fd; cursor: pointer; transition: all 0.2s ease;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <span>Sao lưu dữ liệu (Xuất JSON)</span>
+                        </button>
+                        
+                        <button class="btn btn-secondary" id="btn-restore-trigger" style="padding: 0.5rem 1rem !important; border-radius: 10px !important; font-size: 0.85rem !important; font-weight: 500 !important; display: flex; align-items: center; gap: 0.4rem; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); color: #6ee7b7; cursor: pointer; transition: all 0.2s ease;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            <span>Khôi phục dữ liệu (Nhập JSON)</span>
+                        </button>
+                        <input type="file" id="restore-file-input" accept=".json" style="display: none;">
+                    </div>
+                </div>
+
                 <!-- History Log Table Card -->
                 <div class="history-card">
                     <div class="history-header">
@@ -817,6 +844,6 @@
         <button id="btn-pwa-update">Cập nhật ngay</button>
     </div>
 
-    <script src="app.js?v=1.1.58"></script>
+    <script src="app.js?v=1.1.59"></script>
 </body>
 </html>

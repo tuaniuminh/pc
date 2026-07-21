@@ -724,6 +724,9 @@ const elements = {
     statsTotalReps: document.getElementById('stats-total-reps'),
     historyLogBody: document.getElementById('history-log-body'),
     btnClearData: document.getElementById('btn-clear-data'),
+    btnBackupData: document.getElementById('btn-backup-data'),
+    btnRestoreTrigger: document.getElementById('btn-restore-trigger'),
+    restoreFileInput: document.getElementById('restore-file-input'),
     
     // Supabase DOM Elements
     btnCloudSync: document.getElementById('btn-cloud-sync'),
@@ -1023,6 +1026,26 @@ function setupEventHandlers() {
             clearAllData();
         }
     });
+
+    // Backup & Restore handlers
+    if (elements.btnBackupData) {
+        elements.btnBackupData.addEventListener('click', () => {
+            backupData();
+        });
+    }
+
+    if (elements.btnRestoreTrigger && elements.restoreFileInput) {
+        elements.btnRestoreTrigger.addEventListener('click', () => {
+            elements.restoreFileInput.click();
+        });
+        
+        elements.restoreFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                restoreData(e.target.files[0]);
+                e.target.value = ''; // Reset to allow selecting the same file
+            }
+        });
+    }
 
     // 7. Điều khiển gập/mở Accordion cho Lộ trình dọc (Roadmap)
     const roadmapItems = document.querySelectorAll('.roadmap-item');
@@ -2517,6 +2540,78 @@ function clearAllData() {
     
     renderStats();
     updateUIConfigs();
+}
+
+// --- BACKUP & RESTORE DATA ---
+function backupData() {
+    try {
+        const backupObj = {
+            version: '1.0',
+            app: 'PC Flex',
+            exportedAt: new Date().toISOString(),
+            data: {
+                pc_flex_history: JSON.parse(localStorage.getItem('pc_flex_history')) || [],
+                pc_flex_streak: parseInt(localStorage.getItem('pc_flex_streak')) || 0,
+                pc_flex_total_sessions: parseInt(localStorage.getItem('pc_flex_total_sessions')) || 0,
+                pc_flex_total_reps: parseInt(localStorage.getItem('pc_flex_total_reps')) || 0,
+                pc_flex_custom_workouts: JSON.parse(localStorage.getItem('pc_flex_custom_workouts')) || [],
+                pc_flex_gender: localStorage.getItem('pc_flex_gender') || 'male',
+                pc_flex_birth_year: localStorage.getItem('pc_flex_birth_year') || '',
+                pc_flex_gemini_key: localStorage.getItem('pc_flex_gemini_key') || ''
+            }
+        };
+
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupObj, null, 2));
+        const downloadAnchor = document.createElement('a');
+        const today = new Date().toISOString().slice(0, 10);
+        
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `pc-flex-backup-${today}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    } catch (e) {
+        console.error("Lỗi khi xuất sao lưu dữ liệu:", e);
+        alert("Đã xảy ra lỗi trong quá trình xuất dữ liệu sao lưu!");
+    }
+}
+
+function restoreData(file) {
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const parsed = JSON.parse(e.target.result);
+            
+            // Xác thực tính hợp lệ của tệp backup
+            if (!parsed || parsed.app !== 'PC Flex' || !parsed.data) {
+                alert('Tệp tin không đúng định dạng sao lưu của ứng dụng PC Flex!');
+                return;
+            }
+            
+            if (confirm('Bạn có chắc chắn muốn khôi phục dữ liệu từ tệp tin này? Toàn bộ dữ liệu hiện tại trên thiết bị của bạn sẽ bị ghi đè!')) {
+                const data = parsed.data;
+                
+                // Ghi đè lên localStorage
+                localStorage.setItem('pc_flex_history', JSON.stringify(data.pc_flex_history || []));
+                localStorage.setItem('pc_flex_streak', data.pc_flex_streak || 0);
+                localStorage.setItem('pc_flex_total_sessions', data.pc_flex_total_sessions || 0);
+                localStorage.setItem('pc_flex_total_reps', data.pc_flex_total_reps || 0);
+                localStorage.setItem('pc_flex_custom_workouts', JSON.stringify(data.pc_flex_custom_workouts || []));
+                localStorage.setItem('pc_flex_gender', data.pc_flex_gender || 'male');
+                localStorage.setItem('pc_flex_birth_year', data.pc_flex_birth_year || '');
+                localStorage.setItem('pc_flex_gemini_key', data.pc_flex_gemini_key || '');
+                
+                alert('Khôi phục dữ liệu thành công! Ứng dụng sẽ tự động tải lại để cập nhật trạng thái mới.');
+                window.location.reload();
+            }
+        } catch (err) {
+            console.error("Lỗi khi đọc file khôi phục:", err);
+            alert("Tệp tin không hợp lệ hoặc bị lỗi định dạng JSON!");
+        }
+    };
+    reader.readAsText(file);
 }
 
 // --- SUPABASE CLOUD MANAGEMENT ---
