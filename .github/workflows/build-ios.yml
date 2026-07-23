@@ -29,9 +29,17 @@ jobs:
         run: |
           mkdir -p Payload/PCFlex.app
           
+          # Dynamically locate compiled binary
+          BINARY_PATH=$(find ios/.build -name PCFlex -type f -perm +111 | head -n 1)
+          if [ -z "$BINARY_PATH" ]; then
+            BINARY_PATH=$(find ios/.build -name PCFlex -type f | head -n 1)
+          fi
+          echo "Found compiled binary at: $BINARY_PATH"
+          
           # Copy compiled executable & Info.plist into app bundle
-          cp ios/.build/arm64-apple-ios/release/PCFlex Payload/PCFlex.app/
-          cp ios/PCFlex/Info.plist Payload/PCFlex.app/
+          cp "$BINARY_PATH" Payload/PCFlex.app/PCFlex
+          chmod +x Payload/PCFlex.app/PCFlex
+          cp ios/PCFlex/Info.plist Payload/PCFlex.app/Info.plist
           
           # Ad-Hoc Code Signing with TrollStore Entitlements
           codesign --force --sign - --deep --entitlements ios/ios-build-entitlements.plist Payload/PCFlex.app
