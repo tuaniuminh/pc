@@ -3,16 +3,38 @@ import SwiftUI
 public struct PracticeView: View {
     @ObservedObject var engine: WorkoutEngine
     
+    // Exact PWA CSS Colors & Tokens from styles.css
+    private let bgDark = Color(red: 0.027, green: 0.039, blue: 0.075) // #070a13
+    private let bgCard = Color(red: 0.062, green: 0.09, blue: 0.164).opacity(0.65) // rgba(16, 23, 42, 0.65)
+    private let borderColor = Color.white.opacity(0.06) // rgba(255, 255, 255, 0.06)
+    private let cyanPrimary = Color(red: 0.0, green: 0.96, blue: 0.83) // #00f5d4
+    
     public var body: some View {
         NavigationView {
             ZStack {
-                // Background Gradient matching PWA CSS Image 1
-                Color(red: 0.04, green: 0.06, blue: 0.1)
+                // Background matching PWA body background-image & radial gradients
+                bgDark
                     .ignoresSafeArea()
+                
+                // Radial Glow circles matching PWA CSS lines 48-50
+                GeometryReader { geo in
+                    Circle()
+                        .fill(Color(red: 0.23, green: 0.51, blue: 0.96).opacity(0.05))
+                        .frame(width: geo.size.width * 0.8, height: geo.size.width * 0.8)
+                        .position(x: geo.size.width * 0.1, y: geo.size.height * 0.2)
+                        .blur(radius: 40)
+                    
+                    Circle()
+                        .fill(Color(red: 0.55, green: 0.36, blue: 0.96).opacity(0.06))
+                        .frame(width: geo.size.width * 0.8, height: geo.size.width * 0.8)
+                        .position(x: geo.size.width * 0.9, y: geo.size.height * 0.8)
+                        .blur(radius: 40)
+                }
+                .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 16) {
-                        // Top Brand Bar matching Image 1 (PWA)
+                        // Top Brand Bar matching Image 1 PWA
                         HStack {
                             // Logo Icon (Heart/Pelvis inside rounded dark square)
                             Image(uiImage: UIImage(named: "logo.png") ?? UIImage())
@@ -20,46 +42,44 @@ public struct PracticeView: View {
                                 .scaledToFit()
                                 .frame(width: 36, height: 36)
                                 .padding(6)
-                                .background(Color.white.opacity(0.06))
+                                .background(bgCard)
                                 .cornerRadius(12)
-                                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                                .overlay(RoundedRectangle(cornerRadius: 12).stroke(borderColor, lineWidth: 1))
                             
                             Spacer()
                             
-                            // VER v1.2.05 PRO Button matching Image 1
-                            Button(action: {
-                                // Check update
-                            }) {
-                                Text("VER v1.2.05 PRO")
+                            // VER v1.2.07 PRO Button matching PWA
+                            Button(action: {}) {
+                                Text("VER v1.2.07 PRO")
                                     .font(.system(size: 11, weight: .bold))
                                     .padding(.vertical, 6)
                                     .padding(.horizontal, 12)
-                                    .background(Color(red: 0.0, green: 0.96, blue: 0.83).opacity(0.12))
-                                    .foregroundColor(Color(red: 0.0, green: 0.96, blue: 0.83))
+                                    .background(cyanPrimary.opacity(0.12))
+                                    .foregroundColor(cyanPrimary)
                                     .cornerRadius(20)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 20)
-                                            .stroke(Color(red: 0.0, green: 0.96, blue: 0.83).opacity(0.4), lineWidth: 1)
+                                            .stroke(cyanPrimary.opacity(0.4), lineWidth: 1)
                                     )
                             }
                         }
                         .padding(.horizontal)
                         .padding(.top, 6)
                         
-                        // Title Section matching Image 1
+                        // Title Section matching PWA Image 1
                         VStack(spacing: 6) {
                             Text("Rèn Luyện Mỗi Ngày")
-                                .font(.system(size: 26, weight: .bold))
-                                .foregroundColor(.white)
+                                .font(.system(size: 26, weight: .extrabold))
+                                .foregroundColor(Color(red: 0.97, green: 0.98, blue: 0.99))
                             Text("Chọn cấp độ phù hợp và làm theo chỉ dẫn của\nvòng tròn sinh học.")
-                                .font(.system(size: 12))
-                                .foregroundColor(Color.gray.opacity(0.9))
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(Color(red: 0.58, green: 0.64, blue: 0.72))
                                 .multilineTextAlignment(.center)
                                 .lineSpacing(2)
                         }
                         .padding(.horizontal)
                         
-                        // Stats Badges Row matching Image 1
+                        // Stats Badges Row matching PWA Image 1
                         HStack(spacing: 10) {
                             HStack(spacing: 6) {
                                 Text("⚡")
@@ -68,11 +88,11 @@ public struct PracticeView: View {
                                     .font(.system(size: 12, weight: .semibold))
                                     .foregroundColor(Color(red: 0.85, green: 0.9, blue: 1.0))
                             }
-                            .padding(.vertical, 6)
+                            .padding(.vertical, 7)
                             .padding(.horizontal, 14)
-                            .background(Color.white.opacity(0.06))
+                            .background(bgCard)
                             .cornerRadius(20)
-                            .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.12), lineWidth: 1))
+                            .overlay(RoundedRectangle(cornerRadius: 20).stroke(borderColor, lineWidth: 1))
                             
                             HStack(spacing: 6) {
                                 Circle()
@@ -82,17 +102,17 @@ public struct PracticeView: View {
                                     .font(.system(size: 12, weight: .semibold))
                                     .foregroundColor(Color(red: 0.85, green: 0.9, blue: 1.0))
                             }
-                            .padding(.vertical, 6)
+                            .padding(.vertical, 7)
                             .padding(.horizontal, 14)
-                            .background(Color.white.opacity(0.06))
+                            .background(bgCard)
                             .cornerRadius(20)
-                            .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.12), lineWidth: 1))
+                            .overlay(RoundedRectangle(cornerRadius: 20).stroke(borderColor, lineWidth: 1))
                         }
                         .padding(.horizontal)
                         
-                        // Main Glassmorphic Workout Card Container matching Image 1
+                        // Main Glassmorphic Workout Card Container matching PWA Image 1
                         VStack(spacing: 16) {
-                            // Audio Controls Row matching Image 1
+                            // Audio Controls Row matching PWA Image 1
                             HStack(spacing: 12) {
                                 Button(action: {
                                     SoundManager.shared.isMutedSFX.toggle()
@@ -108,12 +128,10 @@ public struct PracticeView: View {
                                     .background(Color.white.opacity(0.06))
                                     .foregroundColor(SoundManager.shared.isMutedSFX ? .gray : .white)
                                     .cornerRadius(20)
-                                    .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.12), lineWidth: 1))
+                                    .overlay(RoundedRectangle(cornerRadius: 20).stroke(borderColor, lineWidth: 1))
                                 }
                                 
-                                Button(action: {
-                                    // Background music toggle
-                                }) {
+                                Button(action: {}) {
                                     HStack(spacing: 6) {
                                         Image(systemName: "music.note")
                                             .font(.system(size: 13))
@@ -125,15 +143,15 @@ public struct PracticeView: View {
                                     .background(Color.white.opacity(0.06))
                                     .foregroundColor(.white)
                                     .cornerRadius(20)
-                                    .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.12), lineWidth: 1))
+                                    .overlay(RoundedRectangle(cornerRadius: 20).stroke(borderColor, lineWidth: 1))
                                 }
                             }
                             .padding(.top, 10)
                             
-                            // Visualizer Orb View matching Image 1
+                            // Visualizer Orb View matching PWA Image 1
                             VisualizerOrbView(engine: engine)
                             
-                            // Reps Counter & Phase Progress Segments matching Image 1
+                            // Reps Counter & Phase Progress Segments matching PWA Image 1
                             VStack(spacing: 8) {
                                 HStack {
                                     Text("Lượt tập:")
@@ -147,7 +165,7 @@ public struct PracticeView: View {
                                 }
                                 .padding(.horizontal, 4)
                                 
-                                // Phase Progress Segmented Bar matching Image 1
+                                // Phase Progress Segmented Bar matching PWA Image 1
                                 GeometryReader { geo in
                                     let totalPhases = max(1, engine.workoutPhases.count)
                                     let segWidth = (geo.size.width - CGFloat(totalPhases - 1) * 4) / CGFloat(totalPhases)
@@ -158,20 +176,20 @@ public struct PracticeView: View {
                                             let isCompleted = phase.isCompleted
                                             
                                             RoundedRectangle(cornerRadius: 3)
-                                                .fill(isCompleted ? Color(red: 0.0, green: 0.96, blue: 0.83) : Color.white.opacity(0.12))
+                                                .fill(isCompleted ? cyanPrimary : Color.white.opacity(0.12))
                                                 .frame(width: segWidth, height: 6)
                                         }
                                     }
                                 }
                                 .frame(height: 6)
                                 
-                                // Phase Labels Row below progress bar matching Image 1
+                                // Phase Labels Row below progress bar matching PWA Image 1
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 12) {
                                         ForEach(engine.workoutPhases, id: \.id) { phase in
                                             Text(phase.name)
                                                 .font(.system(size: 10, weight: .medium))
-                                                .foregroundColor(phase.isCompleted ? Color(red: 0.0, green: 0.96, blue: 0.83) : .gray)
+                                                .foregroundColor(phase.isCompleted ? cyanPrimary : Color(red: 0.58, green: 0.64, blue: 0.72))
                                         }
                                     }
                                     .padding(.top, 4)
@@ -180,7 +198,7 @@ public struct PracticeView: View {
                             .padding(.horizontal)
                             .padding(.top, 4)
                             
-                            // Control Action Buttons Row matching Image 1
+                            // Control Action Buttons Row matching PWA Image 1
                             HStack(spacing: 14) {
                                 if engine.state == .idle || engine.state == .completed {
                                     Button(action: {
@@ -193,10 +211,10 @@ public struct PracticeView: View {
                                         }
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 14)
-                                        .background(LinearGradient(gradient: Gradient(colors: [Color(red: 0.0, green: 0.96, blue: 0.83), Color(red: 0.0, green: 0.8, blue: 0.9)]), startPoint: .leading, endPoint: .trailing))
+                                        .background(LinearGradient(gradient: Gradient(colors: [cyanPrimary, Color(red: 0.0, green: 0.8, blue: 0.9)]), startPoint: .leading, endPoint: .trailing))
                                         .foregroundColor(.black)
                                         .cornerRadius(12)
-                                        .shadow(color: Color(red: 0.0, green: 0.96, blue: 0.83).opacity(0.3), radius: 8, x: 0, y: 4)
+                                        .shadow(color: cyanPrimary.opacity(0.3), radius: 8, x: 0, y: 4)
                                     }
                                 } else if engine.state == .squeezing || engine.state == .relaxing {
                                     Button(action: {
@@ -248,9 +266,9 @@ public struct PracticeView: View {
                             .padding(.bottom, 16)
                         }
                         .padding(12)
-                        .background(Color(red: 0.07, green: 0.09, blue: 0.16))
+                        .background(bgCard)
                         .cornerRadius(20)
-                        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 20).stroke(borderColor, lineWidth: 1))
                         .padding(.horizontal)
                         .padding(.bottom, 24)
                     }
