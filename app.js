@@ -3,6 +3,8 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
+const APP_VERSION = 'v1.2.05';
+
 // --- STATE MANAGEMENT ---
 const state = {
     currentTab: 'practice',
@@ -3652,7 +3654,7 @@ function bindPWAUpdateChecker() {
                             
                             setTimeout(() => {
                                 btnChecks.forEach(b => {
-                                    b.innerHTML = `VER v1.1.48 PRO`;
+                                    b.innerHTML = `VER ${APP_VERSION} PRO`;
                                 });
                             }, 2500);
                         }, 1200);
@@ -3660,14 +3662,14 @@ function bindPWAUpdateChecker() {
                         console.warn('Lỗi kiểm tra cập nhật:', err);
                         btnChecks.forEach(b => {
                             b.classList.remove('checking');
-                            b.innerHTML = `VER v1.1.48 PRO`;
+                            b.innerHTML = `VER ${APP_VERSION} PRO`;
                         });
                     });
                 }).catch(err => {
                     console.warn('Service worker không sẵn sàng:', err);
                     btnChecks.forEach(b => {
                         b.classList.remove('checking');
-                        b.innerHTML = `VER v1.1.48 PRO`;
+                        b.innerHTML = `VER ${APP_VERSION} PRO`;
                     });
                 });
             } else {
@@ -3675,7 +3677,7 @@ function bindPWAUpdateChecker() {
                     btnChecks.forEach(b => {
                         b.classList.remove('checking');
                         b.innerHTML = `Không hỗ trợ PWA`;
-                        setTimeout(() => { b.innerHTML = `VER v1.1.48 PRO`; }, 2500);
+                        setTimeout(() => { b.innerHTML = `VER ${APP_VERSION} PRO`; }, 2500);
                     });
                 }, 1000);
             }
