@@ -46,11 +46,11 @@ jobs:
           # Force Ad-Hoc Sign with get-task-allow = false Entitlements
           codesign --force --sign - --deep --entitlements ios/ios-build-entitlements.plist Payload/PCFlex.app
           
-          # Compress Payload to PCFlex_v1.2.02.ipa
-          zip -r PCFlex_v1.2.02.ipa Payload
+          # Compress Payload to PCFlex_v1.2.03.ipa
+          zip -r PCFlex_v1.2.03.ipa Payload
 
       - name: Upload TrollStore IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PCFlex_v1.2.02
-          path: PCFlex_v1.2.02.ipa
+          name: PCFlex_v1.2.03
+          path: PCFlex_v1.2.03.ipa
