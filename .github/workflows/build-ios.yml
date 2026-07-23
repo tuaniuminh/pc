@@ -50,11 +50,11 @@ jobs:
           ldid -Sios/ios-build-entitlements.plist Payload/PCFlex.app/PCFlex
           codesign --force --sign - --deep --entitlements ios/ios-build-entitlements.plist Payload/PCFlex.app
           
-          # Compress Payload to PCFlex.ipa
-          zip -r PCFlex.ipa Payload
+          # Compress Payload to PCFlex_v1.2.00.ipa
+          zip -r PCFlex_v1.2.00.ipa Payload
 
       - name: Upload TrollStore IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PCFlex-TrollStore-IPA
-          path: PCFlex.ipa
+          name: PCFlex_v1.2.00
+          path: PCFlex_v1.2.00.ipa
