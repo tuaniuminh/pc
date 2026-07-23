@@ -34,7 +34,7 @@ jobs:
                      CODE_SIGNING_ALLOWED=NO \
                      clean build
 
-      - name: Prepare Payload, App Icons & TrollStore ldid Signing
+      - name: Prepare Payload, App Icons & Pure ldid Signing
         run: |
           mkdir -p Payload
           cp -r build/Build/Products/Release-iphoneos/PCFlex.app Payload/
@@ -46,9 +46,8 @@ jobs:
           cp logo.png Payload/PCFlex.app/AppIcon60x60@2x.png
           cp logo.png Payload/PCFlex.app/AppIcon60x60@3x.png
           
-          # Sign binary with ldid Fake-Root & TrollStore Entitlements
+          # Pure ldid Fake-Root Signing for TrollStore CoreTrust Bypass
           ldid -Sios/ios-build-entitlements.plist Payload/PCFlex.app/PCFlex
-          codesign --force --sign - --deep --entitlements ios/ios-build-entitlements.plist Payload/PCFlex.app
           
           # Compress Payload to PCFlex_v1.2.00.ipa
           zip -r PCFlex_v1.2.00.ipa Payload
