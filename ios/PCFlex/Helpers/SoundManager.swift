@@ -33,8 +33,8 @@ public final class SoundManager: ObservableObject {
     
     public func playReverseKegelSound() {
         guard !isMutedSFX else { return }
-        // Triangle wave chord A4 (440Hz) + C#5 (554.37Hz) + E5 (659.25Hz) matching Web Audio API
-        playSynthTone(frequencies: [440.0, 554.37, 659.25], waveType: .triangle, duration: 0.9, fadeOut: true)
+        // Crystal Celestial Major Triad F5 (698.46Hz) + A5 (880.00Hz) + C6 (1046.50Hz)
+        playSynthTone(frequencies: [698.46, 880.00, 1046.50], waveType: .sine, duration: 1.2, fadeOut: true)
     }
     
     public func playTransitionRestSound() {

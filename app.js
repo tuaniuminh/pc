@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.2.16';
+const APP_VERSION = 'v1.2.18';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -573,7 +573,7 @@ class AudioController {
         osc2.stop(now + 1.5);
     }
 
-    // Play Reverse Kegel Sound (Dual tone harmonic chime - A4 + E5 with ascending glide)
+    // Play Reverse Kegel Sound (Crystal Celestial Major Triad - F5 + A5 + C6)
     playReverseKegelSFX() {
         if (state.isMutedSFX) return;
         triggerNativeSound('reverse');
@@ -583,27 +583,33 @@ class AudioController {
         const now = this.audioCtx.currentTime;
         const osc1 = this.audioCtx.createOscillator();
         const osc2 = this.audioCtx.createOscillator();
+        const osc3 = this.audioCtx.createOscillator();
         const gainNode = this.audioCtx.createGain();
 
-        osc1.type = 'triangle';
-        osc1.frequency.setValueAtTime(440.00, now); // A4
-        osc1.frequency.exponentialRampToValueAtTime(554.37, now + 0.25); // C#5
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(698.46, now); // F5
 
         osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(659.25, now); // E5
+        osc2.frequency.setValueAtTime(880.00, now); // A5
+
+        osc3.type = 'sine';
+        osc3.frequency.setValueAtTime(1046.50, now); // C6
 
         gainNode.gain.setValueAtTime(0, now);
-        gainNode.gain.linearRampToValueAtTime(0.50, now + 0.04);
-        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+        gainNode.gain.linearRampToValueAtTime(0.45, now + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
 
         osc1.connect(gainNode);
         osc2.connect(gainNode);
+        osc3.connect(gainNode);
         gainNode.connect(this.audioCtx.destination);
 
         osc1.start(now);
         osc2.start(now);
-        osc1.stop(now + 1.0);
-        osc2.stop(now + 1.0);
+        osc3.start(now);
+        osc1.stop(now + 1.4);
+        osc2.stop(now + 1.4);
+        osc3.stop(now + 1.4);
     }
 
     // Play Transition Rest Sound (Soft double wood block / gentle pulse - D4 + A4)
@@ -917,6 +923,30 @@ function selectWorkoutLevel(item) {
     updateUIConfigs();
 }
 
+// --- HAPTIC FEEDBACK BRIDGE (RUNG PHẢN HỒI NATIVE) ---
+function triggerHapticFeedback(type = 'light') {
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.haptic) {
+        window.webkit.messageHandlers.haptic.postMessage(type);
+    }
+    if ('vibrate' in navigator) {
+        try {
+            if (type === 'heavy') navigator.vibrate([30]);
+            else if (type === 'medium') navigator.vibrate([18]);
+            else if (type === 'success') navigator.vibrate([15, 50, 15]);
+            else navigator.vibrate([10]);
+        } catch (e) {}
+    }
+}
+
+function setupGlobalButtonHaptics() {
+    document.body.addEventListener('click', (e) => {
+        const btn = e.target.closest('button, .nav-item, .btn, .btn-primary, .btn-secondary, .btn-outline, .level-item, .level-tab-btn, .routine-card, .btn-gender, .version-update-container, .theme-toggle-btn, .modal-close, [role="button"], a, .history-item-header, .faq-question');
+        if (btn) {
+            triggerHapticFeedback('light');
+        }
+    }, { capture: true, passive: true });
+}
+
 // --- THEME MANAGEMENT (SÁNG / TỐI) ---
 function initTheme() {
     const savedTheme = localStorage.getItem('pc_flex_theme') || 'light';
@@ -955,6 +985,7 @@ function initApp() {
     renderCustomWorkoutsList();
     autoSelectLevelByTime();
     setupEventHandlers();
+    setupGlobalButtonHaptics();
     updateUIConfigs();
     renderStats();
     initSupabaseConnection();

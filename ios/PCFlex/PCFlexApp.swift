@@ -2,7 +2,7 @@ import SwiftUI
 
 /**
  * PC Flex Native iOS App (Swift & SwiftUI)
- * Version 1.2.16 - TrollStore Compatible (World-Class Light Theme & Dual Theme Engine)
+ * Version 1.2.18 - TrollStore Compatible (Crystal Celestial Reverse Kegel Chime)
  */
 @main
 struct PCFlexApp: App {
