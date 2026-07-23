@@ -32,9 +32,10 @@ public struct PWAWebView: UIViewRepresentable {
         prefs.allowsContentJavaScript = true
         config.defaultWebpagePreferences = prefs
         
-        // Add Native Haptic Bridge Handler
+        // Add Native Haptic & WakeLock Bridge Handlers
         let contentController = WKUserContentController()
         contentController.add(context.coordinator, name: "haptic")
+        contentController.add(context.coordinator, name: "wakelock")
         config.userContentController = contentController
         
         let webView = WKWebView(frame: .zero, configuration: config)
@@ -45,6 +46,10 @@ public struct PWAWebView: UIViewRepresentable {
         webView.scrollView.backgroundColor = UIColor(red: 0.027, green: 0.039, blue: 0.075, alpha: 1.0)
         webView.scrollView.bounces = true
         webView.scrollView.contentInsetAdjustmentBehavior = .never
+        
+        // Hide scroll indicators for ultra-clean UI
+        webView.scrollView.showsVerticalScrollIndicator = false
+        webView.scrollView.showsHorizontalScrollIndicator = false
         
         // Find index.html in main bundle or www directory
         if let indexURL = Bundle.main.url(forResource: "index", withExtension: "html") {
@@ -75,6 +80,12 @@ public struct PWAWebView: UIViewRepresentable {
             if message.name == "haptic" {
                 if let type = message.body as? String {
                     triggerHaptic(type: type)
+                }
+            } else if message.name == "wakelock" {
+                if let enable = message.body as? Bool {
+                    DispatchQueue.main.async {
+                        UIApplication.shared.isIdleTimerDisabled = enable
+                    }
                 }
             }
         }

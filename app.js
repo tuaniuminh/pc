@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.2.14';
+const APP_VERSION = 'v1.2.15';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -3093,6 +3093,11 @@ let wakeLock = null;
 let fallbackVideo = null;
 
 async function requestWakeLock() {
+    // 0. Gửi tín hiệu sang Swift Native để gọi UIApplication.shared.isIdleTimerDisabled = true
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.wakelock) {
+        window.webkit.messageHandlers.wakelock.postMessage(true);
+    }
+
     // 1. Cố gắng sử dụng Wake Lock API tiêu chuẩn trước
     if ('wakeLock' in navigator) {
         try {
@@ -3143,6 +3148,9 @@ async function requestWakeLock() {
 }
 
 function releaseWakeLock() {
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.wakelock) {
+        window.webkit.messageHandlers.wakelock.postMessage(false);
+    }
     if (wakeLock) {
         wakeLock.release();
         wakeLock = null;
