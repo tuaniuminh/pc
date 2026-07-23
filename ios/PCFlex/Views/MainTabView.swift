@@ -5,15 +5,21 @@ public struct MainTabView: View {
     @StateObject private var engine = WorkoutEngine()
     
     public init() {
-        UITabBar.appearance().barTintColor = UIColor(red: 0.06, green: 0.09, blue: 0.16, alpha: 1.0)
-        UITabBar.appearance().backgroundColor = UIColor(red: 0.06, green: 0.09, blue: 0.16, alpha: 1.0)
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(red: 0.04, green: 0.06, blue: 0.1, alpha: 1.0)
+        
+        UITabBar.appearance().standardAppearance = appearance
+        if #available(iOS 15.0, *) {
+            UITabBar.appearance().scrollEdgeAppearance = appearance
+        }
     }
     
     public var body: some View {
         TabView {
             PracticeView(engine: engine)
                 .tabItem {
-                    Image(systemName: "flame.fill")
+                    Image(systemName: "play.fill")
                     Text("Luyện Tập")
                 }
             

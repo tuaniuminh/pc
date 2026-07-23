@@ -211,10 +211,12 @@ public final class WorkoutEngine: ObservableObject {
     
     private func startTimerLoop() {
         timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+        let t = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             self.tick()
         }
+        RunLoop.main.add(t, forMode: .common)
+        self.timer = t
     }
     
     private func tick() {

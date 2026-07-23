@@ -9,9 +9,33 @@ public struct VisualizerOrbView: View {
         return engine.workoutSteps[engine.currentStepIndex]
     }
     
+    private var actionTitle: String {
+        if engine.state == .idle {
+            return "SẴN SÀNG"
+        }
+        return currentStep?.action ?? "SẴN SÀNG"
+    }
+    
+    private var timerText: String {
+        if engine.state == .idle {
+            return "01"
+        }
+        return String(format: "%02d", engine.timeRemaining)
+    }
+    
+    private var subtextDescription: String {
+        if engine.state == .idle {
+            let activeConfig = ClinicalLevelsData.levels[engine.selectedLevelTab]?.maleWorkouts[engine.selectedWorkoutId]
+            let name = activeConfig?.name ?? "Combo Sức Mạnh"
+            let reps = engine.totalRepsInWorkout > 0 ? engine.totalRepsInWorkout : 59
+            return "Bấm Bắt đầu để tập\n\(name) - \(reps) lượt"
+        }
+        return currentStep?.subtext ?? ""
+    }
+    
     private var orbGlowColors: [Color] {
-        guard let step = currentStep else {
-            return [Color(red: 0.0, green: 0.96, blue: 0.83), Color(red: 0.0, green: 0.7, blue: 0.9)]
+        guard let step = currentStep, engine.state != .idle else {
+            return [Color(red: 0.1, green: 0.15, blue: 0.28), Color(red: 0.05, green: 0.08, blue: 0.16)]
         }
         
         switch step.orbClass {
@@ -27,57 +51,53 @@ public struct VisualizerOrbView: View {
     }
     
     public var body: some View {
-        VStack(spacing: 14) {
-            ZStack {
-                // Outer Glow Rings matching PWA CSS glow
-                Circle()
-                    .fill(LinearGradient(gradient: Gradient(colors: orbGlowColors.map { $0.opacity(0.18) }), startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 250, height: 250)
-                    .scaleEffect(engine.state == .squeezing ? (isPulsing ? 1.12 : 0.96) : 1.0)
-                    .animation(engine.state == .squeezing ? Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true) : .default, value: isPulsing)
-                
-                Circle()
-                    .fill(LinearGradient(gradient: Gradient(colors: orbGlowColors), startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 200, height: 200)
-                    .shadow(color: orbGlowColors.first?.opacity(0.6) ?? .clear, radius: 24, x: 0, y: 0)
-                
-                // Inner Glass Container matching PWA Orb
-                VStack(spacing: 4) {
-                    Text(currentStep?.action ?? "SẴN SÀNG")
-                        .font(.system(size: 19, weight: .black, design: .rounded))
-                        .foregroundColor(.white)
-                        .shadow(radius: 3)
-                    
-                    Text(String(format: "%02d", engine.timeRemaining))
-                        .font(.system(size: 46, weight: .heavy, design: .monospaced))
-                        .foregroundColor(.white)
-                    
-                    if let step = currentStep {
-                        Text(step.subtext)
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 14)
-                            .lineLimit(2)
-                    }
-                }
-                .frame(width: 180, height: 180)
-            }
-            .padding(.top, 6)
-            .onAppear {
-                isPulsing = true
-            }
+        ZStack {
+            // Outer Ring Border matching Image 1
+            Circle()
+                .stroke(Color.white.opacity(0.12), lineWidth: 2)
+                .frame(width: 230, height: 230)
+                .scaleEffect(engine.state == .squeezing ? (isPulsing ? 1.06 : 0.96) : 1.0)
+                .animation(engine.state == .squeezing ? Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true) : .default, value: isPulsing)
             
-            // Phase Progress Segments Label matching PWA
-            if !engine.currentPhaseName.isEmpty {
-                Text(engine.currentPhaseName)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(Color(red: 0.0, green: 0.96, blue: 0.83))
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 12)
-                    .background(Color(red: 0.0, green: 0.96, blue: 0.83).opacity(0.12))
-                    .cornerRadius(12)
+            // Inner Orb Fill
+            Circle()
+                .fill(
+                    RadialGradient(
+                        gradient: Gradient(colors: engine.state == .idle ?
+                            [Color(red: 0.12, green: 0.16, blue: 0.26), Color(red: 0.06, green: 0.08, blue: 0.14)] :
+                            orbGlowColors.map { $0.opacity(0.85) }
+                        ),
+                        center: .center,
+                        startRadius: 20,
+                        endRadius: 110
+                    )
+                )
+                .frame(width: 216, height: 216)
+                .shadow(color: engine.state == .idle ? Color.black.opacity(0.4) : (orbGlowColors.first?.opacity(0.5) ?? .clear), radius: 16, x: 0, y: 0)
+            
+            // Text Content matching Image 1
+            VStack(spacing: 6) {
+                Text(actionTitle)
+                    .font(.system(size: 16, weight: .black, design: .rounded))
+                    .foregroundColor(Color.white.opacity(0.9))
+                    .tracking(2)
+                
+                Text(timerText)
+                    .font(.system(size: 54, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                
+                Text(subtextDescription)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(Color.white.opacity(0.7))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
+                    .lineLimit(3)
             }
+            .frame(width: 190, height: 190)
+        }
+        .padding(.vertical, 10)
+        .onAppear {
+            isPulsing = true
         }
     }
 }
