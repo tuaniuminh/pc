@@ -19,9 +19,6 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
 
-      - name: Install ldid for TrollStore Fake-Root Signing
-        run: brew install ldid
-
       - name: Build Native SwiftUI App (.app)
         run: |
           xcodebuild -project ios/PCFlex.xcodeproj \
@@ -34,7 +31,7 @@ jobs:
                      CODE_SIGNING_ALLOWED=NO \
                      clean build
 
-      - name: Prepare Payload, App Icons & Pure ldid Signing
+      - name: Prepare Payload, App Icons & Manual Ad-Hoc Codesign
         run: |
           mkdir -p Payload
           cp -r build/Build/Products/Release-iphoneos/PCFlex.app Payload/
@@ -46,14 +43,14 @@ jobs:
           cp logo.png Payload/PCFlex.app/AppIcon60x60@2x.png
           cp logo.png Payload/PCFlex.app/AppIcon60x60@3x.png
           
-          # Pure ldid Fake-Root Signing for TrollStore CoreTrust Bypass
-          ldid -Sios/ios-build-entitlements.plist Payload/PCFlex.app/PCFlex
+          # Force Ad-Hoc Sign with get-task-allow = false Entitlements
+          codesign --force --sign - --deep --entitlements ios/ios-build-entitlements.plist Payload/PCFlex.app
           
-          # Compress Payload to PCFlex_v1.2.01.ipa
-          zip -r PCFlex_v1.2.01.ipa Payload
+          # Compress Payload to PCFlex_v1.2.02.ipa
+          zip -r PCFlex_v1.2.02.ipa Payload
 
       - name: Upload TrollStore IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PCFlex_v1.2.01
-          path: PCFlex_v1.2.01.ipa
+          name: PCFlex_v1.2.02
+          path: PCFlex_v1.2.02.ipa
