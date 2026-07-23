@@ -1,0 +1,246 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 55;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000012B5F000100000001 /* PCFlexApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000012B5F000100000001 /* PCFlexApp.swift */; };
+		A10000022B5F000100000002 /* WorkoutModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000022B5F000100000002 /* WorkoutModels.swift */; };
+		A10000032B5F000100000003 /* ClinicalLevelsData.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000032B5F000100000003 /* ClinicalLevelsData.swift */; };
+		A10000042B5F000100000004 /* WorkoutEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000042B5F000100000004 /* WorkoutEngine.swift */; };
+		A10000052B5F000100000005 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000052B5F000100000005 /* HapticManager.swift */; };
+		A10000062B5F000100000006 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000062B5F000100000006 /* SoundManager.swift */; };
+		A10000072B5F000100000007 /* VisualizerOrbView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000072B5F000100000007 /* VisualizerOrbView.swift */; };
+		A10000082B5F000100000008 /* PracticeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000082B5F000100000008 /* PracticeView.swift */; };
+		A10000092B5F000100000009 /* MedicalLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000092B5F000100000009 /* MedicalLibraryView.swift */; };
+		A100000A2B5F00010000000A /* ProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B100000A2B5F00010000000A /* ProgressView.swift */; };
+		A100000B2B5F00010000000B /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B100000B2B5F00010000000B /* MainTabView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		C10000002B5F000100000000 /* PCFlex.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PCFlex.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10000012B5F000100000001 /* PCFlexApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PCFlexApp.swift; sourceTree = "<group>"; };
+		B10000022B5F000100000002 /* WorkoutModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/WorkoutModels.swift; sourceTree = "<group>"; };
+		B10000032B5F000100000003 /* ClinicalLevelsData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/ClinicalLevelsData.swift; sourceTree = "<group>"; };
+		B10000042B5F000100000004 /* WorkoutEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModels/WorkoutEngine.swift; sourceTree = "<group>"; };
+		B10000052B5F000100000005 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helpers/HapticManager.swift; sourceTree = "<group>"; };
+		B10000062B5F000100000006 /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helpers/SoundManager.swift; sourceTree = "<group>"; };
+		B10000072B5F000100000007 /* VisualizerOrbView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/VisualizerOrbView.swift; sourceTree = "<group>"; };
+		B10000082B5F000100000008 /* PracticeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/Practice/PracticeView.swift; sourceTree = "<group>"; };
+		B10000092B5F000100000009 /* MedicalLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/Library/MedicalLibraryView.swift; sourceTree = "<group>"; };
+		B100000A2B5F00010000000A /* ProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/Progress/ProgressView.swift; sourceTree = "<group>"; };
+		B100000B2B5F00010000000B /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/MainTabView.swift; sourceTree = "<group>"; };
+		B100000C2B5F00010000000C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D10000002B5F000100000000 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E10000002B5F000100000000 = {
+			isa = PBXGroup;
+			children = (
+				E10000012B5F000100000001 /* PCFlex */,
+				E10000022B5F000100000002 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		E10000012B5F000100000001 /* PCFlex */ = {
+			isa = PBXGroup;
+			children = (
+				B10000012B5F000100000001 /* PCFlexApp.swift */,
+				B10000022B5F000100000002 /* WorkoutModels.swift */,
+				B10000032B5F000100000003 /* ClinicalLevelsData.swift */,
+				B10000042B5F000100000004 /* WorkoutEngine.swift */,
+				B10000052B5F000100000005 /* HapticManager.swift */,
+				B10000062B5F000100000006 /* SoundManager.swift */,
+				B10000072B5F000100000007 /* VisualizerOrbView.swift */,
+				B10000082B5F000100000008 /* PracticeView.swift */,
+				B10000092B5F000100000009 /* MedicalLibraryView.swift */,
+				B100000A2B5F00010000000A /* ProgressView.swift */,
+				B100000B2B5F00010000000B /* MainTabView.swift */,
+				B100000C2B5F00010000000C /* Info.plist */,
+			);
+			path = PCFlex;
+			sourceTree = "<group>";
+		};
+		E10000022B5F000100000002 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C10000002B5F000100000000 /* PCFlex.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		F10000002B5F000100000000 /* PCFlex */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F10000012B5F000100000001 /* Build configuration list for PBXNativeTarget "PCFlex" */;
+			buildPhases = (
+				F10000022B5F000100000002 /* Sources */,
+				D10000002B5F000100000000 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PCFlex;
+			productName = PCFlex;
+			productReference = C10000002B5F000100000000 /* PCFlex.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		G10000002B5F000100000000 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1400;
+				LastUpgradeCheck = 1400;
+				TargetAttributes = {
+					F10000002B5F000100000000 = {
+						CreatedOnToolsVersion = 14.0;
+					};
+				};
+			};
+			buildConfigurationList = G10000012B5F000100000001 /* Build configuration list for PBXProject "PCFlex" */;
+			compatibilityVersion = "Xcode 13.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E10000002B5F000100000000;
+			productRefGroup = E10000022B5F000100000002 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F10000002B5F000100000000 /* PCFlex */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F10000022B5F000100000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000012B5F000100000001 /* PCFlexApp.swift in Sources */,
+				A10000022B5F000100000002 /* WorkoutModels.swift in Sources */,
+				A10000032B5F000100000003 /* ClinicalLevelsData.swift in Sources */,
+				A10000042B5F000100000004 /* WorkoutEngine.swift in Sources */,
+				A10000052B5F000100000005 /* HapticManager.swift in Sources */,
+				A10000062B5F000100000006 /* SoundManager.swift in Sources */,
+				A10000072B5F000100000007 /* VisualizerOrbView.swift in Sources */,
+				A10000082B5F000100000008 /* PracticeView.swift in Sources */,
+				A10000092B5F000100000009 /* MedicalLibraryView.swift in Sources */,
+				A100000A2B5F00010000000A /* ProgressView.swift in Sources */,
+				A100000B2B5F00010000000B /* MainTabView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		H10000012B5F000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++18";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = PCFlex/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pcflex.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		H10000022B5F000100000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++18";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				INFOPLIST_FILE = PCFlex/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pcflex.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		G10000012B5F000100000001 /* Build configuration list for PBXProject "PCFlex" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				H10000012B5F000100000001 /* Debug */,
+				H10000022B5F000100000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F10000012B5F000100000001 /* Build configuration list for PBXNativeTarget "PCFlex" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				H10000012B5F000100000001 /* Debug */,
+				H10000022B5F000100000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCBuildConfiguration section */
+
+	};
+	rootObject = G10000002B5F000100000000 /* Project object */;
+}

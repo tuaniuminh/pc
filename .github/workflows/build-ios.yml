@@ -1,0 +1,48 @@
+name: Build Native iOS App (TrollStore IPA)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-ipa:
+    name: Build & Package TrollStore IPA
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v3
+
+      - name: Select Xcode
+        run: sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
+
+      - name: Build Native SwiftUI App (.app)
+        run: |
+          xcodebuild -project ios/PCFlex.xcodeproj \
+                     -scheme PCFlex \
+                     -configuration Release \
+                     -sdk iphoneos \
+                     -derivedDataPath build \
+                     CODE_SIGNING_ALLOWED=NO \
+                     CODE_SIGNING_REQUIRED=NO \
+                     clean build
+
+      - name: Prepare Payload & Ad-Hoc Entitlements Signing
+        run: |
+          mkdir -p Payload
+          cp -r build/Build/Products/Release-iphoneos/PCFlex.app Payload/
+          
+          # Ad-Hoc Code Signing with TrollStore Entitlements
+          codesign --force --sign - --deep --entitlements ios/ios-build-entitlements.plist Payload/PCFlex.app
+          
+          # Compress Payload to PCFlex.ipa
+          zip -r PCFlex.ipa Payload
+
+      - name: Upload TrollStore IPA Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: PCFlex-TrollStore-IPA
+          path: PCFlex.ipa

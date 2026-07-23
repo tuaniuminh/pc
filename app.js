@@ -562,6 +562,67 @@ class AudioController {
         osc2.stop(now + 1.5);
     }
 
+    // Play Reverse Kegel Sound (Dual tone harmonic chime - A4 + E5 with ascending glide)
+    playReverseKegelSFX() {
+        if (state.isMutedSFX) return;
+        this.resumeContext();
+        if (!this.audioCtx) return;
+
+        const now = this.audioCtx.currentTime;
+        const osc1 = this.audioCtx.createOscillator();
+        const osc2 = this.audioCtx.createOscillator();
+        const gainNode = this.audioCtx.createGain();
+
+        osc1.type = 'triangle';
+        osc1.frequency.setValueAtTime(440.00, now); // A4
+        osc1.frequency.exponentialRampToValueAtTime(554.37, now + 0.25); // C#5
+
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(659.25, now); // E5
+
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.50, now + 0.04);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+
+        osc1.connect(gainNode);
+        osc2.connect(gainNode);
+        gainNode.connect(this.audioCtx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 1.0);
+        osc2.stop(now + 1.0);
+    }
+
+    // Play Transition Rest Sound (Soft double wood block / gentle pulse - D4 + A4)
+    playTransitionRestSFX() {
+        if (state.isMutedSFX) return;
+        this.resumeContext();
+        if (!this.audioCtx) return;
+
+        const now = this.audioCtx.currentTime;
+        const pulses = [0, 0.18];
+        
+        pulses.forEach(delay => {
+            const osc = this.audioCtx.createOscillator();
+            const gain = this.audioCtx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(293.66, now + delay); // D4
+            osc.frequency.exponentialRampToValueAtTime(440.00, now + delay + 0.08); // A4
+
+            gain.gain.setValueAtTime(0, now + delay);
+            gain.gain.linearRampToValueAtTime(0.40, now + delay + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.4);
+
+            osc.connect(gain);
+            gain.connect(this.audioCtx.destination);
+
+            osc.start(now + delay);
+            osc.stop(now + delay + 0.4);
+        });
+    }
+
     // Play Completion Sound (A beautiful C major arpeggio)
     playCompletionSFX() {
         if (state.isMutedSFX) return;
@@ -1379,12 +1440,17 @@ function getTransitionRestDuration(stage, nextStage, workoutName) {
         return 10;
     }
 
-    // 2. Chuyển từ siết 3s sang siết 3s nghỉ 30s
+    // 2. Chuyển từ siết 1s sang siết 3s nghỉ 10s (bài combo sức mạnh)
+    if (currentType === 'normal' && nextType === 'normal' && currentSqueeze === 1 && nextSqueeze === 3) {
+        return 10;
+    }
+
+    // 3. Chuyển từ siết 3s sang siết 3s nghỉ 30s
     if (currentType === 'normal' && nextType === 'normal' && currentSqueeze === 3 && nextSqueeze === 3) {
         return 30;
     }
 
-    // 3. Chuyển từ siết 3s sang siết 5s nghỉ 1 phút (bài combo sức mạnh)
+    // 4. Chuyển từ siết 3s sang siết 5s nghỉ 1 phút (bài combo sức mạnh)
     if (currentType === 'normal' && nextType === 'normal' && currentSqueeze === 3 && nextSqueeze === 5) {
         return 60;
     }
@@ -1445,7 +1511,7 @@ function buildStepsFromStages(stages, workoutName) {
                         duration: tRest,
                         action: 'NGHỈ CHUYỂN',
                         subtext: `Nghỉ chuyển bài ${tRest}s - Chuẩn bị giai đoạn tiếp theo`,
-                        sfx: 'relax',
+                        sfx: 'transition',
                         orbClass: 'resting',
                         repIndex: currentRep
                     });
@@ -1466,7 +1532,7 @@ function buildStepsFromStages(stages, workoutName) {
                     duration: Math.max(1, parseInt(stage.squeeze || 5)),
                     action: 'KEGEL NGƯỢC',
                     subtext: `Hít vào, đẩy nhẹ cơ PC ra ngoài - Lượt ${r}/${repsCount} (${phaseName})`,
-                    sfx: 'squeeze',
+                    sfx: 'reverse',
                     orbClass: 'resting',
                     repIndex: currentRep
                 });
@@ -1480,7 +1546,7 @@ function buildStepsFromStages(stages, workoutName) {
                         duration: tRest,
                         action: 'NGHỈ CHUYỂN',
                         subtext: `Nghỉ chuyển bài ${tRest}s - Chuẩn bị giai đoạn tiếp theo`,
-                        sfx: 'relax',
+                        sfx: 'transition',
                         orbClass: 'resting',
                         repIndex: currentRep
                     });
@@ -1515,7 +1581,7 @@ function buildStepsFromStages(stages, workoutName) {
                         duration: tRest,
                         action: 'NGHỈ CHUYỂN',
                         subtext: `Nghỉ chuyển bài ${tRest}s - Chuẩn bị giai đoạn tiếp theo`,
-                        sfx: 'relax',
+                        sfx: 'transition',
                         orbClass: 'resting',
                         repIndex: currentRep
                     });
@@ -1565,6 +1631,10 @@ function executeWorkoutStep() {
     // Phát âm báo nhịp
     if (step.sfx === 'squeeze') {
         audioController.playSqueezeSFX();
+    } else if (step.sfx === 'reverse') {
+        audioController.playReverseKegelSFX();
+    } else if (step.sfx === 'transition') {
+        audioController.playTransitionRestSFX();
     } else if (step.sfx === 'relax') {
         audioController.playRelaxSFX();
     }
