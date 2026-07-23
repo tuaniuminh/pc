@@ -48,7 +48,7 @@ public struct MedicalLibraryView: View {
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 10)
-                                .background(engine.gender == .male ? Color(red: 0, green: 0.96, blue: 0.83) : Color.white.opacity(0.08))
+                                .background(engine.gender == .male ? Color(red: 0.0, green: 0.96, blue: 0.83) : Color.white.opacity(0.08))
                                 .foregroundColor(engine.gender == .male ? .black : .white)
                                 .cornerRadius(12)
                             }
@@ -112,7 +112,7 @@ public struct MedicalLibraryView: View {
                                                 .multilineTextAlignment(.leading)
                                             Spacer()
                                             Image(systemName: openFaqIndex == idx ? "chevron.up" : "chevron.down")
-                                                .foregroundColor(Color(red: 0, green: 0.96, blue: 0.83))
+                                                .foregroundColor(Color(red: 0.0, green: 0.96, blue: 0.83))
                                         }
                                     }
                                     

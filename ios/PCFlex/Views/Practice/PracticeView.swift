@@ -31,13 +31,13 @@ public struct PracticeView: View {
                                 Text("⚡")
                                 Text("Đã siết: \(engine.totalRepsCompleted) lượt")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(Color(red: 0, green: 0.96, blue: 0.83))
+                                    .foregroundColor(Color(red: 0.0, green: 0.96, blue: 0.83))
                             }
                             .padding(.vertical, 8)
                             .padding(.horizontal, 12)
-                            .background(Color(red: 0, green: 0.96, blue: 0.83).opacity(0.1))
+                            .background(Color(red: 0.0, green: 0.96, blue: 0.83).opacity(0.1))
                             .cornerRadius(10)
-                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(red: 0, green: 0.96, blue: 0.83).opacity(0.3), lineWidth: 1))
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(red: 0.0, green: 0.96, blue: 0.83).opacity(0.3), lineWidth: 1))
                             
                             HStack(spacing: 6) {
                                 Text("🔥")
@@ -66,7 +66,7 @@ public struct PracticeView: View {
                                             .font(.system(size: 13, weight: .bold))
                                             .padding(.vertical, 8)
                                             .padding(.horizontal, 16)
-                                            .background(engine.selectedLevelTab == levelTab ? Color(red: 0, green: 0.96, blue: 0.83) : Color.white.opacity(0.08))
+                                            .background(engine.selectedLevelTab == levelTab ? Color(red: 0.0, green: 0.96, blue: 0.83) : Color.white.opacity(0.08))
                                             .foregroundColor(engine.selectedLevelTab == levelTab ? .black : .white)
                                             .cornerRadius(12)
                                     }
@@ -100,7 +100,7 @@ public struct PracticeView: View {
                                                 Spacer()
                                                 if engine.selectedWorkoutId == key {
                                                     Image(systemName: "checkmark.circle.fill")
-                                                        .foregroundColor(Color(red: 0, green: 0.96, blue: 0.83))
+                                                        .foregroundColor(Color(red: 0.0, green: 0.96, blue: 0.83))
                                                 }
                                             }
                                             .padding()
@@ -108,7 +108,7 @@ public struct PracticeView: View {
                                             .cornerRadius(14)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 14)
-                                                    .stroke(engine.selectedWorkoutId == key ? Color(red: 0, green: 0.96, blue: 0.83).opacity(0.5) : Color.white.opacity(0.1), lineWidth: 1)
+                                                    .stroke(engine.selectedWorkoutId == key ? Color(red: 0.0, green: 0.96, blue: 0.83).opacity(0.5) : Color.white.opacity(0.1), lineWidth: 1)
                                             )
                                         }
                                         .disabled(engine.state != .idle)
@@ -134,7 +134,7 @@ public struct PracticeView: View {
                                     }
                                     .frame(maxWidth: .infinity)
                                     .padding()
-                                    .background(LinearGradient(gradient: Gradient(colors: [Color(red: 0, green: 0.96, blue: 0.83), Color(red: 0, green: 0.8, blue: 0.9)]), startPoint: .leading, endPoint: .trailing))
+                                    .background(LinearGradient(gradient: Gradient(colors: [Color(red: 0.0, green: 0.96, blue: 0.83), Color(red: 0.0, green: 0.8, blue: 0.9)]), startPoint: .leading, endPoint: .trailing))
                                     .foregroundColor(.black)
                                     .cornerRadius(14)
                                 }

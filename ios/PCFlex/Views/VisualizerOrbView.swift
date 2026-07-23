@@ -11,18 +11,18 @@ public struct VisualizerOrbView: View {
     
     private var orbGlowColors: [Color] {
         guard let step = currentStep else {
-            return [Color(red: 0, green: 0.96, blue: 0.83), Color(red: 0, green: 0.7, blue: 0.9)]
+            return [Color(red: 0.0, green: 0.96, blue: 0.83), Color(red: 0.0, green: 0.7, blue: 0.9)]
         }
         
         switch step.orbClass {
         case "squeezing":
-            return [Color(red: 0, green: 0.96, blue: 0.83), Color(red: 0, green: 0.7, blue: 0.9)]
+            return [Color(red: 0.0, green: 0.96, blue: 0.83), Color(red: 0.0, green: 0.7, blue: 0.9)]
         case "relaxing":
             return [Color(red: 0.23, green: 0.51, blue: 0.96), Color(red: 0.58, green: 0.36, blue: 0.96)]
         case "resting":
             return [Color(red: 0.96, green: 0.62, blue: 0.04), Color(red: 0.93, green: 0.28, blue: 0.6)]
         default:
-            return [Color(red: 0, green: 0.96, blue: 0.83), Color(red: 0, green: 0.7, blue: 0.9)]
+            return [Color(red: 0.0, green: 0.96, blue: 0.83), Color(red: 0.0, green: 0.7, blue: 0.9)]
         }
     }
     

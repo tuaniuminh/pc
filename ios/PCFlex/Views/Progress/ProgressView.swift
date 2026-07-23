@@ -51,7 +51,7 @@ public struct ProgressView: View {
                                     .font(.system(size: 24))
                                 Text("\(engine.totalSessions) hiệp")
                                     .font(.system(size: 18, weight: .bold))
-                                    .foregroundColor(Color(red: 0, green: 0.96, blue: 0.83))
+                                    .foregroundColor(Color(red: 0.0, green: 0.96, blue: 0.83))
                                 Text("Tổng hiệp tập")
                                     .font(.system(size: 10))
                                     .foregroundColor(.gray)
@@ -197,7 +197,7 @@ public struct ProgressView: View {
                                         Spacer()
                                         Text("\(log.repsCompleted) lượt")
                                             .font(.system(size: 13, weight: .semibold))
-                                            .foregroundColor(Color(red: 0, green: 0.96, blue: 0.83))
+                                            .foregroundColor(Color(red: 0.0, green: 0.96, blue: 0.83))
                                     }
                                     .padding()
                                     .background(Color.white.opacity(0.03))
