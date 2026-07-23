@@ -2,7 +2,7 @@ import SwiftUI
 
 /**
  * PC Flex Native iOS App (Swift & SwiftUI)
- * Version 1.2.11 - TrollStore Compatible (Swift KeepAlive Timer & Silent Loop)
+ * Version 1.2.12 - TrollStore Compatible (Swift Native Audio Bridge & Background Audio)
  */
 @main
 struct PCFlexApp: App {

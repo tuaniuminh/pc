@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.2.11';
+const APP_VERSION = 'v1.2.12';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -467,6 +467,13 @@ function calculateSqueezes(level, reps) {
     return reps;
 }
 
+// --- NATIVE SOUND BRIDGE ---
+function triggerNativeSound(type) {
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.sound) {
+        window.webkit.messageHandlers.sound.postMessage(type);
+    }
+}
+
 // --- AUDIO CONTROLLER (Web Audio API Synthesizer) ---
 class AudioController {
     constructor() {
@@ -496,6 +503,7 @@ class AudioController {
     // Play Squeeze Sound (High-pitched pure chime - C5 + G5)
     playSqueezeSFX() {
         if (state.isMutedSFX) return;
+        triggerNativeSound('squeeze');
         this.resumeContext();
         if (!this.audioCtx) return;
 
@@ -532,6 +540,7 @@ class AudioController {
     // Play Relax Sound (Warmer, soft low chime - G3 + E4)
     playRelaxSFX() {
         if (state.isMutedSFX) return;
+        triggerNativeSound('relax');
         this.resumeContext();
         if (!this.audioCtx) return;
 
@@ -567,6 +576,7 @@ class AudioController {
     // Play Reverse Kegel Sound (Dual tone harmonic chime - A4 + E5 with ascending glide)
     playReverseKegelSFX() {
         if (state.isMutedSFX) return;
+        triggerNativeSound('reverse');
         this.resumeContext();
         if (!this.audioCtx) return;
 
@@ -599,6 +609,7 @@ class AudioController {
     // Play Transition Rest Sound (Soft double wood block / gentle pulse - D4 + A4)
     playTransitionRestSFX() {
         if (state.isMutedSFX) return;
+        triggerNativeSound('transition');
         this.resumeContext();
         if (!this.audioCtx) return;
 

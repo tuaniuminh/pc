@@ -48,9 +48,10 @@ public struct PWAWebView: UIViewRepresentable {
         prefs.allowsContentJavaScript = true
         config.defaultWebpagePreferences = prefs
         
-        // Add Native Haptic Bridge Handler
+        // Add Native Haptic & Sound Bridge Handlers
         let contentController = WKUserContentController()
         contentController.add(context.coordinator, name: "haptic")
+        contentController.add(context.coordinator, name: "sound")
         config.userContentController = contentController
         
         let webView = WKWebView(frame: .zero, configuration: config)
@@ -105,6 +106,29 @@ public struct PWAWebView: UIViewRepresentable {
             if message.name == "haptic" {
                 if let type = message.body as? String {
                     triggerHaptic(type: type)
+                }
+            } else if message.name == "sound" {
+                if let soundType = message.body as? String {
+                    triggerNativeSound(type: soundType)
+                }
+            }
+        }
+        
+        private func triggerNativeSound(type: String) {
+            DispatchQueue.main.async {
+                switch type {
+                case "squeeze":
+                    SoundManager.shared.playSqueezeSound()
+                case "reverse":
+                    SoundManager.shared.playReverseKegelSound()
+                case "transition":
+                    SoundManager.shared.playTransitionRestSound()
+                case "relax":
+                    SoundManager.shared.playRelaxSound()
+                case "complete":
+                    SoundManager.shared.playCompletionSound()
+                default:
+                    SoundManager.shared.playSqueezeSound()
                 }
             }
         }
