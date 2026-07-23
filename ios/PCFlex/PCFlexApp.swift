@@ -2,7 +2,7 @@ import SwiftUI
 
 /**
  * PC Flex Native iOS App (Swift & SwiftUI)
- * Version 1.2.15 - TrollStore Compatible (Native WakeLock & Hidden Scrollbars)
+ * Version 1.2.16 - TrollStore Compatible (World-Class Light Theme & Dual Theme Engine)
  */
 @main
 struct PCFlexApp: App {
