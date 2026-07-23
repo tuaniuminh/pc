@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.2.09';
+const APP_VERSION = 'v1.2.10';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -3691,6 +3691,7 @@ function bindPWAUpdateChecker() {
 let pipCanvas = null;
 let pipVideo = null;
 let pipStream = null;
+let pipAudioDestination = null;
 
 function initPiPVideo() {
     if (pipVideo) return;
@@ -3702,7 +3703,6 @@ function initPiPVideo() {
     pipVideo = document.createElement('video');
     pipVideo.setAttribute('playsinline', '');
     pipVideo.setAttribute('webkit-playsinline', '');
-    pipVideo.muted = true;
     pipVideo.style.position = 'fixed';
     pipVideo.style.top = '-9999px';
     pipVideo.style.left = '-9999px';
@@ -3763,6 +3763,28 @@ function startPiPVideoSession() {
     
     if (!pipStream && pipCanvas.captureStream) {
         pipStream = pipCanvas.captureStream(10);
+        
+        // Attach audio track for iOS 16.6 background audio permission
+        if (audioController && audioController.audioCtx) {
+            try {
+                if (!pipAudioDestination) {
+                    pipAudioDestination = audioController.audioCtx.createMediaStreamDestination();
+                    const silentOsc = audioController.audioCtx.createOscillator();
+                    const silentGain = audioController.audioCtx.createGain();
+                    silentGain.gain.value = 0.0001;
+                    silentOsc.connect(silentGain);
+                    silentGain.connect(pipAudioDestination);
+                    silentOsc.start();
+                }
+                const audioTracks = pipAudioDestination.stream.getAudioTracks();
+                if (audioTracks.length > 0) {
+                    pipStream.addTrack(audioTracks[0]);
+                }
+            } catch (e) {
+                console.warn('PiP Audio track attach error:', e);
+            }
+        }
+        
         pipVideo.srcObject = pipStream;
     }
     

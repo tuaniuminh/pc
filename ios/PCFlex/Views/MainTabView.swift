@@ -42,6 +42,7 @@ public struct PWAWebView: UIViewRepresentable {
         config.allowsInlineMediaPlayback = true
         config.allowsAirPlayForMediaPlayback = true
         config.allowsPictureInPictureMediaPlayback = true
+        config.mediaTypesRequiringUserActionForPlayback = []
         
         let prefs = WKWebpagePreferences()
         prefs.allowsContentJavaScript = true
