@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.2.22">
+    <link rel="stylesheet" href="styles.css?v=1.2.23">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -20,7 +20,7 @@
                     <img src="./logo.png" alt="PC Flex Logo" class="brand-logo">
                 </div>
                 <div class="version-update-container" id="btn-check-update" title="Kiểm tra bản cập nhật">
-                    VER v1.2.22 PRO
+                    VER v1.2.23 PRO
                 </div>
             </div>
             
@@ -68,7 +68,7 @@
                     <img src="./logo.png" alt="PC Flex Logo" class="brand-logo">
                 </div>
                 <div class="version-update-container" title="Kiểm tra bản cập nhật">
-                    VER v1.2.22 PRO
+                    VER v1.2.23 PRO
                 </div>
             </header>
             
@@ -107,10 +107,10 @@
                                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
                             </svg>
                         </button>
-                        <!-- Nút Mở Bộ Chọn Âm Thanh Kegel Ngược -->
-                        <button class="home-stat-badge" id="btn-open-sound-modal" title="Đổi âm thanh Kegel Ngược (10 âm thanh)">
-                            <span class="stat-badge-icon">🎵</span>
-                            <span>Âm Thanh Kegel Ngược</span>
+                        <!-- Nút Mở Studio Cài Đặt 50 Âm Thanh -->
+                        <button class="home-stat-badge" id="btn-open-sound-modal" title="Studio Cài Đặt 50 Âm Thanh Bài Tập">
+                            <span class="stat-badge-icon">🎙️</span>
+                            <span>Studio 50 Âm Thanh</span>
                         </button>
                     </div>
                 </div>
@@ -754,6 +754,27 @@
                     </div>
                 </div>
 
+                <!-- Sound Studio Settings Panel inside Tiến Độ tab -->
+                <div class="sound-studio-card">
+                    <div class="sound-studio-header">
+                        <div class="sound-studio-title-group">
+                            <span class="sound-studio-icon">🎙️</span>
+                            <div>
+                                <h3>Studio Thiết Lập Âm Thanh Bài Tập</h3>
+                                <p class="sound-studio-desc">Tự do gán 50 âm thanh thư thái & y khoa cho từng nhịp tập (Siết, Thả lỏng, Kegel ngược, Nghỉ chuyển, Hoàn thành)</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" id="btn-open-sound-studio-modal" style="padding: 0.65rem 1.25rem; font-size: 0.875rem;">
+                            🎧 Mở Studio 50 Âm Thanh
+                        </button>
+                    </div>
+
+                    <!-- Summary Grid of Current Sound Assignments -->
+                    <div class="sound-assignments-grid" id="sound-assignments-summary">
+                        <!-- 5 action assignment cards inserted dynamically -->
+                    </div>
+                </div>
+
                 <!-- History Log Table Card -->
                 <div class="history-card">
                     <div class="history-header">
@@ -884,12 +905,56 @@
         </div>
     </div>
 
+    <!-- Modal: 50 Sound Studio & Custom Assignment -->
+    <div class="modal-backdrop" id="sound-studio-modal" style="display: none;">
+        <div class="modal-card sound-studio-modal-card">
+            <button class="modal-close-btn" id="btn-close-sound-studio-modal">&times;</button>
+            
+            <div class="modal-header">
+                <span class="modal-header-icon">🎙️</span>
+                <div>
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--color-text-primary); margin-bottom: 0.25rem;">Studio Cài Đặt 50 Âm Thanh</h3>
+                    <p style="font-size: 0.85rem; color: var(--color-text-secondary);">Nghe thử 50 âm thanh mẫu & gán trực tiếp cho từng loại nhịp tập</p>
+                </div>
+            </div>
+            
+            <!-- Selector Tabs for Action Types -->
+            <div class="sound-action-tabs" id="sound-action-tabs">
+                <button class="sound-action-tab active" data-action="squeeze">⚡ Siết Cơ</button>
+                <button class="sound-action-tab" data-action="relax">🌀 Thả Lỏng</button>
+                <button class="sound-action-tab" data-action="reverse">🔄 Kegel Ngược</button>
+                <button class="sound-action-tab" data-action="transition">⏸️ Nghỉ Chuyển</button>
+                <button class="sound-action-tab" data-action="complete">🎉 Hoàn Thành</button>
+            </div>
+
+            <!-- Filter Category Pills -->
+            <div class="sound-category-pills" id="sound-category-pills">
+                <button class="sound-cat-pill active" data-cat="all">Tất cả (50)</button>
+                <button class="sound-cat-pill" data-cat="zen">🧘 Chuông Thiền</button>
+                <button class="sound-cat-pill" data-cat="instrument">🎼 Nhạc Cụ</button>
+                <button class="sound-cat-pill" data-cat="nature">🌊 Tự Nhiên</button>
+                <button class="sound-cat-pill" data-cat="solfeggio">⚡ Y Khoa</button>
+                <button class="sound-cat-pill" data-cat="rhythm">🥁 Động Lực</button>
+            </div>
+
+            <!-- 50 Presets List -->
+            <div class="sound-studio-list" id="sound-studio-list">
+                <!-- 50 preset cards dynamically rendered -->
+            </div>
+            
+            <div class="modal-footer" style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                <span class="active-assignment-info" id="active-assignment-info" style="font-size: 0.85rem; color: var(--color-text-secondary);">Đang gán âm thanh cho: <strong style="color: var(--color-primary);" id="active-action-label">⚡ Siết Cơ</strong></span>
+                <button class="btn btn-primary" id="btn-save-sound-studio-modal" style="padding: 0.65rem 1.5rem;">Lưu Cấu Hình</button>
+            </div>
+        </div>
+    </div>
+
     <!-- PWA Update Toast -->
     <div class="pwa-update-toast" id="pwa-update-toast">
         <span>Ứng dụng đã có phiên bản mới!</span>
         <button id="btn-pwa-update">Cập nhật ngay</button>
     </div>
 
-    <script src="app.js?v=1.2.22"></script>
+    <script src="app.js?v=1.2.23"></script>
 </body>
 </html>

@@ -3820,3 +3820,165 @@ body.light-mode .faq-item, body.light-mode .medical-guide-card {
 [data-theme="light"] .orb-subtext, body.light-mode .orb-subtext {
     color: #475569 !important;
 }
+
+/* --- SOUND STUDIO PANEL & MODAL STYLES --- */
+.sound-studio-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(16px);
+    border-radius: 24px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .sound-studio-card {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(226, 232, 240, 0.9);
+}
+
+.sound-studio-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.sound-studio-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.sound-studio-icon {
+    font-size: 1.8rem;
+}
+
+.sound-studio-desc {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    margin-top: 0.2rem;
+}
+
+.sound-assignments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.85rem;
+}
+
+.sound-assignment-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+[data-theme="light"] .sound-assignment-card {
+    background: rgba(241, 245, 249, 0.7);
+    border-color: rgba(226, 232, 240, 0.9);
+}
+
+.sound-assignment-card:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+}
+
+.sound-action-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-uppercase: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sound-preset-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.sound-studio-modal-card {
+    max-width: 680px;
+    width: 94%;
+    max-height: 88vh;
+}
+
+.sound-action-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+}
+
+.sound-action-tab {
+    padding: 0.5rem 0.9rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-color);
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+[data-theme="light"] .sound-action-tab {
+    background: rgba(241, 245, 249, 0.9);
+    border-color: rgba(203, 213, 225, 0.8);
+    color: #475569;
+}
+
+.sound-action-tab.active {
+    background: rgba(var(--color-primary-rgb), 0.15);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.sound-category-pills {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+}
+
+.sound-cat-pill {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--color-text-secondary);
+    font-size: 0.775rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.sound-cat-pill.active {
+    background: var(--color-primary);
+    color: #ffffff;
+    border-color: var(--color-primary);
+}
+
+.sound-studio-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin-top: 0.85rem;
+    overflow-y: auto;
+    max-height: 48vh;
+    padding-right: 0.25rem;
+}

@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.2.22';
+const APP_VERSION = 'v1.2.23';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -21,6 +21,13 @@ const state = {
     isMutedSFX: false,
     isMutedBGM: true,
     reverseKegelSoundPreset: 'preset_1',
+    actionSounds: {
+        squeeze: 'preset_14',
+        relax: 'preset_5',
+        reverse: 'preset_1',
+        transition: 'preset_27',
+        complete: 'preset_20'
+    },
     history: [],
     streak: 0,
     totalSessions: 0,
@@ -501,277 +508,80 @@ class AudioController {
         }
     }
 
-    // Play Squeeze Sound (High-pitched pure chime - C5 + G5)
+    // Action Sound Playback Wrappers (Using User Assigned 50 Presets)
     playSqueezeSFX() {
         if (state.isMutedSFX) return;
-        triggerNativeSound('squeeze');
-        this.resumeContext();
-        if (!this.audioCtx) return;
-
-        const now = this.audioCtx.currentTime;
-        
-        // Additive synthesizers for a crystal-clear bell chime
-        const osc1 = this.audioCtx.createOscillator();
-        const osc2 = this.audioCtx.createOscillator();
-        const gainNode = this.audioCtx.createGain();
-
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(523.25, now); // C5
-
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(783.99, now); // G5 (harmonic purity)
-
-        gainNode.gain.setValueAtTime(0, now);
-        // Fast attack
-        gainNode.gain.linearRampToValueAtTime(0.55, now + 0.03);
-        // Smooth decaying release
-        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
-
-        osc1.connect(gainNode);
-        osc2.connect(gainNode);
-        gainNode.connect(this.audioCtx.destination);
-
-        osc1.start(now);
-        osc2.start(now);
-        
-        osc1.stop(now + 1.2);
-        osc2.stop(now + 1.2);
+        const preset = (state.actionSounds && state.actionSounds.squeeze) || 'preset_14';
+        triggerNativeSound(preset);
+        this.playSoundPreset(preset);
     }
 
-    // Play Relax Sound (Warmer, soft low chime - G3 + E4)
     playRelaxSFX() {
         if (state.isMutedSFX) return;
-        triggerNativeSound('relax');
-        this.resumeContext();
-        if (!this.audioCtx) return;
-
-        const now = this.audioCtx.currentTime;
-        
-        const osc1 = this.audioCtx.createOscillator();
-        const osc2 = this.audioCtx.createOscillator();
-        const gainNode = this.audioCtx.createGain();
-
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(329.63, now); // E4
-
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(196.00, now); // G3 (Deep, relaxing base)
-
-        gainNode.gain.setValueAtTime(0, now);
-        // Softer, slower attack
-        gainNode.gain.linearRampToValueAtTime(0.60, now + 0.15);
-        // Long decay
-        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
-
-        osc1.connect(gainNode);
-        osc2.connect(gainNode);
-        gainNode.connect(this.audioCtx.destination);
-
-        osc1.start(now);
-        osc2.start(now);
-        
-        osc1.stop(now + 1.5);
-        osc2.stop(now + 1.5);
+        const preset = (state.actionSounds && state.actionSounds.relax) || 'preset_5';
+        triggerNativeSound(preset);
+        this.playSoundPreset(preset);
     }
 
-    // Play Reverse Kegel Sound according to user selected preset
     playReverseKegelSFX() {
         if (state.isMutedSFX) return;
-        const preset = state.reverseKegelSoundPreset || 'preset_1';
+        const preset = (state.actionSounds && state.actionSounds.reverse) || 'preset_1';
         triggerNativeSound(preset);
-        this.playReverseKegelSoundPreset(preset);
+        this.playSoundPreset(preset);
     }
 
-    playReverseKegelSoundPreset(presetId) {
-        if (state.isMutedSFX) return;
-        this.resumeContext();
-        if (!this.audioCtx) return;
-
-        const now = this.audioCtx.currentTime;
-
-        switch (presetId) {
-            case 'preset_1': { // 🧘 Zen Singing Bowl
-                const osc1 = this.audioCtx.createOscillator();
-                const osc2 = this.audioCtx.createOscillator();
-                const gain = this.audioCtx.createGain();
-                osc1.type = 'sine'; osc1.frequency.setValueAtTime(216.00, now);
-                osc2.type = 'sine'; osc2.frequency.setValueAtTime(432.00, now);
-                gain.gain.setValueAtTime(0, now);
-                gain.gain.linearRampToValueAtTime(0.5, now + 0.08);
-                gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
-                osc1.connect(gain); osc2.connect(gain);
-                gain.connect(this.audioCtx.destination);
-                osc1.start(now); osc2.start(now);
-                osc1.stop(now + 1.8); osc2.stop(now + 1.8);
-                break;
-            }
-            case 'preset_2': { // 🎼 Soft Harp Strum
-                const notes = [261.63, 329.63, 392.00, 523.25];
-                notes.forEach((freq, idx) => {
-                    const osc = this.audioCtx.createOscillator();
-                    const gain = this.audioCtx.createGain();
-                    const delay = idx * 0.07;
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq, now + delay);
-                    gain.gain.setValueAtTime(0, now + delay);
-                    gain.gain.linearRampToValueAtTime(0.35, now + delay + 0.02);
-                    gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.9);
-                    osc.connect(gain); gain.connect(this.audioCtx.destination);
-                    osc.start(now + delay); osc.stop(now + delay + 0.9);
-                });
-                break;
-            }
-            case 'preset_3': { // 🌊 Ocean Breeze Wave
-                const osc = this.audioCtx.createOscillator();
-                const gain = this.audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(180, now);
-                osc.frequency.exponentialRampToValueAtTime(320, now + 0.6);
-                osc.frequency.exponentialRampToValueAtTime(180, now + 1.4);
-                gain.gain.setValueAtTime(0, now);
-                gain.gain.linearRampToValueAtTime(0.4, now + 0.6);
-                gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
-                osc.connect(gain); gain.connect(this.audioCtx.destination);
-                osc.start(now); osc.stop(now + 1.4);
-                break;
-            }
-            case 'preset_4': { // 🪵 Warm Marimba
-                const freqs = [392.00, 493.88];
-                freqs.forEach(freq => {
-                    const osc = this.audioCtx.createOscillator();
-                    const gain = this.audioCtx.createGain();
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(freq, now);
-                    gain.gain.setValueAtTime(0, now);
-                    gain.gain.linearRampToValueAtTime(0.6, now + 0.01);
-                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
-                    osc.connect(gain); gain.connect(this.audioCtx.destination);
-                    osc.start(now); osc.stop(now + 0.6);
-                });
-                break;
-            }
-            case 'preset_5': { // 🔔 Deep Sanctuary Bell
-                const freqs = [220.00, 329.63, 440.00];
-                freqs.forEach(freq => {
-                    const osc = this.audioCtx.createOscillator();
-                    const gain = this.audioCtx.createGain();
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(freq, now);
-                    gain.gain.setValueAtTime(0, now);
-                    gain.gain.linearRampToValueAtTime(0.4, now + 0.06);
-                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
-                    osc.connect(gain); gain.connect(this.audioCtx.destination);
-                    osc.start(now); osc.stop(now + 1.6);
-                });
-                break;
-            }
-            case 'preset_6': { // 🪈 Celestial Flute
-                const osc = this.audioCtx.createOscillator();
-                const gain = this.audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(659.25, now);
-                osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.3);
-                gain.gain.setValueAtTime(0, now);
-                gain.gain.linearRampToValueAtTime(0.4, now + 0.1);
-                gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
-                osc.connect(gain); gain.connect(this.audioCtx.destination);
-                osc.start(now); osc.stop(now + 1.2);
-                break;
-            }
-            case 'preset_7': { // 💧 Gentle Rain Drop
-                const osc = this.audioCtx.createOscillator();
-                const gain = this.audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(587.33, now);
-                osc.frequency.exponentialRampToValueAtTime(880.00, now + 0.12);
-                gain.gain.setValueAtTime(0, now);
-                gain.gain.linearRampToValueAtTime(0.5, now + 0.02);
-                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
-                osc.connect(gain); gain.connect(this.audioCtx.destination);
-                osc.start(now); osc.stop(now + 0.7);
-                break;
-            }
-            case 'preset_8': { // 🎹 Warm Crystal Organ
-                const freqs = [261.63, 392.00, 659.25];
-                freqs.forEach(freq => {
-                    const osc = this.audioCtx.createOscillator();
-                    const gain = this.audioCtx.createGain();
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(freq, now);
-                    gain.gain.setValueAtTime(0, now);
-                    gain.gain.linearRampToValueAtTime(0.3, now + 0.15);
-                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
-                    osc.connect(gain); gain.connect(this.audioCtx.destination);
-                    osc.start(now); osc.stop(now + 1.5);
-                });
-                break;
-            }
-            case 'preset_9': { // 🪕 Serene Kalimba
-                const freqs = [587.33, 739.99, 880.00];
-                freqs.forEach((freq, i) => {
-                    const osc = this.audioCtx.createOscillator();
-                    const gain = this.audioCtx.createGain();
-                    const delay = i * 0.05;
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(freq, now + delay);
-                    gain.gain.setValueAtTime(0, now + delay);
-                    gain.gain.linearRampToValueAtTime(0.45, now + delay + 0.01);
-                    gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.8);
-                    osc.connect(gain); gain.connect(this.audioCtx.destination);
-                    osc.start(now + delay); osc.stop(now + delay + 0.8);
-                });
-                break;
-            }
-            case 'preset_10': default: { // ✨ Solfeggio 528Hz Cell Repair
-                const osc1 = this.audioCtx.createOscillator();
-                const osc2 = this.audioCtx.createOscillator();
-                const gain = this.audioCtx.createGain();
-                osc1.type = 'sine'; osc1.frequency.setValueAtTime(528.00, now);
-                osc2.type = 'sine'; osc2.frequency.setValueAtTime(264.00, now);
-                gain.gain.setValueAtTime(0, now);
-                gain.gain.linearRampToValueAtTime(0.45, now + 0.08);
-                gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
-                osc1.connect(gain); osc2.connect(gain);
-                gain.connect(this.audioCtx.destination);
-                osc1.start(now); osc2.start(now);
-                osc1.stop(now + 1.6); osc2.stop(now + 1.6);
-                break;
-            }
-        }
-    }
-
-    // Play Transition Rest Sound (Soft double wood block / gentle pulse - D4 + A4)
     playTransitionRestSFX() {
         if (state.isMutedSFX) return;
-        triggerNativeSound('transition');
+        const preset = (state.actionSounds && state.actionSounds.transition) || 'preset_27';
+        triggerNativeSound(preset);
+        this.playSoundPreset(preset);
+    }
+
+    playCompletionSFX() {
+        if (state.isMutedSFX) return;
+        const preset = (state.actionSounds && state.actionSounds.complete) || 'preset_20';
+        triggerNativeSound(preset);
+        this.playSoundPreset(preset);
+    }
+
+    // --- SYNTHESIS HELPER ENGINE FOR 50 PRESETS ---
+    playSineChord(freqs, vol = 0.5, dur = 1.2) {
         this.resumeContext();
         if (!this.audioCtx) return;
-
         const now = this.audioCtx.currentTime;
-        const pulses = [0, 0.18];
-        
-        pulses.forEach(delay => {
+        const gainNode = this.audioCtx.createGain();
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(vol / freqs.length, now + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+        gainNode.connect(this.audioCtx.destination);
+
+        freqs.forEach(freq => {
             const osc = this.audioCtx.createOscillator();
-            const gain = this.audioCtx.createGain();
-
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(293.66, now + delay); // D4
-            osc.frequency.exponentialRampToValueAtTime(440.00, now + delay + 0.08); // A4
-
-            gain.gain.setValueAtTime(0, now + delay);
-            gain.gain.linearRampToValueAtTime(0.40, now + delay + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.4);
-
-            osc.connect(gain);
-            gain.connect(this.audioCtx.destination);
-
-            osc.start(now + delay);
-            osc.stop(now + delay + 0.4);
+            osc.frequency.setValueAtTime(freq, now);
+            osc.connect(gainNode);
+            osc.start(now);
+            osc.stop(now + dur);
         });
     }
 
-    // Play Completion Sound (A beautiful C major arpeggio)
-    playCompletionSFX() {
-        if (state.isMutedSFX) return;
+    playArpeggio(freqs, delayStep = 0.06, vol = 0.4, dur = 1.0) {
         this.resumeContext();
         if (!this.audioCtx) return;
+        const now = this.audioCtx.currentTime;
 
+        freqs.forEach((freq, idx) => {
+            const delay = idx * delayStep;
+            const osc = this.audioCtx.createOscillator();
+            const gain = this.audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + delay);
+            gain.gain.setValueAtTime(0, now + delay);
+            gain.gain.linearRampToValueAtTime(vol, now + delay + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + dur);
+            osc.connect(gain);
+            gain.connect(this.audioCtx.destination);
+            osc.start(now + delay);
         const now = this.audioCtx.currentTime;
         const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
         
@@ -1159,6 +969,241 @@ function renderSoundPresets() {
     });
 }
 
+// --- MASTER 50 SOUND STUDIO PRESETS & HANDLERS ---
+const SOUND_STUDIO_PRESETS = [
+    // --- NHÓM 1: ZEN & CHUÔNG THIỀN (1 - 10) ---
+    { id: 'preset_1', cat: 'zen', icon: '🧘', name: 'Chuông Xoay Zen', desc: 'Sóng âm 216Hz + 432Hz ngân trầm sâu Tây Tạng' },
+    { id: 'preset_2', cat: 'zen', icon: '🔔', name: 'Chuông Tây Tạng Thẫm', desc: 'Hợp âm trầm 144Hz + 288Hz giải tỏa căng thẳng' },
+    { id: 'preset_3', cat: 'zen', icon: '🎐', name: 'Chuông Gió Thạch Anh', desc: 'Sóng âm cao 864Hz + 1296Hz thanh khiết' },
+    { id: 'preset_4', cat: 'zen', icon: '🏛️', name: 'Chuông Chùa Tĩnh Lặng', desc: 'Âm chuông 108Hz + 324Hz tĩnh tại tâm trí' },
+    { id: 'preset_5', cat: 'zen', icon: '✨', name: 'Âm Ngân 432Hz Healing', desc: 'Tần số chữa lành sinh học 432Hz chuẩn quốc tế' },
+    { id: 'preset_6', cat: 'zen', icon: '☸️', name: 'Chuông Tam Bảo', desc: 'Hợp âm ba tầng 300Hz + 600Hz + 900Hz' },
+    { id: 'preset_7', cat: 'zen', icon: '📿', name: 'Chuông Ngân Thư Thái', desc: 'Dải âm 520Hz + 780Hz thư giãn cơ thể' },
+    { id: 'preset_8', cat: 'zen', icon: '🥁', name: 'Gong Thiền Vô Vi', desc: 'Tiếng Gong 96Hz ngân vang tĩnh lặng' },
+    { id: 'preset_9', cat: 'zen', icon: '💎', name: 'Chuông Ngọc Bích F-Major', desc: 'Hợp âm F5 + A5 + C6 tinh khiết y khoa' },
+    { id: 'preset_10', cat: 'zen', icon: '🪐', name: 'Vũ Trụ OM Tone 136.1Hz', desc: 'Tần số OM 136.1Hz cân bằng năng lượng cơ thể' },
+
+    // --- NHÓM 2: NHẠC CỤ & GIAI ĐIỆU (11 - 20) ---
+    { id: 'preset_11', cat: 'instrument', icon: '🎼', name: 'Đàn Hạc Vuốt Nhẹ', desc: 'Hợp âm C4-E4-G4-C5 rải nhẹ tựa đàn hạc' },
+    { id: 'preset_12', cat: 'instrument', icon: '🪵', name: 'Đàn Marimba Mộc', desc: 'Tiếng gõ gỗ gụ G4 + B4 mộc mạc ấm áp' },
+    { id: 'preset_13', cat: 'instrument', icon: '🪕', name: 'Đàn Kalimba Châu Phi', desc: 'Tiếng phiến kim loại Kalimba D5 + F#5 + A5' },
+    { id: 'preset_14', cat: 'instrument', icon: '🎹', name: 'Đàn Organ Crystal', desc: 'Hợp âm phong cầm C4 + G4 + E5 du dương' },
+    { id: 'preset_15', cat: 'instrument', icon: '🪈', name: 'Tiếng Sáo Thiên Đường', desc: 'Tiếng sáo trúc vi vút E5 -> G5 thanh thoát' },
+    { id: 'preset_16', cat: 'instrument', icon: '🎻', name: 'Piano Hợp Âm Ấm', desc: 'Phím đàn Piano A3 + C#4 + E4 du dương' },
+    { id: 'preset_17', cat: 'instrument', icon: '🛎️', name: 'Đàn Celesta Thần Tiên', desc: 'Chuông phím Celesta C6 + E6 + G6 mộng mơ' },
+    { id: 'preset_18', cat: 'instrument', icon: '🎻', name: 'Violin Vĩ Kéo Êm', desc: 'Tiếng kéo vĩ Violin D4 + A4 mượt mà' },
+    { id: 'preset_19', cat: 'instrument', icon: '🪕', name: 'Đàn Tranh Dân Dục', desc: 'Tiếng gảy đàn tranh D4 -> F#4 -> A4 dân gian' },
+    { id: 'preset_20', cat: 'instrument', icon: '🎉', name: 'Giai Điệu Chiến Thắng', desc: 'Hợp âm rải C-E-G-C-E hoạn hỉ chúc mừng' },
+
+    // --- NHÓM 3: TỰ NHIÊN & SOMATIC (21 - 30) ---
+    { id: 'preset_21', cat: 'nature', icon: '🌊', name: 'Sóng Biển Êm Dịu', desc: 'Dải âm 180Hz -> 320Hz phập phồng sóng biển' },
+    { id: 'preset_22', cat: 'nature', icon: '💧', name: 'Giọt Sương Somatic', desc: 'Tiếng giọt nước đọng D5 -> A5 trong trẻo' },
+    { id: 'preset_23', cat: 'nature', icon: '🏞️', name: 'Tiếng Suối Róc Rách', desc: 'Âm thanh giọt nước suối đa tần róc rách' },
+    { id: 'preset_24', cat: 'nature', icon: '🎋', name: 'Gió Thoảng Rừng Trúc', desc: 'Tiếng gió lướt nhẹ qua tán trúc xào xạc' },
+    { id: 'preset_25', cat: 'nature', icon: '🎋', name: 'Cốc Gõ Gỗ Tre', desc: 'Âm thanh gõ ống tre 400Hz + 800Hz mộc mạc' },
+    { id: 'preset_26', cat: 'nature', icon: '🌧️', name: 'Mưa Rào Êm Dịu', desc: 'Tiếng mưa rơi nhẹ nhàng trên lá cây' },
+    { id: 'preset_27', cat: 'nature', icon: '🫀', name: 'Nhịp Tim Somatic', desc: 'Nhịp trầm 60Hz + 80Hz sâu lắng an yên' },
+    { id: 'preset_28', cat: 'nature', icon: '🐦', name: 'Tiếng Chim Rừng Hót', desc: 'Âm vang tiếng chim hót A5 -> C6 vi vút' },
+    { id: 'preset_29', cat: 'nature', icon: '💨', name: 'Hơi Thở Thả Lỏng Sâu', desc: 'Âm thanh sóng thở bung nén thư thái' },
+    { id: 'preset_30', cat: 'nature', icon: '🔥', name: 'Lửa Trại Đêm Thiền', desc: 'Tiếng nổ tí tách ấm áp lửa trại' },
+
+    // --- NHÓM 4: TẦN SỐ SOLFEGGIO & Y KHOA (31 - 40) ---
+    { id: 'preset_31', cat: 'solfeggio', icon: '⚡', name: 'Tần Số 528Hz Solfeggio', desc: 'Tần số 528Hz phục hồi tế bào & DNA' },
+    { id: 'preset_32', cat: 'solfeggio', icon: '💚', name: 'Tần Số 639Hz Gắn Kết', desc: 'Tần số 639Hz cân bằng cảm xúc & tim' },
+    { id: 'preset_33', cat: 'solfeggio', icon: '💜', name: 'Tần Số 741Hz Giải Độc', desc: 'Tần số 741Hz làm sạch năng lượng cơ thể' },
+    { id: 'preset_34', cat: 'solfeggio', icon: '🩺', name: 'Bíp Y Khoa Chuẩn', desc: 'Âm bíp 880Hz báo nhịp y khoa sắc nét' },
+    { id: 'preset_35', cat: 'solfeggio', icon: '🏥', name: 'Bíp Y Khoa Kép', desc: 'Nhịp bíp đôi 880Hz + 1046Hz báo chuyển' },
+    { id: 'preset_36', cat: 'solfeggio', icon: '📈', name: 'Nhịp Mạch Sinh Lý', desc: 'Xung âm 523Hz mô phỏng nhịp sinh học' },
+    { id: 'preset_37', cat: 'solfeggio', icon: '🧠', name: 'Sóng Não Alpha 10Hz', desc: 'Âm nền 440Hz điều tần 10Hz tập trung' },
+    { id: 'preset_38', cat: 'solfeggio', icon: '🌙', name: 'Sóng Não Theta 6Hz', desc: 'Âm trầm 220Hz điều tần 6Hz thư giãn sâu' },
+    { id: 'preset_39', cat: 'solfeggio', icon: '🔔', name: 'Chuông Cảnh Báo Nhẹ', desc: 'Nhịp chuông A5 + E6 báo hoàn thành nhịp' },
+    { id: 'preset_40', cat: 'solfeggio', icon: '💓', name: 'Mạch Sinh Học 70BPM', desc: 'Nhịp đập sine 70 nhịp/phút chuẩn y khoa' },
+
+    // --- NHÓM 5: NHỊP NHÚN & ĐỘNG LỰC (41 - 50) ---
+    { id: 'preset_41', cat: 'rhythm', icon: '🎈', name: 'Tiếng Pop Động Lực', desc: 'Âm vuốt Pop 300Hz linh hoạt tràn năng lượng' },
+    { id: 'preset_42', cat: 'rhythm', icon: '🚀', name: 'Synth Riser Bứt Phá', desc: 'Âm vuốt tăng tần số 200Hz -> 800Hz hào hùng' },
+    { id: 'preset_43', cat: 'rhythm', icon: '💥', name: 'Bass Trầm Năng Lượng', desc: 'Nhịp Bass 80Hz dội mạnh mẽ tạo động lực' },
+    { id: 'preset_44', cat: 'rhythm', icon: '🥁', name: 'Trống Gỗ Thể Thao', desc: 'Nhịp gõ trống Snare gỗ gụ thể thao' },
+    { id: 'preset_45', cat: 'rhythm', icon: '⭐', name: 'Âm Thăng Cấp Level Up', desc: 'Hợp âm C5-E5-G5-C6 vinh quang' },
+    { id: 'preset_46', cat: 'rhythm', icon: '👏', name: 'Tiếng Vỗ Tay Chúc Mừng', desc: 'Âm thanh tán thưởng tán dương hoàn thành' },
+    { id: 'preset_47', cat: 'rhythm', icon: '🔔', name: 'Leng Keng Kim Loại', desc: 'Chuông kim loại 1200Hz vui tươi náo nhiệt' },
+    { id: 'preset_48', cat: 'rhythm', icon: '📳', name: 'Haptic Click Premium', desc: 'Tiếng gõ nhẹ 150Hz mô phỏng rung xúc giác' },
+    { id: 'preset_49', cat: 'rhythm', icon: '🌌', name: 'Sóng Âm Sci-Fi Chuyển', desc: 'Âm thanh viễn tưởng FM chuyển nhịp hiện đại' },
+    { id: 'preset_50', cat: 'rhythm', icon: '🏆', name: 'Hợp Âm Hoàn Mỹ Final', desc: 'Hợp âm C Major 7th hoành tráng kết thúc' }
+];
+
+let activeStudioAction = 'squeeze';
+let activeStudioCategory = 'all';
+
+const ACTION_LABELS = {
+    squeeze: '⚡ Siết Cơ',
+    relax: '🌀 Thả Lỏng',
+    reverse: '🔄 Kegel Ngược',
+    transition: '⏸️ Nghỉ Chuyển',
+    complete: '🎉 Hoàn Thành'
+};
+
+function setupSoundStudioHandlers() {
+    const modal = document.getElementById('sound-studio-modal');
+    const btnOpenMain = document.getElementById('btn-open-sound-studio-modal');
+    const btnOpenHeader = document.getElementById('btn-open-sound-modal');
+    const btnClose = document.getElementById('btn-close-sound-studio-modal');
+    const btnSave = document.getElementById('btn-save-sound-studio-modal');
+
+    const openModal = () => {
+        if (!modal) return;
+        renderSoundStudioList();
+        renderSoundAssignmentsSummary();
+        modal.style.display = 'flex';
+    };
+
+    const closeModal = () => {
+        if (!modal) return;
+        modal.style.display = 'none';
+    };
+
+    if (btnOpenMain) btnOpenMain.addEventListener('click', openModal);
+    if (btnOpenHeader) btnOpenHeader.addEventListener('click', openModal);
+    if (btnClose) btnClose.addEventListener('click', closeModal);
+    if (btnSave) {
+        btnSave.addEventListener('click', () => {
+            saveData();
+            renderSoundAssignmentsSummary();
+            closeModal();
+            triggerHapticFeedback('success');
+        });
+    }
+
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+    }
+
+    // Tab Action switches
+    const actionTabs = document.querySelectorAll('#sound-action-tabs .sound-action-tab');
+    actionTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            actionTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            activeStudioAction = tab.getAttribute('data-action');
+            const labelEl = document.getElementById('active-action-label');
+            if (labelEl) labelEl.textContent = ACTION_LABELS[activeStudioAction] || activeStudioAction;
+            renderSoundStudioList();
+            triggerHapticFeedback('light');
+        });
+    });
+
+    // Category Filter pills
+    const catPills = document.querySelectorAll('#sound-category-pills .sound-cat-pill');
+    catPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            catPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            activeStudioCategory = pill.getAttribute('data-cat');
+            renderSoundStudioList();
+            triggerHapticFeedback('light');
+        });
+    });
+
+    renderSoundAssignmentsSummary();
+}
+
+function renderSoundAssignmentsSummary() {
+    const container = document.getElementById('sound-assignments-summary');
+    if (!container) return;
+
+    container.innerHTML = '';
+    const actions = [
+        { key: 'squeeze', name: '⚡ Siết Cơ' },
+        { key: 'relax', name: '🌀 Thả Lỏng' },
+        { key: 'reverse', name: '🔄 Kegel Ngược' },
+        { key: 'transition', name: '⏸️ Nghỉ Chuyển' },
+        { key: 'complete', name: '🎉 Hoàn Thành' }
+    ];
+
+    actions.forEach(act => {
+        const assignedId = (state.actionSounds && state.actionSounds[act.key]) || 'preset_1';
+        const presetObj = SOUND_STUDIO_PRESETS.find(p => p.id === assignedId) || SOUND_STUDIO_PRESETS[0];
+
+        const card = document.createElement('div');
+        card.className = 'sound-assignment-card';
+        card.innerHTML = `
+            <span class="sound-action-name">${act.name}</span>
+            <span class="sound-preset-name">${presetObj.icon} ${presetObj.name}</span>
+        `;
+        card.addEventListener('click', () => {
+            activeStudioAction = act.key;
+            const modal = document.getElementById('sound-studio-modal');
+            const actionTabs = document.querySelectorAll('#sound-action-tabs .sound-action-tab');
+            actionTabs.forEach(t => {
+                t.classList.toggle('active', t.getAttribute('data-action') === act.key);
+            });
+            const labelEl = document.getElementById('active-action-label');
+            if (labelEl) labelEl.textContent = act.name;
+            renderSoundStudioList();
+            if (modal) modal.style.display = 'flex';
+            audioController.playSoundPreset(assignedId);
+            triggerHapticFeedback('light');
+        });
+
+        container.appendChild(card);
+    });
+}
+
+function renderSoundStudioList() {
+    const listEl = document.getElementById('sound-studio-list');
+    if (!listEl) return;
+
+    listEl.innerHTML = '';
+    const currentAssignedId = (state.actionSounds && state.actionSounds[activeStudioAction]) || 'preset_1';
+
+    const filtered = SOUND_STUDIO_PRESETS.filter(p => {
+        if (activeStudioCategory === 'all') return true;
+        return p.cat === activeStudioCategory;
+    });
+
+    filtered.forEach(preset => {
+        const isAssigned = preset.id === currentAssignedId;
+        const item = document.createElement('div');
+        item.className = `sound-preset-item ${isAssigned ? 'active' : ''}`;
+        item.innerHTML = `
+            <div class="sound-preset-info">
+                <span class="sound-preset-icon">${preset.icon}</span>
+                <div>
+                    <div class="sound-preset-title">${preset.name} ${isAssigned ? '✓ (Đang dùng)' : ''}</div>
+                    <div class="sound-preset-desc">${preset.desc}</div>
+                </div>
+            </div>
+            <div class="sound-preset-actions">
+                <button class="btn-sound-preview" data-preset="${preset.id}">▶ Nghe thử</button>
+            </div>
+        `;
+
+        item.addEventListener('click', (e) => {
+            if (e.target.closest('.btn-sound-preview')) return;
+            if (!state.actionSounds) state.actionSounds = {};
+            state.actionSounds[activeStudioAction] = preset.id;
+            if (activeStudioAction === 'reverse') state.reverseKegelSoundPreset = preset.id;
+            renderSoundStudioList();
+            renderSoundAssignmentsSummary();
+            audioController.playSoundPreset(preset.id);
+            triggerHapticFeedback('light');
+        });
+
+        const previewBtn = item.querySelector('.btn-sound-preview');
+        if (previewBtn) {
+            previewBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                audioController.playSoundPreset(preset.id);
+                triggerHapticFeedback('light');
+            });
+        }
+
+        listEl.appendChild(item);
+    });
+}
+
 // --- THEME MANAGEMENT (SÁNG / TỐI) ---
 function initTheme() {
     const savedTheme = localStorage.getItem('pc_flex_theme') || 'light';
@@ -1208,6 +1253,7 @@ function initApp() {
     setupEventHandlers();
     setupGlobalButtonHaptics();
     setupSoundModalHandlers();
+    setupSoundStudioHandlers();
     updateUIConfigs();
     renderStats();
     initSupabaseConnection();
@@ -2662,6 +2708,7 @@ function saveData() {
     localStorage.setItem('pc_flex_birth_year', state.birthYear || '');
     localStorage.setItem('pc_flex_gemini_key', state.geminiApiKey || '');
     localStorage.setItem('pc_flex_reverse_kegel_preset', state.reverseKegelSoundPreset || 'preset_1');
+    localStorage.setItem('pc_flex_action_sounds', JSON.stringify(state.actionSounds));
 }
 
 function loadData() {
@@ -2674,6 +2721,13 @@ function loadData() {
         state.birthYear = localStorage.getItem('pc_flex_birth_year') || '';
         state.geminiApiKey = localStorage.getItem('pc_flex_gemini_key') || '';
         state.reverseKegelSoundPreset = localStorage.getItem('pc_flex_reverse_kegel_preset') || 'preset_1';
+        state.actionSounds = JSON.parse(localStorage.getItem('pc_flex_action_sounds')) || {
+            squeeze: 'preset_14',
+            relax: 'preset_5',
+            reverse: 'preset_1',
+            transition: 'preset_27',
+            complete: 'preset_20'
+        };
         state.totalRepsCompleted = state.history.reduce((sum, log) => {
             const level = log.level;
             const reps = log.config ? (log.config.reps || 0) : (log.reps || 0);
