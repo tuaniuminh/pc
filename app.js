@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.2.08';
+const APP_VERSION = 'v1.2.09';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -2031,6 +2031,7 @@ function startWorkout() {
     renderProgressSegments();
     executeWorkoutStep();
     
+    startPiPVideoSession();
     state.timerInterval = setInterval(tick, 1000);
 }
 
@@ -2101,6 +2102,7 @@ function tick() {
     } else {
         elements.orbTimer.textContent = String(state.timeRemaining).padStart(2, '0');
     }
+    updatePiPCanvas();
 }
 
 function buildPhasesFromStages(stages) {
@@ -3684,3 +3686,111 @@ function bindPWAUpdateChecker() {
         });
     });
 }
+
+// --- PIP (PICTURE-IN-PICTURE) CONTROLLER FOR IOS ---
+let pipCanvas = null;
+let pipVideo = null;
+let pipStream = null;
+
+function initPiPVideo() {
+    if (pipVideo) return;
+    
+    pipCanvas = document.createElement('canvas');
+    pipCanvas.width = 360;
+    pipCanvas.height = 360;
+    
+    pipVideo = document.createElement('video');
+    pipVideo.setAttribute('playsinline', '');
+    pipVideo.setAttribute('webkit-playsinline', '');
+    pipVideo.muted = true;
+    pipVideo.style.position = 'fixed';
+    pipVideo.style.top = '-9999px';
+    pipVideo.style.left = '-9999px';
+    pipVideo.style.width = '1px';
+    pipVideo.style.height = '1px';
+    pipVideo.style.opacity = '0.01';
+    pipVideo.style.pointerEvents = 'none';
+    document.body.appendChild(pipVideo);
+    
+    if ('autoPictureInPicture' in pipVideo) {
+        pipVideo.autoPictureInPicture = true;
+    }
+}
+
+function updatePiPCanvas() {
+    if (!pipCanvas) initPiPVideo();
+    const ctx = pipCanvas.getContext('2d');
+    
+    const grad = ctx.createLinearGradient(0, 0, 360, 360);
+    grad.addColorStop(0, '#070a13');
+    grad.addColorStop(1, '#0f172a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 360, 360);
+    
+    const step = state.workoutSteps ? state.workoutSteps[state.currentStepIndex] : null;
+    let mainColor = '#00f5d4';
+    if (step && step.orbClass === 'relaxing') mainColor = '#3b82f6';
+    if (step && step.orbClass === 'resting') mainColor = '#f59e0b';
+    
+    ctx.strokeStyle = mainColor;
+    ctx.lineWidth = 8;
+    ctx.shadowColor = mainColor;
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.arc(180, 180, 140, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 28px "Be Vietnam Pro", sans-serif';
+    ctx.textAlign = 'center';
+    const actionText = elements.orbActionText ? elements.orbActionText.textContent : 'SIẾT CƠ';
+    ctx.fillText(actionText, 180, 130);
+    
+    ctx.fillStyle = mainColor;
+    ctx.font = 'bold 84px sans-serif';
+    const timerVal = elements.orbTimer ? elements.orbTimer.textContent : '00';
+    ctx.fillText(timerVal, 180, 220);
+    
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'bold 20px "Be Vietnam Pro", sans-serif';
+    ctx.fillText(`Lượt ${state.currentRep}/${state.totalReps}`, 180, 280);
+}
+
+function startPiPVideoSession() {
+    initPiPVideo();
+    updatePiPCanvas();
+    
+    if (!pipStream && pipCanvas.captureStream) {
+        pipStream = pipCanvas.captureStream(10);
+        pipVideo.srcObject = pipStream;
+    }
+    
+    if (pipVideo) {
+        pipVideo.play().then(() => {
+            if ('autoPictureInPicture' in pipVideo) {
+                pipVideo.autoPictureInPicture = true;
+            }
+        }).catch(err => {
+            console.warn('PiP Video Play Error:', err);
+        });
+    }
+}
+
+function triggerPiPWindow() {
+    if (!pipVideo) return;
+    if (document.pictureInPictureElement) return;
+    
+    if (pipVideo.requestPictureInPicture) {
+        pipVideo.requestPictureInPicture().catch(() => {});
+    } else if (pipVideo.webkitSetPresentationMode) {
+        pipVideo.webkitSetPresentationMode('picture-in-picture');
+    }
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden && (state.workoutState === 'squeezing' || state.workoutState === 'relaxing')) {
+        triggerPiPWindow();
+    }
+});
+
