@@ -23,80 +23,88 @@ public struct MedicalLibraryView: View {
     public var body: some View {
         NavigationView {
             ZStack {
-                Color(red: 0.06, green: 0.09, blue: 0.16)
-                    .ignoresSafeArea()
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(red: 0.04, green: 0.05, blue: 0.09),
+                        Color(red: 0.06, green: 0.09, blue: 0.16)
+                    ]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 18) {
                         // Header
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Giáo Trình Y Khoa")
-                                .font(.system(size: 24, weight: .bold))
+                                .font(.system(size: 22, weight: .bold))
                                 .foregroundColor(.white)
                             Text("Kiến thức y sinh học lâm sàng về sức mạnh sàn chậu.")
-                                .font(.system(size: 13))
+                                .font(.system(size: 12))
                                 .foregroundColor(.gray)
                         }
                         .padding(.horizontal)
+                        .padding(.top, 10)
                         
-                        // Gender Selector
-                        HStack(spacing: 12) {
+                        // Gender Selector matching PWA
+                        HStack(spacing: 10) {
                             Button(action: { engine.gender = .male }) {
                                 HStack {
                                     Text("Nam giới")
-                                        .font(.system(size: 14, weight: .bold))
+                                        .font(.system(size: 13, weight: .bold))
                                 }
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
-                                .background(engine.gender == .male ? Color(red: 0.0, green: 0.96, blue: 0.83) : Color.white.opacity(0.08))
+                                .padding(.vertical, 8)
+                                .background(engine.gender == .male ? Color(red: 0.0, green: 0.96, blue: 0.83) : Color.white.opacity(0.06))
                                 .foregroundColor(engine.gender == .male ? .black : .white)
-                                .cornerRadius(12)
+                                .cornerRadius(10)
                             }
                             
                             Button(action: { engine.gender = .female }) {
                                 HStack {
                                     Text("Nữ giới")
-                                        .font(.system(size: 14, weight: .bold))
+                                        .font(.system(size: 13, weight: .bold))
                                 }
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
-                                .background(engine.gender == .female ? Color(red: 0.93, green: 0.28, blue: 0.6) : Color.white.opacity(0.08))
+                                .padding(.vertical, 8)
+                                .background(engine.gender == .female ? Color(red: 0.93, green: 0.28, blue: 0.6) : Color.white.opacity(0.06))
                                 .foregroundColor(engine.gender == .female ? .white : .white)
-                                .cornerRadius(12)
+                                .cornerRadius(10)
                             }
                         }
                         .padding(.horizontal)
                         
-                        // Medical Guide Banner Card
+                        // Medical Guide Banner Card matching PWA
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
                                 Text("🩺")
-                                    .font(.system(size: 24))
+                                    .font(.system(size: 22))
                                 Text("Cơ Học Sinh Lý Sàn Chậu")
-                                    .font(.system(size: 16, weight: .bold))
+                                    .font(.system(size: 15, weight: .bold))
                                     .foregroundColor(.white)
                             }
                             Text(engine.gender == .male ?
                                  "Tập luyện cơ PC đều đặn giúp gia tăng tuần hoàn máu thể hang, tăng áp lực co bóp và củng cố phản xạ kiểm soát xuất tinh chủ động." :
                                  "Tập luyện nâng đỡ sàn chậu hỗ trợ tăng độ đàn hồi trương lực cơ vòng, phòng ngừa sa tử cung và se khít vùng chậu tự nhiên.")
-                                .font(.system(size: 13))
-                                .foregroundColor(.white.opacity(0.8))
-                                .lineSpacing(4)
+                                .font(.system(size: 12))
+                                .foregroundColor(.white.opacity(0.85))
+                                .lineSpacing(3)
                         }
-                        .padding()
-                        .background(Color.white.opacity(0.05))
-                        .cornerRadius(16)
-                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                        .padding(14)
+                        .background(Color.white.opacity(0.04))
+                        .cornerRadius(14)
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
                         .padding(.horizontal)
                         
                         // FAQ Section Header
                         Text("Giải Đáp Thường Gặp (FAQ)")
-                            .font(.system(size: 18, weight: .bold))
+                            .font(.system(size: 17, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.horizontal)
                         
                         // FAQ List Accordion
-                        VStack(spacing: 12) {
+                        VStack(spacing: 10) {
                             ForEach(0..<faqItems.count, id: \.self) { idx in
                                 let item = faqItems[idx]
                                 VStack(alignment: .leading, spacing: 8) {
@@ -107,30 +115,31 @@ public struct MedicalLibraryView: View {
                                     }) {
                                         HStack {
                                             Text(item.q)
-                                                .font(.system(size: 14, weight: .semibold))
+                                                .font(.system(size: 13, weight: .semibold))
                                                 .foregroundColor(.white)
                                                 .multilineTextAlignment(.leading)
                                             Spacer()
                                             Image(systemName: openFaqIndex == idx ? "chevron.up" : "chevron.down")
+                                                .font(.system(size: 12))
                                                 .foregroundColor(Color(red: 0.0, green: 0.96, blue: 0.83))
                                         }
                                     }
                                     
                                     if openFaqIndex == idx {
                                         Text(item.a)
-                                            .font(.system(size: 13))
+                                            .font(.system(size: 12))
                                             .foregroundColor(.gray)
-                                            .padding(.top, 4)
+                                            .padding(.top, 2)
                                             .lineSpacing(3)
                                     }
                                 }
-                                .padding()
+                                .padding(12)
                                 .background(Color.white.opacity(0.04))
                                 .cornerRadius(12)
                             }
                         }
                         .padding(.horizontal)
-                        .padding(.bottom, 30)
+                        .padding(.bottom, 24)
                     }
                 }
             }

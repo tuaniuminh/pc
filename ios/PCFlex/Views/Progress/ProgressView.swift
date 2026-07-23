@@ -14,124 +14,132 @@ public struct ProgressView: View {
     public var body: some View {
         NavigationView {
             ZStack {
-                Color(red: 0.06, green: 0.09, blue: 0.16)
-                    .ignoresSafeArea()
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(red: 0.04, green: 0.05, blue: 0.09),
+                        Color(red: 0.06, green: 0.09, blue: 0.16)
+                    ]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 18) {
                         // Header
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Tiến Độ Tập Luyện")
-                                .font(.system(size: 24, weight: .bold))
+                                .font(.system(size: 22, weight: .bold))
                                 .foregroundColor(.white)
                             Text("Theo dõi hành trình kiên trì rèn luyện sức mạnh sàn chậu.")
-                                .font(.system(size: 13))
+                                .font(.system(size: 12))
                                 .foregroundColor(.gray)
                         }
                         .padding(.horizontal)
+                        .padding(.top, 10)
                         
-                        // Stats Grid (3 Cards)
-                        HStack(spacing: 12) {
-                            VStack(spacing: 6) {
+                        // Stats Grid (3 Cards matching PWA)
+                        HStack(spacing: 10) {
+                            VStack(spacing: 4) {
                                 Text("🔥")
-                                    .font(.system(size: 24))
+                                    .font(.system(size: 22))
                                 Text("\(engine.streak) ngày")
-                                    .font(.system(size: 18, weight: .bold))
+                                    .font(.system(size: 16, weight: .bold))
                                     .foregroundColor(.orange)
                                 Text("Chuỗi ngày tập")
                                     .font(.system(size: 10))
                                     .foregroundColor(.gray)
                             }
                             .frame(maxWidth: .infinity)
-                            .padding()
+                            .padding(12)
                             .background(Color.white.opacity(0.04))
-                            .cornerRadius(14)
+                            .cornerRadius(12)
                             
-                            VStack(spacing: 6) {
+                            VStack(spacing: 4) {
                                 Text("🏆")
-                                    .font(.system(size: 24))
+                                    .font(.system(size: 22))
                                 Text("\(engine.totalSessions) hiệp")
-                                    .font(.system(size: 18, weight: .bold))
+                                    .font(.system(size: 16, weight: .bold))
                                     .foregroundColor(Color(red: 0.0, green: 0.96, blue: 0.83))
                                 Text("Tổng hiệp tập")
                                     .font(.system(size: 10))
                                     .foregroundColor(.gray)
                             }
                             .frame(maxWidth: .infinity)
-                            .padding()
+                            .padding(12)
                             .background(Color.white.opacity(0.04))
-                            .cornerRadius(14)
+                            .cornerRadius(12)
                             
-                            VStack(spacing: 6) {
+                            VStack(spacing: 4) {
                                 Text("⚡")
-                                    .font(.system(size: 24))
+                                    .font(.system(size: 22))
                                 Text("\(engine.totalRepsCompleted) lượt")
-                                    .font(.system(size: 18, weight: .bold))
+                                    .font(.system(size: 16, weight: .bold))
                                     .foregroundColor(Color(red: 0.58, green: 0.36, blue: 0.96))
                                 Text("Tổng lượt siết")
                                     .font(.system(size: 10))
                                     .foregroundColor(.gray)
                             }
                             .frame(maxWidth: .infinity)
-                            .padding()
+                            .padding(12)
                             .background(Color.white.opacity(0.04))
-                            .cornerRadius(14)
+                            .cornerRadius(12)
                         }
                         .padding(.horizontal)
                         
-                        // User Profile Card
-                        VStack(alignment: .leading, spacing: 14) {
+                        // User Profile Card matching PWA
+                        VStack(alignment: .leading, spacing: 12) {
                             Text("👤 Hồ Sơ Tập Luyện")
-                                .font(.system(size: 16, weight: .bold))
+                                .font(.system(size: 15, weight: .bold))
                                 .foregroundColor(.white)
                             
-                            VStack(alignment: .leading, spacing: 8) {
+                            VStack(alignment: .leading, spacing: 6) {
                                 Text("Năm sinh:")
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .font(.system(size: 11, weight: .semibold))
                                     .foregroundColor(.gray)
                                 TextField("Ví dụ: 1995", text: $engine.birthYear)
                                     .textFieldStyle(PlainTextFieldStyle())
-                                    .padding(10)
-                                    .background(Color.white.opacity(0.08))
+                                    .padding(8)
+                                    .background(Color.white.opacity(0.06))
                                     .cornerRadius(8)
                                     .foregroundColor(.white)
                                     .keyboardType(.numberPad)
                             }
                             
-                            VStack(alignment: .leading, spacing: 8) {
+                            VStack(alignment: .leading, spacing: 6) {
                                 Text("Gemini API Key:")
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .font(.system(size: 11, weight: .semibold))
                                     .foregroundColor(.gray)
                                 SecureField("Nhập khóa API (AIzaSy...)", text: $engine.geminiApiKey)
                                     .textFieldStyle(PlainTextFieldStyle())
-                                    .padding(10)
-                                    .background(Color.white.opacity(0.08))
+                                    .padding(8)
+                                    .background(Color.white.opacity(0.06))
                                     .cornerRadius(8)
                                     .foregroundColor(.white)
                             }
                         }
-                        .padding()
+                        .padding(14)
                         .background(Color.white.opacity(0.04))
-                        .cornerRadius(16)
+                        .cornerRadius(14)
                         .padding(.horizontal)
                         
                         // Data Management Card (Backup & Restore JSON)
-                        VStack(alignment: .leading, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 12) {
                             Text("💾 Quản Lý Dữ Liệu")
-                                .font(.system(size: 16, weight: .bold))
+                                .font(.system(size: 15, weight: .bold))
                                 .foregroundColor(.white)
                             Text("Sao lưu lịch sử tập luyện và hồ sơ cá nhân ra tệp JSON hoặc khôi phục dữ liệu từ tệp tin đã lưu.")
-                                .font(.system(size: 12))
+                                .font(.system(size: 11))
                                 .foregroundColor(.gray)
                             
-                            HStack(spacing: 12) {
+                            HStack(spacing: 10) {
                                 Button(action: {
                                     exportBackupJSON()
                                 }) {
                                     HStack {
                                         Image(systemName: "square.and.arrow.up")
                                         Text("Sao lưu JSON")
-                                            .font(.system(size: 13, weight: .bold))
+                                            .font(.system(size: 12, weight: .bold))
                                     }
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 10)
@@ -147,7 +155,7 @@ public struct ProgressView: View {
                                     HStack {
                                         Image(systemName: "square.and.arrow.down")
                                         Text("Khôi phục JSON")
-                                            .font(.system(size: 13, weight: .bold))
+                                            .font(.system(size: 12, weight: .bold))
                                     }
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 10)
@@ -158,56 +166,56 @@ public struct ProgressView: View {
                                 }
                             }
                         }
-                        .padding()
+                        .padding(14)
                         .background(Color.white.opacity(0.04))
-                        .cornerRadius(16)
+                        .cornerRadius(14)
                         .padding(.horizontal)
                         
                         // History Log Section
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 10) {
                             HStack {
                                 Text("Lịch Sử Tập Luyện")
-                                    .font(.system(size: 18, weight: .bold))
+                                    .font(.system(size: 17, weight: .bold))
                                     .foregroundColor(.white)
                                 Spacer()
                                 Button(action: {
                                     engine.clearAllData()
                                 }) {
                                     Text("Xóa dữ liệu")
-                                        .font(.system(size: 12, weight: .bold))
+                                        .font(.system(size: 11, weight: .bold))
                                         .foregroundColor(.red)
                                 }
                             }
                             
                             if engine.history.isEmpty {
                                 Text("Chưa có lịch sử tập luyện nào.")
-                                    .font(.system(size: 13))
+                                    .font(.system(size: 12))
                                     .foregroundColor(.gray)
-                                    .padding(.vertical, 12)
+                                    .padding(.vertical, 10)
                             } else {
                                 ForEach(engine.history) { log in
                                     HStack {
-                                        VStack(alignment: .leading, spacing: 4) {
+                                        VStack(alignment: .leading, spacing: 3) {
                                             Text(log.levelName)
-                                                .font(.system(size: 14, weight: .bold))
+                                                .font(.system(size: 13, weight: .bold))
                                                 .foregroundColor(.white)
                                             Text(log.dateFormatted)
-                                                .font(.system(size: 11))
+                                                .font(.system(size: 10))
                                                 .foregroundColor(.gray)
                                         }
                                         Spacer()
                                         Text("\(log.repsCompleted) lượt")
-                                            .font(.system(size: 13, weight: .semibold))
+                                            .font(.system(size: 12, weight: .semibold))
                                             .foregroundColor(Color(red: 0.0, green: 0.96, blue: 0.83))
                                     }
-                                    .padding()
+                                    .padding(10)
                                     .background(Color.white.opacity(0.03))
                                     .cornerRadius(10)
                                 }
                             }
                         }
                         .padding(.horizontal)
-                        .padding(.bottom, 30)
+                        .padding(.bottom, 24)
                     }
                 }
             }
