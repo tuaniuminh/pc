@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.2.19';
+const APP_VERSION = 'v1.2.21';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -1186,9 +1186,18 @@ function setTheme(theme) {
     localStorage.setItem('pc_flex_theme', theme);
 }
 
+function syncVersionBadges() {
+    document.querySelectorAll('.version-update-container').forEach(el => {
+        if (!el.classList.contains('checking')) {
+            el.textContent = `VER ${APP_VERSION} PRO`;
+        }
+    });
+}
+
 function initApp() {
     loadData();
     initTheme();
+    syncVersionBadges();
     
     // Khởi tạo class giới tính cho body
     document.body.classList.add('gender-' + state.gender);
@@ -2374,7 +2383,7 @@ function resetWorkout() {
 function tick() {
     state.timeRemaining--;
     
-    if (state.timeRemaining < 0) {
+    if (state.timeRemaining <= 0) {
         state.currentStepIndex++;
         if (state.currentStepIndex >= state.workoutSteps.length) {
             finishWorkout();
