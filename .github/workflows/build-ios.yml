@@ -49,11 +49,11 @@ jobs:
           # Pure ldid Fake-Root Signing for TrollStore CoreTrust Bypass
           ldid -Sios/ios-build-entitlements.plist Payload/PCFlex.app/PCFlex
           
-          # Compress Payload to PCFlex_v1.2.00.ipa
-          zip -r PCFlex_v1.2.00.ipa Payload
+          # Compress Payload to PCFlex_v1.2.01.ipa
+          zip -r PCFlex_v1.2.01.ipa Payload
 
       - name: Upload TrollStore IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PCFlex_v1.2.00
-          path: PCFlex_v1.2.00.ipa
+          name: PCFlex_v1.2.01
+          path: PCFlex_v1.2.01.ipa

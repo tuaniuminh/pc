@@ -2,7 +2,7 @@ import SwiftUI
 
 /**
  * PC Flex Native iOS App (Swift & SwiftUI)
- * Version 1.2.00 - TrollStore Compatible
+ * Version 1.2.01 - TrollStore Compatible
  */
 @main
 struct PCFlexApp: App {
