@@ -11,8 +11,6 @@ public final class SoundManager: ObservableObject {
         }
     }
     
-    private var audioEngine: AVAudioEngine?
-    
     private init() {
         self.isMutedSFX = UserDefaults.standard.bool(forKey: "pc_flex_muted_sfx")
         setupAudioSession()
@@ -30,40 +28,40 @@ public final class SoundManager: ObservableObject {
     
     public func playSqueezeSound() {
         guard !isMutedSFX else { return }
-        playTone(frequencies: [523.25, 783.99], duration: 0.8, type: .sine)
+        playSystemSound(id: 1057) // Crystal High Chime
     }
     
     public func playReverseKegelSound() {
         guard !isMutedSFX else { return }
-        playTone(frequencies: [440.0, 659.25], duration: 0.9, type: .triangle)
+        playSystemSound(id: 1054) // Triangle Harmonic Chime
     }
     
     public func playTransitionRestSound() {
         guard !isMutedSFX else { return }
-        playDoublePulse(frequencies: [293.66, 440.0], duration: 0.3)
+        playDoublePulse() // Soft Double Pulse
     }
     
     public func playRelaxSound() {
         guard !isMutedSFX else { return }
-        playTone(frequencies: [329.63, 196.00], duration: 1.0, type: .sine)
+        playSystemSound(id: 1052) // Soft Low Chime
     }
     
     public func playCompletionSound() {
         guard !isMutedSFX else { return }
         let notes: [Double] = [261.63, 329.63, 392.00, 523.25]
-        for (idx, freq) in notes.enumerated() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(idx) * 0.12) {
-                self.playTone(frequencies: [freq], duration: 0.6, type: .sine)
+        for (idx, _) in notes.enumerated() {
+            let delay = Double(idx) * 0.12
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                self.playSystemSound(id: 1057)
             }
         }
     }
     
-    private func playTone(frequencies: [Double], duration: Double, type: SystemSoundID = 1057) {
-        // Fallback using SystemSoundID chime or AudioServices for lightweight sound synthesis
-        AudioServicesPlaySystemSound(type)
+    private func playSystemSound(id: SystemSoundID) {
+        AudioServicesPlaySystemSound(id)
     }
     
-    private func playDoublePulse(frequencies: [Double], duration: Double) {
+    private func playDoublePulse() {
         AudioServicesPlaySystemSound(1103)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
             AudioServicesPlaySystemSound(1103)
