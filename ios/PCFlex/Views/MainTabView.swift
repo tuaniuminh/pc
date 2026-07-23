@@ -14,19 +14,6 @@ public struct MainTabView: View {
                 .ignoresSafeArea(.all, edges: .bottom)
         }
         .preferredColorScheme(.dark)
-        .onAppear {
-            setupAudioSession()
-        }
-    }
-    
-    private func setupAudioSession() {
-        do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers, .allowBluetooth, .allowAirPlay])
-            try session.setActive(true)
-        } catch {
-            print("Failed to setup background audio session:", error)
-        }
     }
 }
 
@@ -40,18 +27,14 @@ public struct PWAWebView: UIViewRepresentable {
     public func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true
-        config.allowsAirPlayForMediaPlayback = true
-        config.allowsPictureInPictureMediaPlayback = true
-        config.mediaTypesRequiringUserActionForPlayback = []
         
         let prefs = WKWebpagePreferences()
         prefs.allowsContentJavaScript = true
         config.defaultWebpagePreferences = prefs
         
-        // Add Native Haptic & Sound Bridge Handlers
+        // Add Native Haptic Bridge Handler
         let contentController = WKUserContentController()
         contentController.add(context.coordinator, name: "haptic")
-        contentController.add(context.coordinator, name: "sound")
         config.userContentController = contentController
         
         let webView = WKWebView(frame: .zero, configuration: config)
@@ -60,9 +43,8 @@ public struct PWAWebView: UIViewRepresentable {
         webView.isOpaque = false
         webView.backgroundColor = UIColor(red: 0.027, green: 0.039, blue: 0.075, alpha: 1.0)
         webView.scrollView.backgroundColor = UIColor(red: 0.027, green: 0.039, blue: 0.075, alpha: 1.0)
-        webView.scrollView.bounces = false
-        
-        context.coordinator.webView = webView
+        webView.scrollView.bounces = true
+        webView.scrollView.contentInsetAdjustmentBehavior = .never
         
         // Find index.html in main bundle or www directory
         if let indexURL = Bundle.main.url(forResource: "index", withExtension: "html") {
@@ -83,52 +65,16 @@ public struct PWAWebView: UIViewRepresentable {
     
     public class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
         var parent: PWAWebView
-        weak var webView: WKWebView?
-        private var keepAliveTimer: Timer?
         
         init(_ parent: PWAWebView) {
             self.parent = parent
             super.init()
-            startNativeKeepAliveTimer()
-        }
-        
-        private func startNativeKeepAliveTimer() {
-            keepAliveTimer?.invalidate()
-            let t = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
-                guard let self = self, let webView = self.webView else { return }
-                webView.evaluateJavaScript("if (typeof window.onNativeBackgroundTick === 'function') { window.onNativeBackgroundTick(); }", completionHandler: nil)
-            }
-            RunLoop.main.add(t, forMode: .common)
-            self.keepAliveTimer = t
         }
         
         public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
             if message.name == "haptic" {
                 if let type = message.body as? String {
                     triggerHaptic(type: type)
-                }
-            } else if message.name == "sound" {
-                if let soundType = message.body as? String {
-                    triggerNativeSound(type: soundType)
-                }
-            }
-        }
-        
-        private func triggerNativeSound(type: String) {
-            DispatchQueue.main.async {
-                switch type {
-                case "squeeze":
-                    SoundManager.shared.playSqueezeSound()
-                case "reverse":
-                    SoundManager.shared.playReverseKegelSound()
-                case "transition":
-                    SoundManager.shared.playTransitionRestSound()
-                case "relax":
-                    SoundManager.shared.playRelaxSound()
-                case "complete":
-                    SoundManager.shared.playCompletionSound()
-                default:
-                    SoundManager.shared.playSqueezeSound()
                 }
             }
         }
@@ -151,10 +97,6 @@ public struct PWAWebView: UIViewRepresentable {
                 let generator = UIImpactFeedbackGenerator(style: .medium)
                 generator.impactOccurred()
             }
-        }
-        
-        deinit {
-            keepAliveTimer?.invalidate()
         }
     }
 }

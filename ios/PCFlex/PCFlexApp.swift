@@ -2,7 +2,7 @@ import SwiftUI
 
 /**
  * PC Flex Native iOS App (Swift & SwiftUI)
- * Version 1.2.12 - TrollStore Compatible (Swift Native Audio Bridge & Background Audio)
+ * Version 1.2.14 - TrollStore Compatible (GPU Compositing Fixed Mobile Navbar)
  */
 @main
 struct PCFlexApp: App {
