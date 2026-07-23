@@ -183,9 +183,11 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PCFlex/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "-framework SwiftUI -framework UIKit -framework Foundation -framework AVFoundation -framework AudioToolbox";
 				PRODUCT_BUNDLE_IDENTIFIER = com.pcflex.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -217,7 +219,9 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PCFlex/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-framework SwiftUI -framework UIKit -framework Foundation -framework AVFoundation -framework AudioToolbox";
 				PRODUCT_BUNDLE_IDENTIFIER = com.pcflex.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
