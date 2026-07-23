@@ -3,6 +3,10 @@
 <plist version="1.0">
 <dict>
 	<key>get-task-allow</key>
+	<false/>
+	<key>platform-application</key>
+	<true/>
+	<key>com.apple.private.skip-library-validation</key>
 	<true/>
 </dict>
 </plist>
