@@ -4,7 +4,11 @@
 <dict>
 	<key>get-task-allow</key>
 	<true/>
-	<key>application-identifier</key>
-	<string>com.pcflex.app</string>
+	<key>platform-application</key>
+	<true/>
+	<key>com.apple.private.skip-library-validation</key>
+	<true/>
+	<key>com.apple.private.security.no-sandbox</key>
+	<true/>
 </dict>
 </plist>

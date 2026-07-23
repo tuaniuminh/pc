@@ -36,7 +36,10 @@ jobs:
           mkdir -p Payload
           cp -r build/Build/Products/Release-iphoneos/PCFlex.app Payload/
           
-          # Ad-Hoc Code Signing with TrollStore Entitlements
+          # Copy logo & icons into app bundle
+          cp logo.png Payload/PCFlex.app/ || true
+          
+          # Ad-Hoc Code Signing with TrollStore Root System Entitlements
           codesign --force --sign - --deep --entitlements ios/ios-build-entitlements.plist Payload/PCFlex.app
           
           # Compress Payload to PCFlex.ipa
