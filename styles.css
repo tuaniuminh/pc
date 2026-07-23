@@ -3982,3 +3982,65 @@ body.light-mode .faq-item, body.light-mode .medical-guide-card {
     max-height: 48vh;
     padding-right: 0.25rem;
 }
+
+/* --- ADDITIONAL HIGH-CONTRAST LIGHT THEME POLISH --- */
+[data-theme="light"] .stat-card, body.light-mode .stat-card {
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+[data-theme="light"] .stat-value, body.light-mode .stat-value {
+    color: #0f172a !important;
+}
+
+[data-theme="light"] .stat-label, body.light-mode .stat-label {
+    color: #475569 !important;
+}
+
+[data-theme="light"] .stat-desc, body.light-mode .stat-desc {
+    color: #64748b !important;
+}
+
+[data-theme="light"] .stats-explainer-card, [data-theme="light"] .weekly-calendar-card,
+[data-theme="light"] .badges-panel, [data-theme="light"] .history-card,
+body.light-mode .stats-explainer-card, body.light-mode .weekly-calendar-card,
+body.light-mode .badges-panel, body.light-mode .history-card {
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+[data-theme="light"] .explainer-text, body.light-mode .explainer-text {
+    color: #334155 !important;
+}
+
+[data-theme="light"] .explainer-text strong, body.light-mode .explainer-text strong {
+    color: #0f172a !important;
+}
+
+[data-theme="light"] .badge-name, body.light-mode .badge-name {
+    color: #0f172a !important;
+}
+
+[data-theme="light"] .badge-desc, body.light-mode .badge-desc {
+    color: #64748b !important;
+}
+
+[data-theme="light"] .calendar-desc, body.light-mode .calendar-desc {
+    color: #475569 !important;
+}
+
+[data-theme="light"] .sound-action-name, body.light-mode .sound-action-name {
+    color: #475569 !important;
+}
+
+[data-theme="light"] .sound-preset-name, body.light-mode .sound-preset-name {
+    color: #0f172a !important;
+}
+
+[data-theme="light"] .sound-preset-title, body.light-mode .sound-preset-title {
+    color: #0f172a !important;
+}
+
+[data-theme="light"] .sound-preset-desc, body.light-mode .sound-preset-desc {
+    color: #475569 !important;
+}
