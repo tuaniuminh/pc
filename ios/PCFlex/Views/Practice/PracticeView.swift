@@ -70,7 +70,7 @@ public struct PracticeView: View {
                         // Title Section matching PWA Image 1
                         VStack(spacing: 6) {
                             Text("Rèn Luyện Mỗi Ngày")
-                                .font(.system(size: 26, weight: .extrabold))
+                                .font(.system(size: 26, weight: .bold))
                                 .foregroundColor(Color(red: 0.97, green: 0.98, blue: 0.99))
                             Text("Chọn cấp độ phù hợp và làm theo chỉ dẫn của\nvòng tròn sinh học.")
                                 .font(.system(size: 12, weight: .medium))
