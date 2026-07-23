@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 public struct MainTabView: View {
     @StateObject private var engine = WorkoutEngine()
@@ -28,6 +29,6 @@ public struct MainTabView: View {
                     Text("Tiến Độ")
                 }
         }
-        .accentColor(Color(red: 0, green: 0.96, blue: 0.83))
+        .accentColor(Color(red: 0.0, green: 0.96, blue: 0.83))
     }
 }

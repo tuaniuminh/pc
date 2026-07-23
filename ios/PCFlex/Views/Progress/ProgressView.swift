@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 
 public struct ProgressView: View {
@@ -211,7 +212,7 @@ public struct ProgressView: View {
                 }
             }
             .navigationBarHidden(true)
-            .fileImporter(isPresented: $showingFileImporter, allowedContentTypes: [.json]) { result in
+            .fileImporter(isPresented: $showingFileImporter, allowedContentTypes: [UTType.json]) { result in
                 switch result {
                 case .success(let url):
                     importBackupJSON(from: url)
