@@ -36,9 +36,17 @@ jobs:
           mkdir -p Payload
           cp -r build/Build/Products/Release-iphoneos/PCFlex.app Payload/
           
+          # Copy PWA Web Assets into App Bundle for WKWebView Container
+          cp index.html Payload/PCFlex.app/
+          cp app.js Payload/PCFlex.app/
+          cp styles.css Payload/PCFlex.app/
+          cp logo.png Payload/PCFlex.app/
+          cp manifest.json Payload/PCFlex.app/
+          cp sw.js Payload/PCFlex.app/
+          cp icon-192.png Payload/PCFlex.app/
+          cp icon-512.png Payload/PCFlex.app/
+          
           # Copy App Icons into Bundle for SpringBoard
-          cp logo.png Payload/PCFlex.app/logo.png
-          cp logo.png Payload/PCFlex.app/logo
           cp logo.png Payload/PCFlex.app/AppIcon.png
           cp logo.png Payload/PCFlex.app/AppIcon60x60@2x.png
           cp logo.png Payload/PCFlex.app/AppIcon60x60@3x.png
@@ -46,11 +54,11 @@ jobs:
           # Force Ad-Hoc Sign with get-task-allow = false Entitlements
           codesign --force --sign - --deep --entitlements ios/ios-build-entitlements.plist Payload/PCFlex.app
           
-          # Compress Payload to PCFlex_v1.2.07.ipa
-          zip -r PCFlex_v1.2.07.ipa Payload
+          # Compress Payload to PCFlex_v1.2.08.ipa
+          zip -r PCFlex_v1.2.08.ipa Payload
 
       - name: Upload TrollStore IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PCFlex_v1.2.07
-          path: PCFlex_v1.2.07.ipa
+          name: PCFlex_v1.2.08
+          path: PCFlex_v1.2.08.ipa
