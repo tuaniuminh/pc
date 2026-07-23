@@ -61,6 +61,8 @@ public struct PWAWebView: UIViewRepresentable {
         webView.scrollView.backgroundColor = UIColor(red: 0.027, green: 0.039, blue: 0.075, alpha: 1.0)
         webView.scrollView.bounces = false
         
+        context.coordinator.webView = webView
+        
         // Find index.html in main bundle or www directory
         if let indexURL = Bundle.main.url(forResource: "index", withExtension: "html") {
             webView.loadFileURL(indexURL, allowingReadAccessTo: indexURL.deletingLastPathComponent())
@@ -80,9 +82,23 @@ public struct PWAWebView: UIViewRepresentable {
     
     public class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
         var parent: PWAWebView
+        weak var webView: WKWebView?
+        private var keepAliveTimer: Timer?
         
         init(_ parent: PWAWebView) {
             self.parent = parent
+            super.init()
+            startNativeKeepAliveTimer()
+        }
+        
+        private func startNativeKeepAliveTimer() {
+            keepAliveTimer?.invalidate()
+            let t = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
+                guard let self = self, let webView = self.webView else { return }
+                webView.evaluateJavaScript("if (typeof window.onNativeBackgroundTick === 'function') { window.onNativeBackgroundTick(); }", completionHandler: nil)
+            }
+            RunLoop.main.add(t, forMode: .common)
+            self.keepAliveTimer = t
         }
         
         public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -111,6 +127,10 @@ public struct PWAWebView: UIViewRepresentable {
                 let generator = UIImpactFeedbackGenerator(style: .medium)
                 generator.impactOccurred()
             }
+        }
+        
+        deinit {
+            keepAliveTimer?.invalidate()
         }
     }
 }

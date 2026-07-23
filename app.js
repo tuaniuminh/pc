@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.2.10';
+const APP_VERSION = 'v1.2.11';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -2031,6 +2031,7 @@ function startWorkout() {
     renderProgressSegments();
     executeWorkoutStep();
     
+    playSilentAudioLoop();
     startPiPVideoSession();
     state.timerInterval = setInterval(tick, 1000);
 }
@@ -3815,4 +3816,23 @@ document.addEventListener('visibilitychange', () => {
         triggerPiPWindow();
     }
 });
+
+let silentAudioLoop = null;
+
+function playSilentAudioLoop() {
+    if (!silentAudioLoop) {
+        silentAudioLoop = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA");
+        silentAudioLoop.loop = true;
+    }
+    silentAudioLoop.play().catch(() => {});
+}
+
+window.onNativeBackgroundTick = function() {
+    if (state.workoutState === 'squeezing' || state.workoutState === 'relaxing') {
+        if (document.hidden) {
+            tick();
+        }
+    }
+};
+
 
