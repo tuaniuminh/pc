@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.2.23';
+const APP_VERSION = 'v1.2.24';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -582,25 +582,7 @@ class AudioController {
             osc.connect(gain);
             gain.connect(this.audioCtx.destination);
             osc.start(now + delay);
-        const now = this.audioCtx.currentTime;
-        const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
-        
-        notes.forEach((freq, index) => {
-            const osc = this.audioCtx.createOscillator();
-            const gainNode = this.audioCtx.createGain();
-            
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, now + index * 0.12);
-            
-            gainNode.gain.setValueAtTime(0, now + index * 0.12);
-            gainNode.gain.linearRampToValueAtTime(0.45, now + index * 0.12 + 0.02);
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.12 + 1.0);
-            
-            osc.connect(gainNode);
-            gainNode.connect(this.audioCtx.destination);
-            
-            osc.start(now + index * 0.12);
-            osc.stop(now + index * 0.12 + 1.0);
+            osc.stop(now + delay + dur);
         });
     }
 
