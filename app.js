@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.3.2';
+const APP_VERSION = 'v1.3.3';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -3187,8 +3187,125 @@ function restoreData(file) {
 let supabaseClient = null;
 let currentAuthMode = 'login';
 
+// --- PURE REST API FALLBACK FOR SUPABASE ---
+class SupabaseRestWrapper {
+    constructor(url, key) {
+        this.url = url.replace(/\/rest\/v1\/?$/, '');
+        this.key = key;
+        this.token = localStorage.getItem('supabase_access_token') || null;
+        this.user = JSON.parse(localStorage.getItem('supabase_user_data') || 'null');
+    }
+
+    auth = {
+        getSession: async () => {
+            if (!this.token || !this.user) return { data: { session: null }, error: null };
+            return { data: { session: { user: this.user, access_token: this.token } }, error: null };
+        },
+
+        getUser: async () => {
+            if (!this.user) return { data: { user: null }, error: null };
+            return { data: { user: this.user }, error: null };
+        },
+
+        signInWithPassword: async ({ email, password }) => {
+            const resp = await fetch(`${this.url}/auth/v1/token?grant_type=password`, {
+                method: 'POST',
+                headers: {
+                    'apikey': this.key,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                return { data: null, error: { message: data.error_description || data.msg || data.message || 'Đăng nhập không thành công' } };
+            }
+            this.token = data.access_token;
+            this.user = data.user;
+            localStorage.setItem('supabase_access_token', this.token);
+            localStorage.setItem('supabase_user_data', JSON.stringify(this.user));
+            return { data: { user: data.user, session: data }, error: null };
+        },
+
+        signUp: async ({ email, password }) => {
+            const resp = await fetch(`${this.url}/auth/v1/signup`, {
+                method: 'POST',
+                headers: {
+                    'apikey': this.key,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                return { data: null, error: { message: data.msg || data.message || 'Đăng ký không thành công' } };
+            }
+            if (data.access_token && data.user) {
+                this.token = data.access_token;
+                this.user = data.user;
+                localStorage.setItem('supabase_access_token', this.token);
+                localStorage.setItem('supabase_user_data', JSON.stringify(this.user));
+            }
+            return { data: { user: data.user, session: data.access_token ? data : null }, error: null };
+        },
+
+        signOut: async () => {
+            this.token = null;
+            this.user = null;
+            localStorage.removeItem('supabase_access_token');
+            localStorage.removeItem('supabase_user_data');
+            return { error: null };
+        }
+    };
+
+    from(tableName) {
+        const self = this;
+        return {
+            select: (cols) => {
+                return {
+                    order: async (col, opts) => {
+                        try {
+                            const headers = {
+                                'apikey': self.key,
+                                'Authorization': `Bearer ${self.token}`
+                            };
+                            const resp = await fetch(`${self.url}/rest/v1/${tableName}?select=${encodeURIComponent(cols)}&order=${col}.${opts && opts.ascending ? 'asc' : 'desc'}`, {
+                                headers
+                            });
+                            const data = await resp.json();
+                            if (!resp.ok) return { data: [], error: data };
+                            return { data: Array.isArray(data) ? data : [], error: null };
+                        } catch (e) {
+                            return { data: [], error: e };
+                        }
+                    }
+                };
+            },
+            insert: async (records) => {
+                try {
+                    const headers = {
+                        'apikey': self.key,
+                        'Authorization': `Bearer ${self.token}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    };
+                    const resp = await fetch(`${self.url}/rest/v1/${tableName}`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(records)
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) return { data: null, error: data };
+                    return { data, error: null };
+                } catch (e) {
+                    return { data: null, error: e };
+                }
+            }
+        };
+    }
+}
+
 function initSupabaseConnection() {
-    // Tích hợp sẵn thông tin kết nối mặc định của bạn
     const defaultUrl = 'https://rwmhivfwjusezxedjtgw.supabase.co';
     const defaultKey = 'sb_publishable_sOm6SWd3dIIerce97LHXNw_OVCroPTr';
     
@@ -3206,43 +3323,34 @@ function initSupabaseConnection() {
     
     if (url && key) {
         try {
+            const cleanUrl = url.replace(/\/rest\/v1\/?$/, '');
             if (window.supabase) {
-                // Đảm bảo URL kết nối được làm sạch (bỏ đuôi /rest/v1/ nếu có)
-                const cleanUrl = url.replace(/\/rest\/v1\/?$/, '');
                 supabaseClient = window.supabase.createClient(cleanUrl, key);
-                
-                // Mở khóa form đăng nhập
-                if (warningEl) warningEl.style.display = 'none';
-                if (emailInput) emailInput.disabled = false;
-                if (passwordInput) passwordInput.disabled = false;
-                if (submitBtn) submitBtn.disabled = false;
-                if (toggleLink) {
-                    toggleLink.style.cursor = 'pointer';
-                    toggleLink.style.opacity = '1';
-                }
-                
-                // Gán giá trị vào input config để hiển thị
-                const configUrl = document.getElementById('input-supabase-url');
-                const configKey = document.getElementById('input-supabase-key');
-                if (configUrl) configUrl.value = url;
-                if (configKey) configKey.value = key;
-                
-                checkUserSession();
-                return true;
             } else {
-                // Thử lại nếu script CDN Supabase đang tải chậm trên WKWebView di động
-                setTimeout(() => {
-                    if (window.supabase && !supabaseClient) {
-                        initSupabaseConnection();
-                    }
-                }, 1000);
+                supabaseClient = new SupabaseRestWrapper(cleanUrl, key);
             }
+            
+            if (warningEl) warningEl.style.display = 'none';
+            if (emailInput) emailInput.disabled = false;
+            if (passwordInput) passwordInput.disabled = false;
+            if (submitBtn) submitBtn.disabled = false;
+            if (toggleLink) {
+                toggleLink.style.cursor = 'pointer';
+                toggleLink.style.opacity = '1';
+            }
+            
+            const configUrl = document.getElementById('input-supabase-url');
+            const configKey = document.getElementById('input-supabase-key');
+            if (configUrl) configUrl.value = url;
+            if (configKey) configKey.value = key;
+            
+            checkUserSession();
+            return true;
         } catch (e) {
             console.error("Lỗi khởi tạo Supabase:", e);
         }
     }
     
-    // Nếu chưa cấu hình, mở sẵn form Auth cho người dùng
     if (emailInput) emailInput.disabled = false;
     if (passwordInput) passwordInput.disabled = false;
     if (submitBtn) submitBtn.disabled = false;
@@ -3255,6 +3363,7 @@ function initSupabaseConnection() {
 }
 
 async function checkUserSession() {
+    if (!supabaseClient) initSupabaseConnection();
     if (!supabaseClient) return;
     
     try {
@@ -3357,7 +3466,13 @@ function updateSyncStatusUI(status) {
 }
 
 async function handleAuthSubmit() {
-    if (!supabaseClient) return;
+    if (!supabaseClient) {
+        initSupabaseConnection();
+    }
+    if (!supabaseClient) {
+        alert("Không thể kết nối dịch vụ Cloud. Vui lòng kiểm tra lại kết nối mạng!");
+        return;
+    }
     
     const email = document.getElementById('input-auth-email').value.trim();
     const password = document.getElementById('input-auth-password').value;
@@ -3400,7 +3515,7 @@ async function handleAuthSubmit() {
             }
         }
     } catch (e) {
-        alert("Lỗi xác thực: " + e.message);
+        alert("Lỗi xác thực: " + (e.message || JSON.stringify(e)));
     } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = currentAuthMode === 'login' ? 'Đăng Nhập' : 'Đăng Ký';
