@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.3.0';
+const APP_VERSION = 'v1.3.1';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -2085,29 +2085,6 @@ function buildStepsFromStages(stages, workoutName) {
     return { steps, phases, totalReps };
 }
 
-function updateBreathingGuide(step) {
-    const badge = document.getElementById('orb-breathing-guide');
-    const textEl = document.getElementById('breathing-text');
-    if (!badge || !textEl) return;
-
-    if (step.sfx === 'squeeze') {
-        badge.className = 'breathing-guide-badge exhale';
-        textEl.textContent = '🌬️ Thở ra nhẹ nhàng & Siết cơ';
-    } else if (step.sfx === 'reverse') {
-        badge.className = 'breathing-guide-badge inhale';
-        textEl.textContent = '🧘 Hít sâu xuống đáy chậu (Mở cơ)';
-    } else if (step.sfx === 'transition') {
-        badge.className = 'breathing-guide-badge';
-        textEl.textContent = '💨 Hít thở đều đặn thả lỏng...';
-    } else if (step.sfx === 'relax') {
-        badge.className = 'breathing-guide-badge inhale';
-        textEl.textContent = '🫁 Hít sâu vào bụng & Thả lỏng';
-    } else {
-        badge.className = 'breathing-guide-badge';
-        textEl.textContent = 'Hít thở chuẩn bị...';
-    }
-}
-
 function executeWorkoutStep() {
     const step = state.workoutSteps[state.currentStepIndex];
     if (!step) return;
@@ -2126,9 +2103,6 @@ function executeWorkoutStep() {
     elements.orbAction.textContent = step.action;
     elements.orbSubText.textContent = step.subtext;
     elements.orbTimer.textContent = String(state.timeRemaining).padStart(2, '0');
-    
-    // Cập nhật Somatic Breathing Guide
-    updateBreathingGuide(step);
     
     // Cập nhật các thanh đếm & thanh tiến trình
     updateProgressDisplays();

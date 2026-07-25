@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.3.0">
+    <link rel="stylesheet" href="styles.css?v=1.3.1">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -20,7 +20,7 @@
                     <img src="./logo.png" alt="PC Flex Logo" class="brand-logo">
                 </div>
                 <div class="version-update-container" id="btn-check-update" title="Kiểm tra bản cập nhật">
-                    VER v1.3.0 PRO
+                    VER v1.3.1 PRO
                 </div>
             </div>
             
@@ -72,7 +72,7 @@
                     <img src="./logo.png" alt="PC Flex Logo" class="brand-logo">
                 </div>
                 <div class="version-update-container" title="Kiểm tra bản cập nhật">
-                    VER v1.3.0 PRO
+                    VER v1.3.1 PRO
                 </div>
             </header>
             
@@ -141,10 +141,6 @@
                             <div class="visualizer-orb" id="visualizer-orb">
                                 <div class="orb-glow"></div>
                                 <div class="orb-content">
-                                    <div class="breathing-guide-badge" id="orb-breathing-guide">
-                                        <span class="breathing-icon">🫁</span>
-                                        <span class="breathing-text" id="breathing-text">Hít thở chuẩn bị...</span>
-                                    </div>
                                     <span class="orb-action" id="orb-action">SẴN SÀNG</span>
                                     <span class="orb-timer" id="orb-timer">00</span>
                                     <span class="orb-sub-text" id="orb-sub-text">Bấm Bắt đầu để tập</span>
@@ -901,18 +897,18 @@
                 <div id="auth-form-fields">
                     <div class="auth-form-group">
                         <label for="input-auth-email">Địa chỉ Email</label>
-                        <input type="email" id="input-auth-email" placeholder="ten-cua-ban@gmail.com" autocomplete="off" disabled>
+                        <input type="email" id="input-auth-email" placeholder="ten-cua-ban@gmail.com" autocomplete="off">
                     </div>
                     <div class="auth-form-group">
                         <label for="input-auth-password">Mật khẩu</label>
-                        <input type="password" id="input-auth-password" placeholder="••••••••" autocomplete="off" disabled>
+                        <input type="password" id="input-auth-password" placeholder="••••••••" autocomplete="off">
                     </div>
                     
                     <div class="auth-actions-row">
-                        <span class="auth-toggle-link" id="link-toggle-auth-mode" style="cursor: not-allowed; opacity: 0.5;">Chưa có tài khoản? Đăng ký ngay</span>
+                        <span class="auth-toggle-link" id="link-toggle-auth-mode">Chưa có tài khoản? Đăng ký ngay</span>
                     </div>
                     
-                    <button class="btn btn-primary btn-block" id="btn-submit-auth" disabled>Đăng Nhập</button>
+                    <button class="btn btn-primary btn-block" id="btn-submit-auth">Đăng Nhập</button>
                 </div>
                 
                 <!-- User Profile (Logged In state) -->
@@ -1065,6 +1061,6 @@
         <button id="btn-pwa-update">Cập nhật ngay</button>
     </div>
 
-    <script src="app.js?v=1.3.0"></script>
+    <script src="app.js?v=1.3.1"></script>
 </body>
 </html>

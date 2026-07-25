@@ -2,7 +2,7 @@ import SwiftUI
 
 /**
  * PC Flex Native iOS App (Swift & SwiftUI)
- * Version 1.3.0 - TrollStore Compatible (Major Features: Somatic Breathing, Rank System, Gemini 3.6 Flash & PSI PDF)
+ * Version 1.3.1 - TrollStore Compatible (Remove Breathing Badge & Enable Native Input Form Fields)
  */
 @main
 struct PCFlexApp: App {
