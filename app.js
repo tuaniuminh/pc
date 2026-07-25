@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.2.29';
+const APP_VERSION = 'v1.2.30';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -872,18 +872,13 @@ const elements = {
     btnBackupData: document.getElementById('btn-backup-data'),
     btnRestoreTrigger: document.getElementById('btn-restore-trigger'),
     restoreFileInput: document.getElementById('restore-file-input'),
-    sidebarRankValue: document.getElementById('sidebar-rank-value'),
-    btnOpenChallengeModal: document.getElementById('btn-open-challenge-modal'),
-    challengeModal: document.getElementById('challenge-modal'),
-    btnCloseChallengeModal: document.getElementById('btn-close-challenge-modal'),
-    btnCloseChallengeModalFooter: document.getElementById('btn-close-challenge-modal-footer'),
-    challengeDaysGrid: document.getElementById('challenge-days-grid'),
-    heatmapRingLA: document.getElementById('heatmap-ring-la'),
-    heatmapRingPC: document.getElementById('heatmap-ring-pc'),
-    heatmapPCStatus: document.getElementById('heatmap-pc-status'),
-    heatmapLAStatus: document.getElementById('heatmap-la-status'),
-    heatmapBarPC: document.getElementById('heatmap-bar-pc'),
-    heatmapBarLA: document.getElementById('heatmap-bar-la'),
+    aiModal: document.getElementById('ai-modal'),
+    aiChatHistory: document.getElementById('ai-chat-history'),
+    aiChatInput: document.getElementById('ai-chat-input'),
+    btnSendAIChat: document.getElementById('btn-send-ai-chat'),
+    aiChip1: document.getElementById('ai-chip-1'),
+    aiChip2: document.getElementById('ai-chip-2'),
+    aiChip3: document.getElementById('ai-chip-3'),
     
     // Supabase DOM Elements
     btnCloudSync: document.getElementById('btn-cloud-sync'),
@@ -1589,24 +1584,6 @@ function setupEventHandlers() {
                 e.target.value = ''; // Reset to allow selecting the same file
             }
         });
-    }
-
-    if (elements.btnOpenChallengeModal) {
-        elements.btnOpenChallengeModal.addEventListener('click', () => {
-            renderChallengeRoadmap();
-            if (elements.challengeModal) elements.challengeModal.style.display = 'flex';
-        });
-    }
-
-    const closeChallenge = () => {
-        if (elements.challengeModal) elements.challengeModal.style.display = 'none';
-    };
-
-    if (elements.btnCloseChallengeModal) {
-        elements.btnCloseChallengeModal.addEventListener('click', closeChallenge);
-    }
-    if (elements.btnCloseChallengeModalFooter) {
-        elements.btnCloseChallengeModalFooter.addEventListener('click', closeChallenge);
     }
 
     // 7. Điều khiển gập/mở Accordion cho Lộ trình dọc (Roadmap)
@@ -2757,22 +2734,6 @@ function finishWorkout() {
 
     // Save statistics & log
     saveWorkoutLog();
-
-    // Check and save challenge progress
-    const activeChallengeDay = parseInt(localStorage.getItem('pcflex_current_challenge_day'));
-    if (activeChallengeDay) {
-        let completedChallengeDays = parseInt(localStorage.getItem('pcflex_challenge_completed_days')) || 0;
-        if (activeChallengeDay === completedChallengeDays + 1) {
-            completedChallengeDays = activeChallengeDay;
-            localStorage.setItem('pcflex_challenge_completed_days', completedChallengeDays);
-            localStorage.removeItem('pcflex_current_challenge_day');
-            
-            // Show alert congratulations
-            setTimeout(() => {
-                alert(`🎉 Tuyệt vời! Bạn đã hoàn thành Thử thách Ngày ${activeChallengeDay} của Lộ trình 21 ngày!`);
-            }, 1000);
-        }
-    }
 }
 
 // --- DATA PERSISTENCE & STATISTICS ---
@@ -3020,8 +2981,6 @@ function renderStats() {
     // Cập nhật Lịch hoạt động và Huy hiệu
     renderWeeklyCalendar();
     updateBadges();
-    updateRank();
-    updatePelvicHeatmap();
 
     // 3. Render History Table Log
     if (elements.historyLogBody) {
@@ -3955,13 +3914,47 @@ function initProfileAndAI() {
     const btnAIAnalyze = document.getElementById('btn-ai-analyze');
     if (btnAIAnalyze) {
         btnAIAnalyze.addEventListener('click', () => {
-            triggerAIAnalysis();
+            initAIChat();
         });
     }
 
+    if (elements.btnSendAIChat && elements.aiChatInput) {
+        elements.btnSendAIChat.addEventListener('click', () => {
+            const val = elements.aiChatInput.value.trim();
+            if (val) {
+                sendAIChatMessage(val);
+                elements.aiChatInput.value = '';
+            }
+        });
+
+        elements.aiChatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const val = elements.aiChatInput.value.trim();
+                if (val) {
+                    sendAIChatMessage(val);
+                    elements.aiChatInput.value = '';
+                }
+            }
+        });
+    }
+
+    // Bind prompt chips
+    ['ai-chip-1', 'ai-chip-2', 'ai-chip-3'].forEach((id, idx) => {
+        const chip = document.getElementById(id);
+        if (chip) {
+            chip.addEventListener('click', () => {
+                const prompts = [
+                    'Phân tích chi tiết tiến độ luyện tập cơ sàn chậu của tôi.',
+                    'Làm thế nào để cải thiện sức mạnh lực co bóp cơ PC?',
+                    'Hướng dẫn kết hợp nhịp thở cơ hoành khi tập Kegel.'
+                ];
+                sendAIChatMessage(prompts[idx]);
+            });
+        }
+    });
+
     const closeButtons = [
-        document.getElementById('btn-close-ai-modal'),
-        document.getElementById('btn-close-ai-modal-footer')
+        document.getElementById('btn-close-ai-modal')
     ];
     closeButtons.forEach(btn => {
         if (btn) {
@@ -3974,52 +3967,61 @@ function initProfileAndAI() {
 }
 
 let isQueryingAI = false;
-async function triggerAIAnalysis() {
+let aiChatHistory = [];
+
+function appendChatMessage(role, text) {
+    if (!elements.aiChatHistory) return;
+    
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `ai-message ${role === 'user' ? 'outgoing' : role === 'system' ? 'system' : 'incoming'}`;
+    
+    if (role === 'model') {
+        msgDiv.innerHTML = renderMarkdownToHTML(text);
+    } else {
+        msgDiv.textContent = text;
+    }
+    
+    elements.aiChatHistory.appendChild(msgDiv);
+    elements.aiChatHistory.scrollTop = elements.aiChatHistory.scrollHeight;
+}
+
+function initAIChat() {
+    if (elements.aiModal) elements.aiModal.style.display = 'flex';
+    if (elements.aiChatHistory) {
+        elements.aiChatHistory.innerHTML = '';
+        aiChatHistory = [];
+        
+        appendChatMessage('model', '👋 Xin chào! Tôi là **Bác sĩ Bio-Coach AI** chuyên khoa phục hồi chức năng cơ sàn chậu của bạn. \n\nTôi có thể giúp bạn giải đáp các vấn đề về bài tập Kegel, cơ mu cụt (PC), hướng dẫn thở hoặc trực tiếp phân tích nhật ký tập luyện của bạn. Hãy trò chuyện với tôi hoặc bấm các gợi ý nhanh phía dưới nhé!');
+    }
+}
+async function sendAIChatMessage(messageText) {
     if (isQueryingAI) return;
     
-    const modal = document.getElementById('ai-modal');
-    const contentContainer = document.getElementById('ai-analysis-content');
-    
-    if (!modal || !contentContainer) return;
-    
-    // Open Modal
-    modal.style.display = 'flex';
-    
-    // Show Loading
-    contentContainer.innerHTML = `
-        <div class="ai-loading-container">
-            <div class="ai-pulse-orb">🤖</div>
-            <div style="color: var(--text-light); font-weight: 500; font-size: 0.95rem;">Đang kết nối với Trợ lý A.I...</div>
-            <p style="color: var(--text-muted); font-size: 0.8rem; max-width: 340px; margin: 0; line-height: 1.5;">
-                Trí tuệ nhân tạo đang tổng hợp chuỗi chặng co thắt cơ sàn chậu và phân tích sinh lý học lâm sàng của bạn.
-            </p>
-        </div>
-    `;
-    
+    const apiKey = state.geminiApiKey;
+    if (!apiKey) {
+        appendChatMessage('system', '🔑 Vui lòng nhập Gemini API Key của bạn trong phần cài đặt trước khi bắt đầu trò chuyện.');
+        return;
+    }
+
+    // Append user message
+    appendChatMessage('user', messageText);
+    aiChatHistory.push({ role: 'user', text: messageText });
+
+    // Append loading bubble
     isQueryingAI = true;
+    appendChatMessage('model', 'Đang kết nối với bác sĩ ảo... 🤖');
     
+    // Get last bubble so we can replace its text later
+    const bubbles = elements.aiChatHistory.querySelectorAll('.ai-message');
+    const loadingBubble = bubbles[bubbles.length - 1];
+
     try {
-        const apiKey = state.geminiApiKey;
-        if (!apiKey) {
-            contentContainer.innerHTML = `
-                <div style="padding: 1.5rem; text-align: center; color: #ef4444;">
-                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">🔑</div>
-                    <h4 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; color: #f87171;">Chưa Có Gemini API Key</h4>
-                    <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.55;">Vui lòng điền mã khóa Gemini API Key của bạn ở khung "Hồ Sơ Tập Luyện" ở trên và nhấn "Lưu hồ sơ" trước khi chạy phân tích.</p>
-                </div>
-            `;
-            isQueryingAI = false;
-            return;
-        }
-        
-        // Prepare variables for prompt
         const ageStr = state.birthYear ? `${new Date().getFullYear() - parseInt(state.birthYear)} tuổi` : "Không rõ";
         const genderStr = state.gender === 'female' ? 'Nữ giới' : 'Nam giới';
         
-        // Format history summary
         let historyText = "";
         if (!state.history || state.history.length === 0) {
-            historyText = "Không có lịch sử luyện tập nào được ghi nhận. Người dùng chưa tập luyện buổi nào.";
+            historyText = "Không có nhật ký luyện tập nào.";
         } else {
             historyText = state.history.map(log => {
                 const date = log.timestamp ? log.timestamp.split('T')[0] : 'Không rõ';
@@ -4028,24 +4030,32 @@ async function triggerAIAnalysis() {
         }
 
         const systemPrompt = `Bạn là một Bác sĩ chuyên khoa đầu ngành về Nam khoa và Phụ khoa, đồng thời là chuyên gia vật lý trị liệu phục hồi chức năng cơ sàn chậu (cơ mu cụt - PC).
-Nhiệm vụ của bạn là phân tích dữ liệu luyện tập của người dùng, đưa ra những nhận xét lâm sàng chuyên nghiệp, chính xác, mang tính động viên và hướng dẫn chuyên khoa hữu ích.
-
-Thông tin người dùng:
+Nhiệm vụ của bạn là trò chuyện trực tiếp và tư vấn y khoa ân cần cho người dùng về các bài tập sàn chậu (Kegel, Reverse Kegel, breathing).
+Hãy trả lời câu hỏi hiện tại dựa trên bối cảnh sức khỏe người dùng:
 - Giới tính sinh học: ${genderStr}
 - Độ tuổi: ${ageStr}
-
-Nhật ký toàn bộ buổi tập:
+- Nhật ký luyện tập:
 ${historyText}
 
-Hãy viết một báo cáo nhận định chi tiết bằng tiếng Việt, định dạng Markdown chuẩn với các phần cụ thể sau:
-1. **📊 Phân tích Tiến Trình**: Nhận xét về tần suất, mức độ kiên trì và khối lượng bài tập tích lũy. Đánh giá xem cường độ tập đã hợp lý với nhóm tuổi và giới tính sinh học chưa.
-2. **🩺 Nhận Định Sinh Lý Lâm Sàng**: Giải thích cơ chế sinh học: Việc tập luyện như hiện tại mang lại lợi ích cụ thể gì cho nhóm cơ sàn chậu của họ (Nam: Kiểm soát phản xạ xuất tinh, tăng áp lực thể hang cải thiện độ cứng, ngừa phì đại tuyến tiền liệt; Nữ: Củng cố cơ chậu nâng đỡ bàng quang, tử cung ngăn sa tạng, tăng đàn hồi âm đạo, kiểm soát són tiểu stress).
-3. **💡 Khuyên Nghị Chuyên Khoa**: Đề xuất hướng đi tiếp theo (có nên nâng cấp cấp độ tập không, nên tăng thời gian siết hay tăng thời gian nghỉ chuyển, các lưu ý về tư thế và kết hợp nhịp thở cơ hoành khi luyện tập).
+Quy tắc trả lời:
+1. Trả lời trực tiếp câu hỏi của người dùng một cách ngắn gọn, khoa học, chuyên nghiệp bằng tiếng Việt.
+2. Giọng điệu bác sĩ ân cần, giàu chuyên môn, nghiêm túc.
+3. Luôn sử dụng định dạng Markdown chuẩn (tiêu đề, in đậm, danh sách).
+4. Nếu người dùng hỏi câu hỏi ngoài y học hoặc cơ sàn chậu, lịch sự từ chối và nhắc họ quay lại chủ đề sức khỏe.`;
 
-Hãy giữ giọng điệu bác sĩ ân cần, nghiêm túc, khoa học và giàu chuyên môn. Sử dụng các icon emoji thích hợp để văn bản trực quan.`;
+        // Format history for Gemini API
+        let promptText = `${systemPrompt}\n\nLịch sử hội thoại trò chuyện:\n`;
+        
+        // Limit history to last 6 messages to keep it fast
+        const startIdx = Math.max(0, aiChatHistory.length - 6);
+        for (let i = startIdx; i < aiChatHistory.length; i++) {
+            const msg = aiChatHistory[i];
+            promptText += `${msg.role === 'user' ? 'Người dùng' : 'Bác sĩ'}: ${msg.text}\n`;
+        }
+        
+        promptText += `Bác sĩ:`;
 
-        // Direct fetch call to Gemini 3.5 Flash API
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
         
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -4057,38 +4067,31 @@ Hãy giữ giọng điệu bác sĩ ân cần, nghiêm túc, khoa học và già
                     {
                         parts: [
                             {
-                                text: systemPrompt
+                                text: promptText
                             }
                         ]
                     }
                 ]
             })
         });
-        
+
         if (!response.ok) {
             throw new Error(`Gemini API returned status code: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        const markdown = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không thể phản hồi từ Gemini 3.5 Flash. Vui lòng kiểm tra API Key.";
+        const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không thể phản hồi từ bác sĩ ảo.";
         
-        // Render Markdown to HTML and inject
-        contentContainer.innerHTML = renderMarkdownToHTML(markdown);
-        
-    } catch(err) {
+        // Replace loading bubble text
+        loadingBubble.innerHTML = renderMarkdownToHTML(responseText);
+        aiChatHistory.push({ role: 'model', text: responseText });
+
+    } catch (err) {
         console.error('Error calling Gemini direct API:', err);
-        contentContainer.innerHTML = `
-            <div style="padding: 1.5rem; text-align: center; color: #ef4444;">
-                <div style="font-size: 2.5rem; margin-bottom: 1rem;">❌</div>
-                <h4 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; color: #f87171;">Lỗi Kết Nối Phân Tích</h4>
-                <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.55;">
-                    Có lỗi xảy ra khi truyền tải dữ liệu hoặc gọi Gemini 3.5 Flash: ${err.message}.<br>
-                    Vui lòng đảm bảo thiết bị đã kết nối Internet và API Key của bạn hợp lệ.
-                </p>
-            </div>
-        `;
+        loadingBubble.textContent = `❌ Lỗi kết nối bác sĩ AI: ${err.message}. Vui lòng thử lại.`;
     } finally {
         isQueryingAI = false;
+        if (elements.aiChatHistory) elements.aiChatHistory.scrollTop = elements.aiChatHistory.scrollHeight;
     }
 }
 
@@ -4219,124 +4222,5 @@ function bindPWAUpdateChecker() {
         });
     });
 }
-// --- GAMIFICATION & RANK SYSTEM ---
-function calculateRank() {
-    const sessions = state.totalSessions || 0;
-    if (sessions >= 30) return { title: '👑 Huyền Thoại Sinh Lý', color: '#f59e0b' };
-    if (sessions >= 15) return { title: '🥇 Cao Thủ PC Flex', color: '#10b981' };
-    if (sessions >= 5) return { title: '🥈 Chiến Binh Sàn Chậu', color: '#3b82f6' };
-    return { title: '🌱 Tân Binh PC', color: '#00f5d4' };
-}
 
-function updateRank() {
-    if (elements.sidebarRankValue) {
-        const rank = calculateRank();
-        elements.sidebarRankValue.textContent = rank.title;
-        elements.sidebarRankValue.style.color = rank.color;
-    }
-}
 
-// --- 21-DAY CHALLENGE ROADMAP ---
-function renderChallengeRoadmap() {
-    if (!elements.challengeDaysGrid) return;
-    
-    let completedChallengeDays = parseInt(localStorage.getItem('pcflex_challenge_completed_days')) || 0;
-    elements.challengeDaysGrid.innerHTML = '';
-    
-    for (let i = 1; i <= 21; i++) {
-        const dayItem = document.createElement('div');
-        dayItem.className = 'challenge-day-item';
-        
-        let statusText = 'Khóa';
-        if (i <= completedChallengeDays) {
-            dayItem.classList.add('completed');
-            statusText = '✓ Xong';
-        } else if (i === completedChallengeDays + 1) {
-            dayItem.classList.add('active');
-            statusText = '🔥 Tập';
-        } else {
-            dayItem.classList.add('locked');
-            statusText = '🔒';
-        }
-        
-        dayItem.innerHTML = `
-            <span class="challenge-day-num">D${i}</span>
-            <span class="challenge-day-status">${statusText}</span>
-        `;
-        
-        if (i <= completedChallengeDays + 1) {
-            dayItem.addEventListener('click', () => {
-                // Close the modal
-                if (elements.challengeModal) elements.challengeModal.style.display = 'none';
-                
-                // Switch to practice tab
-                switchTab('practice');
-                
-                // Select level based on day
-                let levelToSelect = 'goodMorning';
-                if (i > 14) levelToSelect = 'deepSqueeze';
-                else if (i > 7) levelToSelect = 'quickFlex';
-                
-                // Find the level element and select it
-                const levelEl = document.querySelector(`.level-item[data-level="${levelToSelect}"]`);
-                if (levelEl) {
-                    selectWorkoutLevel(levelEl);
-                    alert(`🎯 Thử thách Ngày ${i}: Hãy hoàn thành hiệp tập cấp độ [${levelEl.querySelector('h4').textContent}] để hoàn thành thử thách hôm nay!`);
-                }
-                
-                // Store that we are currently training for day X
-                localStorage.setItem('pcflex_current_challenge_day', i);
-            });
-        }
-        
-        elements.challengeDaysGrid.appendChild(dayItem);
-    }
-}
-
-// --- PELVIC FLOOR HEATMAP GENERATOR ---
-function updatePelvicHeatmap() {
-    const reps = state.totalRepsCompleted || 0;
-    const sessions = state.totalSessions || 0;
-
-    const pcPercent = Math.min(100, Math.round(reps / 5)); // 500 reps = 100%
-    const laPercent = Math.min(100, Math.round(sessions * 4)); // 25 sessions = 100%
-
-    // Update PC Ring Dashoffset (157 is full stroke)
-    if (elements.heatmapRingPC) {
-        const pcOffset = 157 - (157 * pcPercent / 100);
-        elements.heatmapRingPC.style.strokeDashoffset = pcOffset;
-        
-        // Heatmap color glow based on percentage
-        if (pcPercent >= 80) elements.heatmapRingPC.style.stroke = '#22c55e'; // Green
-        else if (pcPercent >= 50) elements.heatmapRingPC.style.stroke = '#3b82f6'; // Blue
-        else if (pcPercent >= 20) elements.heatmapRingPC.style.stroke = '#eab308'; // Yellow
-        else elements.heatmapRingPC.style.stroke = '#ef4444'; // Red
-    }
-
-    // Update LA Ring Dashoffset (220 is full stroke)
-    if (elements.heatmapRingLA) {
-        const laOffset = 220 - (220 * laPercent / 100);
-        elements.heatmapRingLA.style.strokeDashoffset = laOffset;
-        
-        // Heatmap color glow based on percentage
-        if (laPercent >= 80) elements.heatmapRingLA.style.stroke = '#10b981'; // Emerald
-        else if (laPercent >= 50) elements.heatmapRingLA.style.stroke = '#6366f1'; // Indigo
-        else if (laPercent >= 20) elements.heatmapRingLA.style.stroke = '#f97316'; // Orange
-        else elements.heatmapRingLA.style.stroke = '#f43f5e'; // Rose
-    }
-
-    // Update bars
-    if (elements.heatmapBarPC) elements.heatmapBarPC.style.width = `${pcPercent}%`;
-    if (elements.heatmapBarLA) elements.heatmapBarLA.style.width = `${laPercent}%`;
-
-    // Update statuses
-    const getStatusText = (pct) => {
-        if (pct >= 80) return 'Tối ưu (Hoàn hảo)';
-        if (pct >= 50) return 'Khỏe mạnh (Tốt)';
-        if (pct >= 20) return 'Căn bản (Khá)';
-        return 'Mới kích hoạt (Yếu)';
-    };
-
-    if (elements.heatmapPCStatus) elements.heatmapPCStatus.textContent = getStatusText(pcPercent);
-    if (elements.heatmapLAStatus) elements.heatmapLAStatus.textContent = getStatusText(laPercent);
-}
