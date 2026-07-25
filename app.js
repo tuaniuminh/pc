@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.3.8';
+const APP_VERSION = 'v1.3.9';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -1371,6 +1371,7 @@ function syncVersionBadges() {
 }
 
 function initApp() {
+    initElements();
     setupEventHandlers();
     setupGlobalButtonHaptics();
 
@@ -1466,20 +1467,28 @@ function setupEventHandlers() {
     });
 
     // 1. Sidebar tab switching
-    elements.navItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const targetTab = item.getAttribute('data-tab');
-            switchTab(targetTab);
+    if (elements.navItems) {
+        elements.navItems.forEach(item => {
+            if (item) {
+                item.addEventListener('click', () => {
+                    const targetTab = item.getAttribute('data-tab');
+                    switchTab(targetTab);
+                });
+            }
         });
-    });
+    }
 
     // 2. Library subtab switching
-    elements.libTabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const targetSubtab = btn.getAttribute('data-subtab');
-            switchLibrarySubtab(targetSubtab);
+    if (elements.libTabBtns) {
+        elements.libTabBtns.forEach(btn => {
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    const targetSubtab = btn.getAttribute('data-subtab');
+                    switchLibrarySubtab(targetSubtab);
+                });
+            }
         });
-    });
+    }
 
     // 3. Level Selector Tabs (1-5)
     const levelTabBtns = document.querySelectorAll('.level-tab-btn');
@@ -1539,48 +1548,58 @@ function setupEventHandlers() {
     }
 
     // 4. Sound toggles
-    elements.btnToggleSFX.addEventListener('click', () => {
-        state.isMutedSFX = !state.isMutedSFX;
-        audioController.resumeContext();
-        updateSoundButtons();
-    });
+    if (elements.btnToggleSFX) {
+        elements.btnToggleSFX.addEventListener('click', () => {
+            state.isMutedSFX = !state.isMutedSFX;
+            audioController.resumeContext();
+            updateSoundButtons();
+        });
+    }
 
-    elements.btnToggleBGM.addEventListener('click', () => {
-        state.isMutedBGM = !state.isMutedBGM;
-        audioController.resumeContext();
-        
-        if (state.isMutedBGM) {
-            audioController.stopBGM();
-        } else {
-            audioController.startBGM();
-        }
-        updateSoundButtons();
-    });
+    if (elements.btnToggleBGM) {
+        elements.btnToggleBGM.addEventListener('click', () => {
+            state.isMutedBGM = !state.isMutedBGM;
+            audioController.resumeContext();
+            
+            if (state.isMutedBGM) {
+                audioController.stopBGM();
+            } else {
+                audioController.startBGM();
+            }
+            updateSoundButtons();
+        });
+    }
 
     // 5. Workout controls
-    elements.btnStart.addEventListener('click', () => {
-        // Resume Audio context on first click interaction
-        audioController.resumeContext();
-        
-        if (state.workoutState === 'idle') {
-            startWorkout();
-        } else if (state.workoutState === 'squeezing' || state.workoutState === 'relaxing') {
-            pauseWorkout();
-        } else if (state.workoutState.startsWith('paused_')) {
-            resumeWorkout();
-        }
-    });
+    if (elements.btnStart) {
+        elements.btnStart.addEventListener('click', () => {
+            // Resume Audio context on first click interaction
+            audioController.resumeContext();
+            
+            if (state.workoutState === 'idle') {
+                startWorkout();
+            } else if (state.workoutState === 'squeezing' || state.workoutState === 'relaxing') {
+                pauseWorkout();
+            } else if (state.workoutState.startsWith('paused_')) {
+                resumeWorkout();
+            }
+        });
+    }
 
-    elements.btnReset.addEventListener('click', () => {
-        resetWorkout();
-    });
+    if (elements.btnReset) {
+        elements.btnReset.addEventListener('click', () => {
+            resetWorkout();
+        });
+    }
 
     // 6. Stats clearing
-    elements.btnClearData.addEventListener('click', () => {
-        if (confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử luyện tập và chuỗi ngày tập?')) {
-            clearAllData();
-        }
-    });
+    if (elements.btnClearData) {
+        elements.btnClearData.addEventListener('click', () => {
+            if (confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử luyện tập và chuỗi ngày tập?')) {
+                clearAllData();
+            }
+        });
+    }
 
     // Backup & Restore handlers
     if (elements.btnBackupData) {
