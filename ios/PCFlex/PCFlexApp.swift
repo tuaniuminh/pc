@@ -2,7 +2,7 @@ import SwiftUI
 
 /**
  * PC Flex Native iOS App (Swift & SwiftUI)
- * Version 1.2.31 - Top Navbar and Diagnostic Bug Logger
+ * Version 1.2.32 - Contrast polish for Light Mode theme
  */
 @main
 struct PCFlexApp: App {

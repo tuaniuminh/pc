@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.2.31">
+    <link rel="stylesheet" href="styles.css?v=1.2.32">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -728,7 +728,7 @@
                             <!-- Birth Year Input -->
                             <div class="profile-form-group">
                                 <label for="profile-birth-year" class="profile-form-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--color-text-secondary);">Năm sinh:</label>
-                                <input type="number" id="profile-birth-year" class="profile-input" placeholder="Ví dụ: 1995" min="1930" max="2020" style="width: 100%; box-sizing: border-box; padding: 0.6rem; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: white;">
+                                <input type="number" id="profile-birth-year" class="profile-input" placeholder="Ví dụ: 1995" min="1930" max="2020" style="width: 100%; box-sizing: border-box; padding: 0.6rem; border-radius: 10px; background: rgba(var(--color-primary-rgb), 0.03); border: 1px solid var(--border-color); color: var(--color-text-primary);">
                             </div>
                             
                             <!-- Gemini API Key Input -->
@@ -737,7 +737,7 @@
                                     Gemini API Key:
                                     <a href="https://aistudio.google.com/" target="_blank" style="color: var(--color-primary); font-size: 0.725rem; font-weight: 500; text-decoration: underline; text-transform: none; letter-spacing: 0;">Lấy key tại đây</a>
                                 </label>
-                                <input type="password" id="profile-gemini-key" class="profile-input" style="width: 100%; box-sizing: border-box; padding: 0.6rem; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: white;" placeholder="Nhập khóa API (AIzaSy...)">
+                                <input type="password" id="profile-gemini-key" class="profile-input" style="width: 100%; box-sizing: border-box; padding: 0.6rem; border-radius: 10px; background: rgba(var(--color-primary-rgb), 0.03); border: 1px solid var(--border-color); color: var(--color-text-primary);" placeholder="Nhập khóa API (AIzaSy...)">
                             </div>
                         </div>
                         <div style="margin-top: 1.25rem; text-align: right;">
@@ -752,27 +752,27 @@
                         
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.25rem;">
                             <!-- SFX Toggle -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: rgba(var(--color-primary-rgb), 0.03); border: 1px solid var(--border-color); border-radius: 12px;">
                                 <div style="display: flex; flex-direction: column;">
-                                    <span style="font-size: 0.85rem; font-weight: 600; color: white;">Âm báo bài tập</span>
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--color-text-primary);">Âm báo bài tập</span>
                                     <span style="font-size: 0.75rem; color: var(--color-text-secondary);">Nhịp siết/thả cơ chậu</span>
                                 </div>
                                 <button class="btn btn-secondary btn-sm" id="btn-manage-toggle-sfx" style="min-width: 80px;">Bật</button>
                             </div>
                             
                             <!-- BGM Toggle -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: rgba(var(--color-primary-rgb), 0.03); border: 1px solid var(--border-color); border-radius: 12px;">
                                 <div style="display: flex; flex-direction: column;">
-                                    <span style="font-size: 0.85rem; font-weight: 600; color: white;">Nhạc nền thiền</span>
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--color-text-primary);">Nhạc nền thiền</span>
                                     <span style="font-size: 0.75rem; color: var(--color-text-secondary);">Nhạc không lời thư thái</span>
                                 </div>
                                 <button class="btn btn-secondary btn-sm" id="btn-manage-toggle-bgm" style="min-width: 80px;">Bật</button>
                             </div>
                             
                             <!-- Bug Logger Toggle -->
-                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; grid-column: span 1;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: rgba(var(--color-primary-rgb), 0.03); border: 1px solid var(--border-color); border-radius: 12px; grid-column: span 1;">
                                 <div style="display: flex; flex-direction: column;">
-                                    <span style="font-size: 0.85rem; font-weight: 600; color: white;">Con bọ chẩn đoán</span>
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--color-text-primary);">Con bọ chẩn đoán</span>
                                     <span style="font-size: 0.75rem; color: var(--color-text-secondary);">Hiện nút 🐞 báo lỗi trên màn hình</span>
                                 </div>
                                 <div style="display: flex; align-items: center; height: 100%;">
@@ -844,7 +844,7 @@
         
         <footer class="app-footer">
             <div class="footer-content">
-                <span class="footer-version" id="footer-version-label">VER v1.2.31 PRO</span>
+                <span class="footer-version" id="footer-version-label">VER v1.2.32 PRO</span>
                 <span class="footer-dot">•</span>
                 <div class="version-update-container" id="btn-check-update" title="Kiểm tra bản cập nhật">
                     Kiểm tra cập nhật
@@ -1030,6 +1030,6 @@
         🐞
     </button>
 
-    <script src="app.js?v=1.2.31"></script>
+    <script src="app.js?v=1.2.32"></script>
 </body>
 </html>

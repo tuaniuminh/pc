@@ -3447,6 +3447,7 @@ body.gender-female .level-tab-btn.active {
 [data-theme="light"] .medical-guide-card,
 [data-theme="light"] .history-item,
 [data-theme="light"] .setting-card,
+[data-theme="light"] .profile-card,
 [data-theme="light"] .stat-box {
     background: rgba(255, 255, 255, 0.85);
     border: 1px solid rgba(226, 232, 240, 0.9);
@@ -4318,7 +4319,17 @@ body.light-mode .badges-panel, body.light-mode .history-card {
     color: #0f172a;
 }
 [data-theme="light"] .top-navbar .nav-item.active, body.light-mode .top-navbar .nav-item.active {
-    background: rgba(13, 148, 136, 0.08);
-    color: #0d9488;
+    background: rgba(2, 132, 199, 0.08);
+    color: #0284c7;
+}
+
+[data-theme="light"] .bug-log-item, body.light-mode .bug-log-item {
+    background: rgba(220, 38, 38, 0.05);
+    color: #b91c1c;
+    border-left-color: #dc2626;
+}
+
+[data-theme="light"] .bug-console-header h4, body.light-mode .bug-console-header h4 {
+    color: #b91c1c;
 }
 
