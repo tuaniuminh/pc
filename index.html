@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.2.26">
+    <link rel="stylesheet" href="styles.css?v=1.3.0">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -20,7 +20,7 @@
                     <img src="./logo.png" alt="PC Flex Logo" class="brand-logo">
                 </div>
                 <div class="version-update-container" id="btn-check-update" title="Kiểm tra bản cập nhật">
-                    VER v1.2.26 PRO
+                    VER v1.3.0 PRO
                 </div>
             </div>
             
@@ -57,6 +57,10 @@
                     <span class="label">Tổng hiệp đã tập</span>
                     <span class="value" id="sidebar-total-sessions">0 hiệp</span>
                 </div>
+                <div class="quick-stat-item rank-stat-item" id="sidebar-rank-card">
+                    <span class="label">Cấp Bậc Sinh Lý</span>
+                    <span class="value" id="sidebar-rank-value">🌱 Tân Binh PC</span>
+                </div>
             </div>
         </aside>
 
@@ -68,7 +72,7 @@
                     <img src="./logo.png" alt="PC Flex Logo" class="brand-logo">
                 </div>
                 <div class="version-update-container" title="Kiểm tra bản cập nhật">
-                    VER v1.2.26 PRO
+                    VER v1.3.0 PRO
                 </div>
             </header>
             
@@ -137,6 +141,10 @@
                             <div class="visualizer-orb" id="visualizer-orb">
                                 <div class="orb-glow"></div>
                                 <div class="orb-content">
+                                    <div class="breathing-guide-badge" id="orb-breathing-guide">
+                                        <span class="breathing-icon">🫁</span>
+                                        <span class="breathing-text" id="breathing-text">Hít thở chuẩn bị...</span>
+                                    </div>
                                     <span class="orb-action" id="orb-action">SẴN SÀNG</span>
                                     <span class="orb-timer" id="orb-timer">00</span>
                                     <span class="orb-sub-text" id="orb-sub-text">Bấm Bắt đầu để tập</span>
@@ -617,6 +625,17 @@
                 </div>
 
                 <div class="stats-grid">
+                    <!-- Stat Card: Pelvic Strength Index (PSI) -->
+                    <div class="stat-card psi-card" id="stats-psi-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-value" id="stats-psi-value">PSI 15 / 100</div>
+                        <div class="stat-label">Chỉ Số Sức Mạnh Cơ PC (PSI)</div>
+                        <p class="stat-desc" id="stats-psi-desc">Đang ở mức độ khởi đầu. Hãy kiên trì tập luyện để thăng cấp sức khỏe sàn chậu.</p>
+                        <button class="btn btn-secondary btn-sm" id="btn-export-pdf-report" style="margin-top: 0.85rem; width: 100%; border-radius: 12px; font-size: 0.8rem; padding: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem; background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.3); color: #3b82f6; cursor: pointer;">
+                            📄 Xuất Báo Cáo PDF Y Khoa
+                        </button>
+                    </div>
+
                     <!-- Stat Card: Streak -->
                     <div class="stat-card streak-card">
                         <div class="stat-icon">🔥</div>
@@ -639,6 +658,64 @@
                         <div class="stat-value" id="stats-total-reps">0 lượt</div>
                         <div class="stat-label">Tổng số lượt siết/thả</div>
                         <p class="stat-desc">Số lần cơ PC của bạn được vận động co thắt cơ sàn chậu.</p>
+                    </div>
+                </div>
+
+                <!-- 21-Day Specialized Challenge Roadmap Card -->
+                <div class="profile-card challenge-card" id="stats-challenge-card" style="margin-top: 1.5rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <h3 class="profile-title">🎯 Thách Thức 21 Ngày Đổi Mới Sức Khỏe Sinh Lý</h3>
+                            <p class="profile-desc">Lộ trình rèn luyện 21 ngày chuyên sâu được thiết kế khoa học giúp phục hồi trương lực cơ PC và tăng cường kiểm soát.</p>
+                        </div>
+                        <button class="btn btn-primary" id="btn-open-challenge-modal" style="padding: 0.65rem 1.25rem; font-size: 0.875rem; border-radius: 14px;">
+                            🚀 Mở Lộ Trình 21 Ngày
+                        </button>
+                    </div>
+                    <div class="challenge-mini-progress" style="margin-top: 1rem;">
+                        <div class="challenge-bar-label" style="display: flex; justify-content: space-between; font-size: 0.825rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 0.4rem;">
+                            <span>Tiến độ 21 Ngày:</span>
+                            <span id="challenge-progress-text">Ngày 0 / 21</span>
+                        </div>
+                        <div class="challenge-progress-track" style="height: 10px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden;">
+                            <div class="challenge-progress-fill" id="challenge-progress-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981); transition: width 0.4s ease;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pelvic Floor Activation Heatmap Card -->
+                <div class="profile-card heatmap-card" id="pelvic-heatmap-card" style="margin-top: 1.5rem;">
+                    <h3 class="profile-title">🗺️ Bản Đồ Kích Hoạt Cơ Sàn Chậu (Pelvic Muscle Activation Heatmap)</h3>
+                    <p class="profile-desc">Mô phỏng mức độ kích hoạt và lưu thông máu đến nhóm cơ cụ thể dựa trên tổng lượng Reps tích lũy.</p>
+                    <div class="heatmap-body" style="display: flex; align-items: center; justify-content: space-around; gap: 1.5rem; flex-wrap: wrap; margin-top: 1.25rem;">
+                        <div class="heatmap-svg-container" style="width: 180px; height: 180px; position: relative;">
+                            <svg viewBox="0 0 200 200" width="100%" height="100%" class="pelvic-svg">
+                                <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="12"/>
+                                <!-- Pubococcygeus Muscle Outer Ring -->
+                                <circle id="heatmap-ring-pc" cx="100" cy="100" r="75" fill="none" stroke="rgba(59, 130, 246, 0.2)" stroke-width="16" stroke-dasharray="471" stroke-dashoffset="0"/>
+                                <!-- Levator Ani Muscle Inner Ring -->
+                                <circle id="heatmap-ring-la" cx="100" cy="100" r="50" fill="none" stroke="rgba(16, 185, 129, 0.2)" stroke-width="14" stroke-dasharray="314" stroke-dashoffset="0"/>
+                                <!-- Sphincter Muscle Core -->
+                                <circle id="heatmap-core-sphincter" cx="100" cy="100" r="24" fill="rgba(245, 158, 11, 0.25)"/>
+                            </svg>
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none;">
+                                <span style="font-size: 1.5rem;">⚡</span>
+                            </div>
+                        </div>
+                        <div class="heatmap-legend" style="flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 0.75rem;">
+                            <div class="legend-item" style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem;">
+                                <span style="width: 12px; height: 12px; border-radius: 50%; background: #3b82f6; display: inline-block;"></span>
+                                <span><strong>Cơ Pubococcygeus (PC):</strong> <span id="heatmap-pc-status">Mới kích hoạt</span></span>
+                            </div>
+                            <div class="legend-item" style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem;">
+                                <span style="width: 12px; height: 12px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+                                <span><strong>Cơ Nâng Hậu Môn (Levator Ani):</strong> <span id="heatmap-la-status">Căn bản</span></span>
+                            </div>
+                            <div class="legend-item" style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem;">
+                                <span style="width: 12px; height: 12px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
+                                <span><strong>Cơ Vòng Niệu Đạo:</strong> <span id="heatmap-sphincter-status">Ổn định</span></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -852,26 +929,64 @@
         </div>
     </div>
 
-    <!-- Modal: AI Analysis Report -->
+    <!-- Modal: AI Bio-Coach Chatbot (Powered by Gemini 3.6 Flash) -->
     <div class="modal-backdrop" id="ai-modal" style="display: none;">
-        <div class="ai-modal-card">
+        <div class="ai-modal-card ai-chat-modal-card">
             <button class="modal-close-btn" id="btn-close-ai-modal">&times;</button>
             
             <div class="ai-modal-header">
                 <span class="ai-header-icon">🤖</span>
                 <div class="ai-header-text">
-                    <h3>Nhận Định Y Khoa A.I</h3>
-                    <p>Phân tích sinh lý chuyên khoa tự động bởi Gemini 3.5 Flash</p>
+                    <h3>Bác Sĩ Trợ Lý A.I Bio-Coach</h3>
+                    <p>Tư vấn sinh lý & cơ sàn chậu trực tiếp bởi <strong>Gemini 3.6 Flash</strong></p>
                 </div>
             </div>
             
-            <!-- AI Content (Scrollable) -->
-            <div class="ai-modal-body" id="ai-analysis-content">
-                <!-- Content will be injected dynamically -->
+            <!-- Suggested Medical Prompt Chips -->
+            <div class="ai-prompt-chips" id="ai-prompt-chips">
+                <button class="ai-chip" data-prompt="Làm thế nào để kiểm soát xuất tinh tốt hơn nhờ Kegel?">⚡ Kiểm soát xuất tinh</button>
+                <button class="ai-chip" data-prompt="Chế độ ăn uống bổ sung Kẽm và L-Arginine nào tốt nhất?">🥗 Dinh dưỡng bổ sung</button>
+                <button class="ai-chip" data-prompt="Tại sao bị mỏi cơ bụng dưới khi mới tập Kegel?">🩺 Khắc phục mỏi cơ</button>
+                <button class="ai-chip" data-prompt="Kegel ngược mang lại lợi ích gì cho cơ sàn chậu?">🔄 Tác dụng Kegel ngược</button>
             </div>
             
-            <div class="ai-modal-footer">
-                <button class="btn btn-secondary" id="btn-close-ai-modal-footer">Đóng</button>
+            <!-- AI Chat Log Messages Container (Scrollable) -->
+            <div class="ai-chat-messages" id="ai-chat-messages">
+                <div class="ai-msg ai-msg-system">
+                    <span class="ai-avatar">🤖</span>
+                    <div class="ai-bubble">
+                        Xin chào! Tôi là Bác Sĩ Trợ Lý A.I Bio-Coach (được vận hành bởi <strong>Gemini 3.6 Flash</strong> mới nhất). Hãy chọn một câu hỏi gợi ý bên trên hoặc nhập bất kỳ thắc mắc nào về sức khỏe sinh lý và tập luyện cơ sàn chậu để tôi tư vấn cho bạn!
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI Chat Input Box -->
+            <div class="ai-chat-input-bar">
+                <input type="text" id="ai-chat-input" placeholder="Nhập câu hỏi của bạn cho Bác Sĩ A.I..." autocomplete="off">
+                <button class="btn btn-primary btn-send-ai-chat" id="btn-send-ai-chat">Gửi 🚀</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: 21-Day Specialized Challenge Roadmap -->
+    <div class="modal-backdrop" id="challenge-modal" style="display: none;">
+        <div class="modal-card challenge-modal-card">
+            <button class="modal-close-btn" id="btn-close-challenge-modal">&times;</button>
+            
+            <div class="modal-header">
+                <span class="modal-header-icon">🎯</span>
+                <div>
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--color-text-primary); margin-bottom: 0.25rem;">Lộ Trình Thách Thức 21 Ngày</h3>
+                    <p style="font-size: 0.85rem; color: var(--color-text-secondary);">Hoàn thành từng ngày tập để biến thói quen thành phản xạ sinh lý bền vững</p>
+                </div>
+            </div>
+            
+            <div class="challenge-days-grid" id="challenge-days-grid">
+                <!-- 21 Day items rendered dynamically -->
+            </div>
+            
+            <div class="modal-footer" style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
+                <button class="btn btn-secondary" id="btn-close-challenge-modal-footer">Đóng</button>
             </div>
         </div>
     </div>
@@ -950,6 +1065,6 @@
         <button id="btn-pwa-update">Cập nhật ngay</button>
     </div>
 
-    <script src="app.js?v=1.2.26"></script>
+    <script src="app.js?v=1.3.0"></script>
 </body>
 </html>

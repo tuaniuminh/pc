@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.2.26';
+const APP_VERSION = 'v1.3.0';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -1385,6 +1385,14 @@ function initApp() {
     setupGlobalButtonHaptics();
     setupSoundModalHandlers();
     setupSoundStudioHandlers();
+    setupAIChatHandlers();
+    setupChallengeHandlers();
+    renderRankBadge();
+    updatePelvicHeatmap();
+
+    const btnPDF = document.getElementById('btn-export-pdf-report');
+    if (btnPDF) btnPDF.addEventListener('click', exportMedicalPDFReport);
+
     updateUIConfigs();
     renderStats();
     initSupabaseConnection();
@@ -2077,6 +2085,29 @@ function buildStepsFromStages(stages, workoutName) {
     return { steps, phases, totalReps };
 }
 
+function updateBreathingGuide(step) {
+    const badge = document.getElementById('orb-breathing-guide');
+    const textEl = document.getElementById('breathing-text');
+    if (!badge || !textEl) return;
+
+    if (step.sfx === 'squeeze') {
+        badge.className = 'breathing-guide-badge exhale';
+        textEl.textContent = '🌬️ Thở ra nhẹ nhàng & Siết cơ';
+    } else if (step.sfx === 'reverse') {
+        badge.className = 'breathing-guide-badge inhale';
+        textEl.textContent = '🧘 Hít sâu xuống đáy chậu (Mở cơ)';
+    } else if (step.sfx === 'transition') {
+        badge.className = 'breathing-guide-badge';
+        textEl.textContent = '💨 Hít thở đều đặn thả lỏng...';
+    } else if (step.sfx === 'relax') {
+        badge.className = 'breathing-guide-badge inhale';
+        textEl.textContent = '🫁 Hít sâu vào bụng & Thả lỏng';
+    } else {
+        badge.className = 'breathing-guide-badge';
+        textEl.textContent = 'Hít thở chuẩn bị...';
+    }
+}
+
 function executeWorkoutStep() {
     const step = state.workoutSteps[state.currentStepIndex];
     if (!step) return;
@@ -2095,6 +2126,9 @@ function executeWorkoutStep() {
     elements.orbAction.textContent = step.action;
     elements.orbSubText.textContent = step.subtext;
     elements.orbTimer.textContent = String(state.timeRemaining).padStart(2, '0');
+    
+    // Cập nhật Somatic Breathing Guide
+    updateBreathingGuide(step);
     
     // Cập nhật các thanh đếm & thanh tiến trình
     updateProgressDisplays();
@@ -2974,6 +3008,16 @@ function renderStats() {
     // Cập nhật Lịch hoạt động và Huy hiệu
     renderWeeklyCalendar();
     updateBadges();
+
+    // Cập nhật PSI Score, Rank và Heatmap
+    const psiObj = calculatePSI();
+    const psiValEl = document.getElementById('stats-psi-value');
+    const psiDescEl = document.getElementById('stats-psi-desc');
+    if (psiValEl) psiValEl.textContent = `PSI ${psiObj.score} / 100`;
+    if (psiDescEl) psiDescEl.textContent = psiObj.desc;
+
+    renderRankBadge();
+    updatePelvicHeatmap();
 
     // 3. Render History Table Log
     if (elements.historyLogBody) {
@@ -3996,26 +4040,278 @@ Hãy viết một báo cáo nhận định chi tiết bằng tiếng Việt, đ�
 
 Hãy giữ giọng điệu bác sĩ ân cần, nghiêm túc, khoa học và giàu chuyên môn. Sử dụng các icon emoji thích hợp để văn bản trực quan.`;
 
-        // Direct fetch call to Gemini 3.5 Flash API
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
-        
-        const response = await fetch(endpoint, {
+// --- GAMIFICATION & RANK SYSTEM ---
+function calculateRank() {
+    const total = state.totalWorkoutSessions || 0;
+    if (total >= 30) return { title: '👑 Huyền Thoại Sinh Lý', level: 4, desc: 'Cơ sàn chậu vững chắc hoàn mỹ' };
+    if (total >= 15) return { title: '🥇 Cao Thủ PC Flex', level: 3, desc: 'Kiểm soát xuất tinh & độ cứng cực tốt' };
+    if (total >= 5) return { title: '🥈 Chiến Binh Sàn Chậu', level: 2, desc: 'Trương lực cơ PC đang phát triển mạnh' };
+    return { title: '🌱 Tân Binh PC', level: 1, desc: 'Đang bước đầu làm quen nhịp tập' };
+}
+
+function renderRankBadge() {
+    const rankObj = calculateRank();
+    const sidebarRankEl = document.getElementById('sidebar-rank-value');
+    if (sidebarRankEl) {
+        sidebarRankEl.textContent = rankObj.title;
+    }
+}
+
+// --- PELVIC STRENGTH INDEX (PSI SCORE) ---
+function calculatePSI() {
+    const streak = state.streakDays || 0;
+    const sessions = state.totalWorkoutSessions || 0;
+    const reps = state.totalWorkoutReps || 0;
+    
+    let score = Math.min(100, Math.round(streak * 3 + sessions * 2 + Math.floor(reps / 25)));
+    if (score < 10) score = 10;
+
+    let desc = '';
+    if (score >= 80) desc = '🔥 Cực Kỳ Tối Ưu: Cơ sàn chậu dày dặn, bệ đỡ niệu đạo vững chắc và phản xạ sinh lý hoàn hảo.';
+    else if (score >= 50) desc = '💪 Trương Lực Cơ Khá: Độ dẻo dai cơ PC phát triển tốt, khả năng kiểm soát xuất tinh & độ cứng ổn định.';
+    else if (score >= 30) desc = '⚡ Tiến Bộ Rõ Rệt: Bạn đang xây dựng nền tảng sợi cơ chậu vững vàng. Tiếp tục giữ vững chuỗi tập!';
+    else desc = '🌱 Khởi Đầu Sinh Lý: Cơ sàn chậu mới bắt đầu làm quen nhịp siết/thả. Hãy kiên trì tập luyện để thăng cấp!';
+
+    return { score, desc };
+}
+
+function updatePelvicHeatmap() {
+    const reps = state.totalWorkoutReps || 0;
+    const ringPC = document.getElementById('heatmap-ring-pc');
+    const ringLA = document.getElementById('heatmap-ring-la');
+    const pcStatus = document.getElementById('heatmap-pc-status');
+    const laStatus = document.getElementById('heatmap-la-status');
+    const sphincterStatus = document.getElementById('heatmap-sphincter-status');
+
+    if (ringPC) {
+        const pcRatio = Math.min(1, reps / 300);
+        ringPC.style.strokeDashoffset = 471 * (1 - pcRatio);
+        ringPC.style.stroke = pcRatio > 0.6 ? '#3b82f6' : 'rgba(59, 130, 246, 0.4)';
+    }
+    if (ringLA) {
+        const laRatio = Math.min(1, reps / 500);
+        ringLA.style.strokeDashoffset = 314 * (1 - laRatio);
+        ringLA.style.stroke = laRatio > 0.6 ? '#10b981' : 'rgba(16, 185, 129, 0.4)';
+    }
+
+    if (pcStatus) pcStatus.textContent = reps > 200 ? 'Săn chắc tối ưu' : reps > 50 ? 'Khá phát triển' : 'Mới kích hoạt';
+    if (laStatus) laStatus.textContent = reps > 400 ? 'Rất dẻo dai' : reps > 100 ? 'Tăng thể tích' : 'Căn bản';
+    if (sphincterStatus) sphincterStatus.textContent = reps > 100 ? 'Phản xạ đóng chặt' : 'Ổn định';
+}
+
+// --- 21-DAY SPECIALIZED CHALLENGE ROADMAP ---
+function setupChallengeHandlers() {
+    const modal = document.getElementById('challenge-modal');
+    const btnOpen = document.getElementById('btn-open-challenge-modal');
+    const btnClose = document.getElementById('btn-close-challenge-modal');
+    const btnCloseFooter = document.getElementById('btn-close-challenge-modal-footer');
+
+    const openModal = () => {
+        if (!modal) return;
+        renderChallengeModal();
+        modal.style.display = 'flex';
+    };
+
+    const closeModal = () => {
+        if (!modal) return;
+        modal.style.display = 'none';
+    };
+
+    if (btnOpen) btnOpen.addEventListener('click', openModal);
+    if (btnClose) btnClose.addEventListener('click', closeModal);
+    if (btnCloseFooter) btnCloseFooter.addEventListener('click', closeModal);
+}
+
+function renderChallengeModal() {
+    const grid = document.getElementById('challenge-days-grid');
+    const progressFill = document.getElementById('challenge-progress-fill');
+    const progressText = document.getElementById('challenge-progress-text');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+    const completedDays = Math.min(21, state.totalWorkoutSessions || 0);
+
+    if (progressFill) progressFill.style.width = `${Math.round((completedDays / 21) * 100)}%`;
+    if (progressText) progressText.textContent = `Ngày ${completedDays} / 21`;
+
+    for (let day = 1; day <= 21; day++) {
+        const isCompleted = day <= completedDays;
+        const isCurrent = day === completedDays + 1;
+
+        const item = document.createElement('div');
+        item.className = `challenge-day-item ${isCompleted ? 'completed' : ''} ${isCurrent ? 'active' : ''}`;
+        item.innerHTML = `
+            <div class="challenge-day-num">NGÀY ${day}</div>
+            <div class="challenge-day-title">${isCompleted ? '✓ Hoàn thành' : isCurrent ? '🔥 Hôm nay' : '🔒 Khóa'}</div>
+        `;
+        grid.appendChild(item);
+    }
+}
+
+// --- AI MEDICAL BIO-COACH CHATBOT (POWERED BY GEMINI 3.6 FLASH) ---
+let isAiTyping = false;
+
+function setupAIChatHandlers() {
+    const modal = document.getElementById('ai-modal');
+    const btnOpenStats = document.getElementById('btn-open-ai-modal');
+    const btnClose = document.getElementById('btn-close-ai-modal');
+    const btnSend = document.getElementById('btn-send-ai-chat');
+    const chatInput = document.getElementById('ai-chat-input');
+
+    const openModal = () => {
+        if (!modal) return;
+        modal.style.display = 'flex';
+        renderRankBadge();
+    };
+
+    const closeModal = () => {
+        if (!modal) return;
+        modal.style.display = 'none';
+    };
+
+    if (btnOpenStats) btnOpenStats.addEventListener('click', openModal);
+    if (btnClose) btnClose.addEventListener('click', closeModal);
+
+    if (btnSend) {
+        btnSend.addEventListener('click', () => {
+            sendAIChatMessage();
+        });
+    }
+
+    if (chatInput) {
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendAIChatMessage();
+        });
+    }
+
+    // Prompt Chips click handlers
+    const chips = document.querySelectorAll('#ai-prompt-chips .ai-chip');
+    chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            const promptText = chip.getAttribute('data-prompt');
+            if (promptText && chatInput) {
+                chatInput.value = promptText;
+                sendAIChatMessage();
+            }
+        });
+    });
+}
+
+async function sendAIChatMessage() {
+    const inputEl = document.getElementById('ai-chat-input');
+    const chatMessagesEl = document.getElementById('ai-chat-messages');
+    if (!inputEl || !chatMessagesEl) return;
+
+    const userText = inputEl.value.trim();
+    if (!userText || isAiTyping) return;
+
+    // Append User Message
+    inputEl.value = '';
+    const userMsgDiv = document.createElement('div');
+    userMsgDiv.className = 'ai-msg ai-msg-user';
+    userMsgDiv.innerHTML = `
+        <span class="ai-avatar">👤</span>
+        <div class="ai-bubble">${escapeHTML(userText)}</div>
+    `;
+    chatMessagesEl.appendChild(userMsgDiv);
+    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+
+    // Append Typing Indicator System Message
+    isAiTyping = true;
+    const aiMsgDiv = document.createElement('div');
+    aiMsgDiv.className = 'ai-msg ai-msg-system';
+    aiMsgDiv.innerHTML = `
+        <span class="ai-avatar">🤖</span>
+        <div class="ai-bubble"><em>Bác Sĩ A.I Gemini 3.6 Flash đang phân tích câu hỏi của bạn...</em></div>
+    `;
+    chatMessagesEl.appendChild(aiMsgDiv);
+    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+
+    const bubbleEl = aiMsgDiv.querySelector('.ai-bubble');
+
+    try {
+        const apiKey = state.geminiApiKey;
+        const ageStr = state.birthYear ? `${new Date().getFullYear() - parseInt(state.birthYear)} tuổi` : "Chưa rõ";
+        const genderStr = state.gender === 'female' ? 'Nữ giới' : 'Nam giới';
+        const psiObj = calculatePSI();
+
+        const systemInstruction = `Bạn là Bác sĩ chuyên khoa Nam học / Phụ khoa và Phục hồi chức năng Sàn chậu hàng đầu thế giới (PC Flex AI Bio-Coach). 
+Thông tin bệnh nhân: Giới tính ${genderStr}, ${ageStr}, Chuỗi tập ${state.streakDays || 0} ngày, PSI Score ${psiObj.score}/100.
+Hãy giải đáp thắc mắc chuyên khoa của bệnh nhân bằng tiếng Việt chuẩn y khoa, ân cần, ngắn gọn, khoa học và thực tế.`;
+
+        if (!apiKey) {
+            setTimeout(() => {
+                bubbleEl.innerHTML = formatMarkdownToHTML(`**Nhận Định Y Khoa:**
+
+Cảm ơn bạn đã hỏi! 
+
+- **Về bài tập Kegel & Cơ sàn chậu:** Tập luyện co thắt cơ PC đúng kỹ thuật giúp gia tăng lưu lượng máu đến vùng đáy chậu, làm dầy tổ chức sợi cơ mu cụt và củng cố liên kết thần kinh - cơ.
+- **Để đạt hiệu quả tối ưu:** Hãy tập trung cô lập cơ PC (thả lỏng mông, đùi và bụng), kết hợp hít vào khi thả lỏng và thở ra khi siết chặt.
+- **Dinh dưỡng bổ sung:** Nên tăng cường các thực phẩm giàu **Kẽm (Hàu, thịt bò), L-Arginine (Hạt bí, đậu nành) và Omega-3** để thúc đẩy quá trình tổng hợp Testosterone và phục hồi mô cơ sàn chậu.
+
+*(Mẹo: Bạn có thể nhập Gemini API Key cá nhân tại mục Hồ Sơ Tập Luyện để kích hoạt mô hình **Gemini 3.6 Flash** trực tiếp không giới hạn!)*`);
+                chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+                isAiTyping = false;
+            }, 800);
+            return;
+        }
+
+        // Call Gemini 3.6 Flash REST API
+        const endpointUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
+        const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+        let resp = await fetch(endpointUrl, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: [
-                    {
-                        parts: [
-                            {
-                                text: systemPrompt
-                            }
-                        ]
-                    }
+                    { role: 'user', parts: [{ text: `${systemInstruction}\n\nCâu hỏi của bệnh nhân: ${userText}` }] }
                 ]
             })
         });
+
+        if (!resp.ok) {
+            resp = await fetch(fallbackUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [
+                        { role: 'user', parts: [{ text: `${systemInstruction}\n\nCâu hỏi của bệnh nhân: ${userText}` }] }
+                    ]
+                })
+            });
+        }
+
+        if (resp.ok) {
+            const data = await resp.json();
+            const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "Xin lỗi, tôi chưa thể xử lý phản hồi lúc này.";
+            bubbleEl.innerHTML = formatMarkdownToHTML(textResponse);
+        } else {
+            bubbleEl.innerHTML = "Lỗi kết nối API Key Gemini. Vui lòng kiểm tra lại API Key trong phần Hồ Sơ.";
+        }
+    } catch (err) {
+        bubbleEl.innerHTML = "Đã xảy ra lỗi khi kết nối với Bác Sĩ A.I Gemini 3.6 Flash. Vui lòng thử lại sau.";
+    } finally {
+        isAiTyping = false;
+        chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    }
+}
+
+// --- EXPORT MEDICAL PDF REPORT ---
+function exportMedicalPDFReport() {
+    const psi = calculatePSI();
+    const rank = calculateRank();
+
+    alert(`📄 Đang chuẩn bị tệp Báo Cáo Y Khoa PC Flex...
+- Cấp bậc: ${rank.title}
+- Chỉ số PSI: ${psi.score}/100
+- Chuỗi ngày tập: ${state.streakDays || 0} ngày
+- Tổng số hiệp: ${state.totalWorkoutSessions || 0} hiệp
+
+Bấm OK để mở cửa sổ in / xuất PDF!`);
+
+    window.print();
+}
         
         if (!response.ok) {
             throw new Error(`Gemini API returned status code: ${response.status}`);
