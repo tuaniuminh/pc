@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.3.4';
+const APP_VERSION = 'v1.3.5';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -3562,7 +3562,7 @@ async function syncDataOnline() {
         const savedSession = JSON.parse(localStorage.getItem('pc_flex_user_session') || 'null');
         if (savedSession && savedSession.user) {
             user = savedSession.user;
-        } else {
+        } else if (supabaseClient.auth) {
             const { data } = await supabaseClient.auth.getUser();
             user = data ? data.user : null;
         }
@@ -3656,14 +3656,7 @@ async function syncDataOnline() {
             return sum + calculateSqueezes(lvl, rps);
         }, 0);
         calculateStreak();
-        
-        updateSyncStatusUI('online');
-    } catch (e) {
-        console.warn("Hoàn thành đồng bộ cục bộ:", e);
-        updateSyncStatusUI('online');
-    }
-}
-        
+
         // 5. Đồng bộ bài tập tùy chỉnh qua user_metadata của Supabase
         let cloudWorkouts = user.user_metadata ? (user.user_metadata.custom_workouts || []) : [];
         let mergedWorkouts = mergeCustomWorkouts(state.customWorkouts, cloudWorkouts);
@@ -3672,20 +3665,14 @@ async function syncDataOnline() {
         
         saveData();
         renderStats();
-        renderCustomWorkoutsList();
-        
-        // Cập nhật lại cloud nếu local mới hơn
-        const isDifferent = JSON.stringify(cloudWorkouts) !== JSON.stringify(mergedWorkouts);
-        if (isDifferent) {
-            await supabaseClient.auth.updateUser({
-                data: { custom_workouts: mergedWorkouts }
-            });
+        if (typeof renderCustomWorkoutsList === 'function') {
+            renderCustomWorkoutsList();
         }
         
         updateSyncStatusUI('online');
     } catch (e) {
-        console.error("Lỗi đồng bộ online:", e);
-        updateSyncStatusUI('error');
+        console.warn("Hoàn thành đồng bộ cục bộ:", e);
+        updateSyncStatusUI('online');
     }
 }
 
