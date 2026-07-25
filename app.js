@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.3.10';
+const APP_VERSION = 'v1.3.11';
 
 // --- CRITICAL ERROR DIAGNOSTICS ---
 window.onerror = function (message, source, lineno, colno, error) {
