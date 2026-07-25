@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.3.1';
+const APP_VERSION = 'v1.3.2';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -3192,16 +3192,11 @@ function initSupabaseConnection() {
     const defaultUrl = 'https://rwmhivfwjusezxedjtgw.supabase.co';
     const defaultKey = 'sb_publishable_sOm6SWd3dIIerce97LHXNw_OVCroPTr';
     
-    let url = localStorage.getItem('supabase_url');
-    let key = localStorage.getItem('supabase_key');
+    let url = localStorage.getItem('supabase_url') || defaultUrl;
+    let key = localStorage.getItem('supabase_key') || defaultKey;
     
-    // Nếu chưa có cấu hình trong LocalStorage, tự động thiết lập cấu hình mặc định
-    if (!url || !key) {
-        url = defaultUrl;
-        key = defaultKey;
-        localStorage.setItem('supabase_url', url);
-        localStorage.setItem('supabase_key', key);
-    }
+    localStorage.setItem('supabase_url', url);
+    localStorage.setItem('supabase_key', key);
     
     const warningEl = document.getElementById('auth-connection-warning');
     const emailInput = document.getElementById('input-auth-email');
@@ -3234,22 +3229,28 @@ function initSupabaseConnection() {
                 
                 checkUserSession();
                 return true;
+            } else {
+                // Thử lại nếu script CDN Supabase đang tải chậm trên WKWebView di động
+                setTimeout(() => {
+                    if (window.supabase && !supabaseClient) {
+                        initSupabaseConnection();
+                    }
+                }, 1000);
             }
         } catch (e) {
             console.error("Lỗi khởi tạo Supabase:", e);
         }
     }
     
-    // Nếu chưa cấu hình, khóa form Auth
-    supabaseClient = null;
-    if (warningEl) warningEl.style.display = 'block';
-    if (emailInput) emailInput.disabled = true;
-    if (passwordInput) passwordInput.disabled = true;
-    if (submitBtn) submitBtn.disabled = true;
+    // Nếu chưa cấu hình, mở sẵn form Auth cho người dùng
+    if (emailInput) emailInput.disabled = false;
+    if (passwordInput) passwordInput.disabled = false;
+    if (submitBtn) submitBtn.disabled = false;
     if (toggleLink) {
-        toggleLink.style.cursor = 'not-allowed';
-        toggleLink.style.opacity = '0.5';
+        toggleLink.style.cursor = 'pointer';
+        toggleLink.style.opacity = '1';
     }
+    updateSyncStatusUI('offline');
     return false;
 }
 
@@ -3266,6 +3267,7 @@ async function checkUserSession() {
         }
     } catch (e) {
         console.error("Lỗi kiểm tra session:", e);
+        updateSyncStatusUI('offline');
     }
 }
 
@@ -3302,8 +3304,13 @@ function updateSyncStatusUI(status) {
         if (cloudBtn) {
             cloudBtn.classList.remove('online', 'syncing');
         }
-        if (homeSyncDot) homeSyncDot.style.backgroundColor = '#9ca3af';
-        if (homeSyncText) homeSyncText.textContent = 'Chưa kết nối Cloud';
+        if (supabaseClient) {
+            if (homeSyncDot) homeSyncDot.style.backgroundColor = '#60a5fa';
+            if (homeSyncText) homeSyncText.textContent = 'Sẵn sàng Cloud (Chưa đăng nhập)';
+        } else {
+            if (homeSyncDot) homeSyncDot.style.backgroundColor = '#9ca3af';
+            if (homeSyncText) homeSyncText.textContent = 'Lưu trữ nội bộ (Offline)';
+        }
         if (homeSyncStatus) {
             homeSyncStatus.style.borderColor = 'rgba(255, 255, 255, 0.08)';
             homeSyncStatus.style.background = 'rgba(255, 255, 255, 0.03)';
