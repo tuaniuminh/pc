@@ -2,7 +2,7 @@ import SwiftUI
 
 /**
  * PC Flex Native iOS App (Swift & SwiftUI)
- * Version 1.3.5 - TrollStore Compatible (Fix JS Syntax Error in syncDataOnline)
+ * Version 1.3.6 - TrollStore Compatible (Fix Export PDF & 21-Day Challenge Event Handlers)
  */
 @main
 struct PCFlexApp: App {

@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.3.5';
+const APP_VERSION = 'v1.3.6';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -1450,6 +1450,25 @@ function autoSelectLevelByTime() {
 
 // --- SETUP EVENT HANDLERS ---
 function setupEventHandlers() {
+    // Delegated click listeners for Challenge Modal and PDF Exporter
+    document.addEventListener('click', (e) => {
+        const btnChallenge = e.target.closest('#btn-open-challenge-modal');
+        if (btnChallenge) {
+            e.preventDefault();
+            const modal = document.getElementById('challenge-modal');
+            if (modal) {
+                renderChallengeModal();
+                modal.style.display = 'flex';
+            }
+        }
+
+        const btnPDF = e.target.closest('#btn-export-pdf-report');
+        if (btnPDF) {
+            e.preventDefault();
+            exportMedicalPDFReport();
+        }
+    });
+
     // 1. Sidebar tab switching
     elements.navItems.forEach(item => {
         item.addEventListener('click', () => {
@@ -4425,39 +4444,12 @@ function exportMedicalPDFReport() {
     alert(`📄 Đang chuẩn bị tệp Báo Cáo Y Khoa PC Flex...
 - Cấp bậc: ${rank.title}
 - Chỉ số PSI: ${psi.score}/100
-- Chuỗi ngày tập: ${state.streakDays || 0} ngày
-- Tổng số hiệp: ${state.totalWorkoutSessions || 0} hiệp
+- Chuỗi ngày tập: ${state.streak || 0} ngày
+- Tổng số hiệp: ${state.totalSessions || 0} hiệp
 
 Bấm OK để mở cửa sổ in / xuất PDF!`);
 
     window.print();
-}
-        
-        if (!response.ok) {
-            throw new Error(`Gemini API returned status code: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        const markdown = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không thể phản hồi từ Gemini 3.5 Flash. Vui lòng kiểm tra API Key.";
-        
-        // Render Markdown to HTML and inject
-        contentContainer.innerHTML = renderMarkdownToHTML(markdown);
-        
-    } catch(err) {
-        console.error('Error calling Gemini direct API:', err);
-        contentContainer.innerHTML = `
-            <div style="padding: 1.5rem; text-align: center; color: #ef4444;">
-                <div style="font-size: 2.5rem; margin-bottom: 1rem;">❌</div>
-                <h4 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; color: #f87171;">Lỗi Kết Nối Phân Tích</h4>
-                <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.55;">
-                    Có lỗi xảy ra khi truyền tải dữ liệu hoặc gọi Gemini 3.5 Flash: ${err.message}.<br>
-                    Vui lòng đảm bảo thiết bị đã kết nối Internet và API Key của bạn hợp lệ.
-                </p>
-            </div>
-        `;
-    } finally {
-        isQueryingAI = false;
-    }
 }
 
 function renderMarkdownToHTML(markdown) {
