@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.2.28';
+const APP_VERSION = 'v1.2.29';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -872,9 +872,18 @@ const elements = {
     btnBackupData: document.getElementById('btn-backup-data'),
     btnRestoreTrigger: document.getElementById('btn-restore-trigger'),
     restoreFileInput: document.getElementById('restore-file-input'),
-    statsPsiValue: document.getElementById('stats-psi-value'),
-    statsPsiDesc: document.getElementById('stats-psi-desc'),
-    btnExportPDFReport: document.getElementById('btn-export-pdf-report'),
+    sidebarRankValue: document.getElementById('sidebar-rank-value'),
+    btnOpenChallengeModal: document.getElementById('btn-open-challenge-modal'),
+    challengeModal: document.getElementById('challenge-modal'),
+    btnCloseChallengeModal: document.getElementById('btn-close-challenge-modal'),
+    btnCloseChallengeModalFooter: document.getElementById('btn-close-challenge-modal-footer'),
+    challengeDaysGrid: document.getElementById('challenge-days-grid'),
+    heatmapRingLA: document.getElementById('heatmap-ring-la'),
+    heatmapRingPC: document.getElementById('heatmap-ring-pc'),
+    heatmapPCStatus: document.getElementById('heatmap-pc-status'),
+    heatmapLAStatus: document.getElementById('heatmap-la-status'),
+    heatmapBarPC: document.getElementById('heatmap-bar-pc'),
+    heatmapBarLA: document.getElementById('heatmap-bar-la'),
     
     // Supabase DOM Elements
     btnCloudSync: document.getElementById('btn-cloud-sync'),
@@ -1582,10 +1591,22 @@ function setupEventHandlers() {
         });
     }
 
-    if (elements.btnExportPDFReport) {
-        elements.btnExportPDFReport.addEventListener('click', () => {
-            exportMedicalPDFReport();
+    if (elements.btnOpenChallengeModal) {
+        elements.btnOpenChallengeModal.addEventListener('click', () => {
+            renderChallengeRoadmap();
+            if (elements.challengeModal) elements.challengeModal.style.display = 'flex';
         });
+    }
+
+    const closeChallenge = () => {
+        if (elements.challengeModal) elements.challengeModal.style.display = 'none';
+    };
+
+    if (elements.btnCloseChallengeModal) {
+        elements.btnCloseChallengeModal.addEventListener('click', closeChallenge);
+    }
+    if (elements.btnCloseChallengeModalFooter) {
+        elements.btnCloseChallengeModalFooter.addEventListener('click', closeChallenge);
     }
 
     // 7. Điều khiển gập/mở Accordion cho Lộ trình dọc (Roadmap)
@@ -2736,6 +2757,22 @@ function finishWorkout() {
 
     // Save statistics & log
     saveWorkoutLog();
+
+    // Check and save challenge progress
+    const activeChallengeDay = parseInt(localStorage.getItem('pcflex_current_challenge_day'));
+    if (activeChallengeDay) {
+        let completedChallengeDays = parseInt(localStorage.getItem('pcflex_challenge_completed_days')) || 0;
+        if (activeChallengeDay === completedChallengeDays + 1) {
+            completedChallengeDays = activeChallengeDay;
+            localStorage.setItem('pcflex_challenge_completed_days', completedChallengeDays);
+            localStorage.removeItem('pcflex_current_challenge_day');
+            
+            // Show alert congratulations
+            setTimeout(() => {
+                alert(`🎉 Tuyệt vời! Bạn đã hoàn thành Thử thách Ngày ${activeChallengeDay} của Lộ trình 21 ngày!`);
+            }, 1000);
+        }
+    }
 }
 
 // --- DATA PERSISTENCE & STATISTICS ---
@@ -2974,12 +3011,6 @@ function renderStats() {
         elements.statsTotalReps.textContent = `${state.totalRepsCompleted} lượt`;
     }
 
-    if (elements.statsPsiValue && elements.statsPsiDesc) {
-        const psi = calculatePSI();
-        elements.statsPsiValue.textContent = psi.score;
-        elements.statsPsiDesc.textContent = psi.desc;
-    }
-
     // 3. Home Page Stats Badge
     const homeRepsCount = document.getElementById('home-total-reps-count');
     if (homeRepsCount) {
@@ -2989,6 +3020,8 @@ function renderStats() {
     // Cập nhật Lịch hoạt động và Huy hiệu
     renderWeeklyCalendar();
     updateBadges();
+    updateRank();
+    updatePelvicHeatmap();
 
     // 3. Render History Table Log
     if (elements.historyLogBody) {
@@ -4186,35 +4219,124 @@ function bindPWAUpdateChecker() {
         });
     });
 }
-// --- PELVIC STRENGTH INDEX (PSI SCORE) ---
-function calculatePSI() {
-    const streak = state.streak || 0;
+// --- GAMIFICATION & RANK SYSTEM ---
+function calculateRank() {
     const sessions = state.totalSessions || 0;
-    const reps = state.totalRepsCompleted || 0;
-    
-    let score = Math.min(100, Math.round(streak * 3 + sessions * 2 + Math.floor(reps / 25)));
-    if (score < 10) score = 10;
-
-    let desc = '';
-    if (score >= 80) desc = '🔥 Cực Kỳ Tối Ưu: Cơ sàn chậu dày dặn, bệ đỡ niệu đạo vững chắc và phản xạ sinh lý hoàn hảo.';
-    else if (score >= 50) desc = '💪 Trương Lực Cơ Khá: Độ dẻo dai cơ PC phát triển tốt, khả năng kiểm soát xuất tinh & độ cứng ổn định.';
-    else if (score >= 30) desc = '⚡ Tiến Bộ Rõ Rệt: Bạn đang xây dựng nền tảng sợi cơ chậu vững vàng. Tiếp tục giữ vững chuỗi tập!';
-    else desc = '🌱 Khởi Đầu Sinh Lý: Cơ sàn chậu mới bắt đầu làm quen nhịp siết/thả. Hãy kiên trì tập luyện để thăng cấp!';
-
-    return { score, desc };
+    if (sessions >= 30) return { title: '👑 Huyền Thoại Sinh Lý', color: '#f59e0b' };
+    if (sessions >= 15) return { title: '🥇 Cao Thủ PC Flex', color: '#10b981' };
+    if (sessions >= 5) return { title: '🥈 Chiến Binh Sàn Chậu', color: '#3b82f6' };
+    return { title: '🌱 Tân Binh PC', color: '#00f5d4' };
 }
 
-// --- MEDICAL PDF REPORT EXPORTER ---
-function exportMedicalPDFReport() {
-    const psi = calculatePSI();
+function updateRank() {
+    if (elements.sidebarRankValue) {
+        const rank = calculateRank();
+        elements.sidebarRankValue.textContent = rank.title;
+        elements.sidebarRankValue.style.color = rank.color;
+    }
+}
+
+// --- 21-DAY CHALLENGE ROADMAP ---
+function renderChallengeRoadmap() {
+    if (!elements.challengeDaysGrid) return;
     
-    alert(`📄 Đang chuẩn bị tệp Báo Cáo Y Khoa PC Flex...
-- Chỉ số PSI: ${psi.score}/100
-- Chuỗi ngày tập: ${state.streak} ngày
-- Tổng số hiệp: ${state.totalSessions} hiệp
-- Tổng số lượt co thắt: ${state.totalRepsCompleted} lượt
+    let completedChallengeDays = parseInt(localStorage.getItem('pcflex_challenge_completed_days')) || 0;
+    elements.challengeDaysGrid.innerHTML = '';
+    
+    for (let i = 1; i <= 21; i++) {
+        const dayItem = document.createElement('div');
+        dayItem.className = 'challenge-day-item';
+        
+        let statusText = 'Khóa';
+        if (i <= completedChallengeDays) {
+            dayItem.classList.add('completed');
+            statusText = '✓ Xong';
+        } else if (i === completedChallengeDays + 1) {
+            dayItem.classList.add('active');
+            statusText = '🔥 Tập';
+        } else {
+            dayItem.classList.add('locked');
+            statusText = '🔒';
+        }
+        
+        dayItem.innerHTML = `
+            <span class="challenge-day-num">D${i}</span>
+            <span class="challenge-day-status">${statusText}</span>
+        `;
+        
+        if (i <= completedChallengeDays + 1) {
+            dayItem.addEventListener('click', () => {
+                // Close the modal
+                if (elements.challengeModal) elements.challengeModal.style.display = 'none';
+                
+                // Switch to practice tab
+                switchTab('practice');
+                
+                // Select level based on day
+                let levelToSelect = 'goodMorning';
+                if (i > 14) levelToSelect = 'deepSqueeze';
+                else if (i > 7) levelToSelect = 'quickFlex';
+                
+                // Find the level element and select it
+                const levelEl = document.querySelector(`.level-item[data-level="${levelToSelect}"]`);
+                if (levelEl) {
+                    selectWorkoutLevel(levelEl);
+                    alert(`🎯 Thử thách Ngày ${i}: Hãy hoàn thành hiệp tập cấp độ [${levelEl.querySelector('h4').textContent}] để hoàn thành thử thách hôm nay!`);
+                }
+                
+                // Store that we are currently training for day X
+                localStorage.setItem('pcflex_current_challenge_day', i);
+            });
+        }
+        
+        elements.challengeDaysGrid.appendChild(dayItem);
+    }
+}
 
-Bấm OK để mở cửa sổ in / xuất PDF!`);
+// --- PELVIC FLOOR HEATMAP GENERATOR ---
+function updatePelvicHeatmap() {
+    const reps = state.totalRepsCompleted || 0;
+    const sessions = state.totalSessions || 0;
 
-    window.print();
+    const pcPercent = Math.min(100, Math.round(reps / 5)); // 500 reps = 100%
+    const laPercent = Math.min(100, Math.round(sessions * 4)); // 25 sessions = 100%
+
+    // Update PC Ring Dashoffset (157 is full stroke)
+    if (elements.heatmapRingPC) {
+        const pcOffset = 157 - (157 * pcPercent / 100);
+        elements.heatmapRingPC.style.strokeDashoffset = pcOffset;
+        
+        // Heatmap color glow based on percentage
+        if (pcPercent >= 80) elements.heatmapRingPC.style.stroke = '#22c55e'; // Green
+        else if (pcPercent >= 50) elements.heatmapRingPC.style.stroke = '#3b82f6'; // Blue
+        else if (pcPercent >= 20) elements.heatmapRingPC.style.stroke = '#eab308'; // Yellow
+        else elements.heatmapRingPC.style.stroke = '#ef4444'; // Red
+    }
+
+    // Update LA Ring Dashoffset (220 is full stroke)
+    if (elements.heatmapRingLA) {
+        const laOffset = 220 - (220 * laPercent / 100);
+        elements.heatmapRingLA.style.strokeDashoffset = laOffset;
+        
+        // Heatmap color glow based on percentage
+        if (laPercent >= 80) elements.heatmapRingLA.style.stroke = '#10b981'; // Emerald
+        else if (laPercent >= 50) elements.heatmapRingLA.style.stroke = '#6366f1'; // Indigo
+        else if (laPercent >= 20) elements.heatmapRingLA.style.stroke = '#f97316'; // Orange
+        else elements.heatmapRingLA.style.stroke = '#f43f5e'; // Rose
+    }
+
+    // Update bars
+    if (elements.heatmapBarPC) elements.heatmapBarPC.style.width = `${pcPercent}%`;
+    if (elements.heatmapBarLA) elements.heatmapBarLA.style.width = `${laPercent}%`;
+
+    // Update statuses
+    const getStatusText = (pct) => {
+        if (pct >= 80) return 'Tối ưu (Hoàn hảo)';
+        if (pct >= 50) return 'Khỏe mạnh (Tốt)';
+        if (pct >= 20) return 'Căn bản (Khá)';
+        return 'Mới kích hoạt (Yếu)';
+    };
+
+    if (elements.heatmapPCStatus) elements.heatmapPCStatus.textContent = getStatusText(pcPercent);
+    if (elements.heatmapLAStatus) elements.heatmapLAStatus.textContent = getStatusText(laPercent);
 }

@@ -2,7 +2,7 @@ import SwiftUI
 
 /**
  * PC Flex Native iOS App (Swift & SwiftUI)
- * Version 1.2.28 - Add PSI and PDF Exporter to Stable Branch
+ * Version 1.2.29 - Add Rank System, 21-Day Challenge & Pelvic Heatmap
  */
 @main
 struct PCFlexApp: App {

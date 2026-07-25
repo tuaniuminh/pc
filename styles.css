@@ -4045,83 +4045,80 @@ body.light-mode .badges-panel, body.light-mode .history-card {
     color: #475569 !important;
 }
 
-/* --- PELVIC STRENGTH INDEX (PSI) CARD & GAUGE --- */
-.card-psi {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8)) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-}
-
-.psi-gauge-container {
+/* --- GAMIFICATION & CHALLENGE STYLES --- */
+.challenge-day-item {
+    aspect-ratio: 1;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin: 1.5rem 0;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
+    user-select: none;
 }
 
-.psi-gauge-value {
-    font-size: 3.5rem;
-    font-weight: 800;
-    color: var(--color-primary);
-    text-shadow: 0 0 20px rgba(0, 245, 212, 0.4);
-    font-family: var(--font-secondary);
-    line-height: 1;
+.challenge-day-item:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-primary);
+    background: rgba(0, 245, 212, 0.05);
 }
 
-.psi-gauge-label {
-    font-size: 0.85rem;
-    color: var(--color-text-secondary);
+.challenge-day-item.completed {
+    background: rgba(16, 185, 129, 0.1) !important;
+    border-color: #10b981 !important;
+    color: #10b981 !important;
+}
+
+.challenge-day-item.active {
+    background: rgba(0, 245, 212, 0.15) !important;
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 12px rgba(0, 245, 212, 0.3);
+}
+
+.challenge-day-item.locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.challenge-day-item.locked:hover {
+    transform: none;
+    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.challenge-day-num {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.challenge-day-status {
+    font-size: 0.6rem;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-top: 0.5rem;
-    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
 }
 
-.psi-desc {
-    font-size: 0.85rem;
-    color: var(--color-text-secondary);
-    line-height: 1.5;
-    text-align: center;
-    margin: 0;
+/* Light mode overrides */
+[data-theme="light"] .challenge-day-item, body.light-mode .challenge-day-item {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
 }
-
-/* Light mode overrides for PSI */
-[data-theme="light"] .card-psi, body.light-mode .card-psi {
-    background: rgba(255, 255, 255, 0.88) !important;
-    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+[data-theme="light"] .challenge-day-item.completed, body.light-mode .challenge-day-item.completed {
+    background: rgba(16, 185, 129, 0.08) !important;
 }
-[data-theme="light"] .psi-gauge-value, body.light-mode .psi-gauge-value {
-    color: #0d9488 !important;
+[data-theme="light"] .challenge-day-item.active, body.light-mode .challenge-day-item.active {
+    background: rgba(13, 148, 136, 0.08) !important;
 }
-[data-theme="light"] .psi-desc, body.light-mode .psi-desc {
-    color: #475569 !important;
+[data-theme="light"] .sidebar-rank, body.light-mode .sidebar-rank {
+    background: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
 }
-
-/* @media print styles to export the page cleanly */
-@media print {
-    body * {
-        visibility: hidden;
-    }
-    #tab-stats, #tab-stats * {
-        visibility: visible;
-    }
-    #tab-stats {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        background: white !important;
-        color: black !important;
-    }
-    .stats-card, .stat-card, .badges-panel, .card-psi {
-        background: white !important;
-        color: black !important;
-        border: 1px solid #ccc !important;
-        box-shadow: none !important;
-    }
-    #btn-export-pdf-report {
-        display: none !important;
-    }
+[data-theme="light"] .heatmap-card, body.light-mode .heatmap-card {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
 }
 
