@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.3.6';
+const APP_VERSION = 'v1.3.7';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -4175,13 +4175,42 @@ ${historyText}
 Hãy viết một báo cáo nhận định chi tiết bằng tiếng Việt, định dạng Markdown chuẩn với các phần cụ thể sau:
 1. **📊 Phân tích Tiến Trình**: Nhận xét về tần suất, mức độ kiên trì và khối lượng bài tập tích lũy. Đánh giá xem cường độ tập đã hợp lý với nhóm tuổi và giới tính sinh học chưa.
 2. **🩺 Nhận Định Sinh Lý Lâm Sàng**: Giải thích cơ chế sinh học: Việc tập luyện như hiện tại mang lại lợi ích cụ thể gì cho nhóm cơ sàn chậu của họ (Nam: Kiểm soát phản xạ xuất tinh, tăng áp lực thể hang cải thiện độ cứng, ngừa phì đại tuyến tiền liệt; Nữ: Củng cố cơ chậu nâng đỡ bàng quang, tử cung ngăn sa tạng, tăng đàn hồi âm đạo, kiểm soát són tiểu stress).
-3. **💡 Khuyên Nghị Chuyên Khoa**: Đề xuất hướng đi tiếp theo (có nên nâng cấp cấp độ tập không, nên tăng thời gian siết hay tăng thời gian nghỉ chuyển, các lưu ý về tư thế và kết hợp nhịp thở cơ hoành khi luyện tập).
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: systemPrompt }] }]
+            })
+        });
 
-Hãy giữ giọng điệu bác sĩ ân cần, nghiêm túc, khoa học và giàu chuyên môn. Sử dụng các icon emoji thích hợp để văn bản trực quan.`;
+        if (!response.ok) {
+            throw new Error(`Gemini API HTTP Error status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const markdown = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không thể phản hồi từ Gemini 3.6 Flash.";
+        contentContainer.innerHTML = renderMarkdownToHTML(markdown);
+    } catch (err) {
+        console.error('Lỗi khi gọi Gemini API:', err);
+        contentContainer.innerHTML = `
+            <div style="padding: 1.5rem; text-align: center; color: #ef4444;">
+                <div style="font-size: 2.5rem; margin-bottom: 1rem;">❌</div>
+                <h4 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; color: #f87171;">Lỗi Kết Nối Phân Tích</h4>
+                <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.55;">
+                    Có lỗi xảy ra khi truyền tải dữ liệu hoặc gọi Gemini 3.6 Flash: ${err.message}.<br>
+                    Vui lòng đảm bảo thiết bị đã kết nối Internet và API Key của bạn hợp lệ.
+                </p>
+            </div>
+        `;
+    } finally {
+        isQueryingAI = false;
+    }
+}
 
 // --- GAMIFICATION & RANK SYSTEM ---
 function calculateRank() {
-    const total = state.totalWorkoutSessions || 0;
+    const total = state.totalSessions || 0;
     if (total >= 30) return { title: '👑 Huyền Thoại Sinh Lý', level: 4, desc: 'Cơ sàn chậu vững chắc hoàn mỹ' };
     if (total >= 15) return { title: '🥇 Cao Thủ PC Flex', level: 3, desc: 'Kiểm soát xuất tinh & độ cứng cực tốt' };
     if (total >= 5) return { title: '🥈 Chiến Binh Sàn Chậu', level: 2, desc: 'Trương lực cơ PC đang phát triển mạnh' };
@@ -4198,9 +4227,9 @@ function renderRankBadge() {
 
 // --- PELVIC STRENGTH INDEX (PSI SCORE) ---
 function calculatePSI() {
-    const streak = state.streakDays || 0;
-    const sessions = state.totalWorkoutSessions || 0;
-    const reps = state.totalWorkoutReps || 0;
+    const streak = state.streak || 0;
+    const sessions = state.totalSessions || 0;
+    const reps = state.totalRepsCompleted || 0;
     
     let score = Math.min(100, Math.round(streak * 3 + sessions * 2 + Math.floor(reps / 25)));
     if (score < 10) score = 10;
