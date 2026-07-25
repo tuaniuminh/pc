@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.2.30';
+const APP_VERSION = 'v1.2.31';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -880,6 +880,19 @@ const elements = {
     aiChip2: document.getElementById('ai-chip-2'),
     aiChip3: document.getElementById('ai-chip-3'),
     
+    // New Management & Bug Logger elements
+    btnTabManage: document.getElementById('btn-tab-manage'),
+    toggleBugLogger: document.getElementById('toggle-bug-logger'),
+    btnBugFloat: document.getElementById('btn-bug-float'),
+    bugCountBadge: document.getElementById('bug-count-badge'),
+    bugConsole: document.getElementById('bug-console'),
+    bugLogList: document.getElementById('bug-log-list'),
+    btnCloseBugConsole: document.getElementById('btn-close-bug-console'),
+    btnClearBugLogs: document.getElementById('btn-clear-bug-logs'),
+    btnCopyBugLogs: document.getElementById('btn-copy-bug-logs'),
+    btnManageToggleSFX: document.getElementById('btn-manage-toggle-sfx'),
+    btnManageToggleBGM: document.getElementById('btn-manage-toggle-bgm'),
+    
     // Supabase DOM Elements
     btnCloudSync: document.getElementById('btn-cloud-sync'),
     authModal: document.getElementById('auth-modal'),
@@ -1395,6 +1408,7 @@ function initApp() {
     updateUIConfigs();
     renderStats();
     initSupabaseConnection();
+    initBugLogger();
     
     // Đảm bảo tất cả các nút giới tính hiển thị đúng active state ban đầu
     const btnMales = document.querySelectorAll('.btn-gender-male, #btn-gender-male');
@@ -1706,6 +1720,38 @@ function setupEventHandlers() {
             return;
         }
     });
+
+    // 11. Manage Tab Sound & Interface Toggles
+    if (elements.btnManageToggleSFX) {
+        elements.btnManageToggleSFX.addEventListener('click', () => {
+            state.isMutedSFX = !state.isMutedSFX;
+            audioController.resumeContext();
+            updateSoundButtons();
+        });
+    }
+
+    if (elements.btnManageToggleBGM) {
+        elements.btnManageToggleBGM.addEventListener('click', () => {
+            state.isMutedBGM = !state.isMutedBGM;
+            audioController.resumeContext();
+            if (state.isMutedBGM) {
+                audioController.stopBGM();
+            } else {
+                audioController.startBGM();
+            }
+            updateSoundButtons();
+        });
+    }
+
+    if (elements.toggleBugLogger) {
+        elements.toggleBugLogger.addEventListener('change', (e) => {
+            const checked = e.target.checked;
+            if (elements.btnBugFloat) {
+                elements.btnBugFloat.style.display = checked ? 'flex' : 'none';
+            }
+            localStorage.setItem('pcflex_show_bug_logger', checked ? 'true' : 'false');
+        });
+    }
 }
 
 // --- TAB SWITCHING LOGIC ---
@@ -1843,41 +1889,65 @@ function updateUIConfigs() {
 
 function updateSoundButtons() {
     // SFX button
-    if (state.isMutedSFX) {
-        elements.btnToggleSFX.classList.add('muted');
-        elements.btnToggleSFX.querySelector('span').textContent = 'Tắt âm';
-        elements.iconSFX.innerHTML = `
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-            <line x1="23" y1="9" x2="17" y2="15"/>
-            <line x1="17" y1="9" x2="23" y2="15"/>
-        `;
-    } else {
-        elements.btnToggleSFX.classList.remove('muted');
-        elements.btnToggleSFX.querySelector('span').textContent = 'Âm báo';
-        elements.iconSFX.innerHTML = `
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
-        `;
+    if (elements.btnToggleSFX) {
+        if (state.isMutedSFX) {
+            elements.btnToggleSFX.classList.add('muted');
+            elements.btnToggleSFX.querySelector('span').textContent = 'Tắt âm';
+            elements.iconSFX.innerHTML = `
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <line x1="23" y1="9" x2="17" y2="15"/>
+                <line x1="17" y1="9" x2="23" y2="15"/>
+            `;
+        } else {
+            elements.btnToggleSFX.classList.remove('muted');
+            elements.btnToggleSFX.querySelector('span').textContent = 'Âm báo';
+            elements.iconSFX.innerHTML = `
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            `;
+        }
+    }
+
+    if (elements.btnManageToggleSFX) {
+        if (state.isMutedSFX) {
+            elements.btnManageToggleSFX.textContent = 'Tắt';
+            elements.btnManageToggleSFX.className = 'btn btn-secondary btn-sm';
+        } else {
+            elements.btnManageToggleSFX.textContent = 'Bật';
+            elements.btnManageToggleSFX.className = 'btn btn-primary btn-sm';
+        }
     }
 
     // BGM button
-    if (state.isMutedBGM) {
-        elements.btnToggleBGM.classList.add('muted');
-        elements.btnToggleBGM.querySelector('span').textContent = 'Tắt nhạc';
-        elements.iconBGM.innerHTML = `
-            <path d="M9 18V5l12-2v13"/>
-            <circle cx="6" cy="18" r="3"/>
-            <circle cx="18" cy="16" r="3"/>
-            <line x1="3" y1="3" x2="21" y2="21"/>
-        `;
-    } else {
-        elements.btnToggleBGM.classList.remove('muted');
-        elements.btnToggleBGM.querySelector('span').textContent = 'Nhạc nền';
-        elements.iconBGM.innerHTML = `
-            <path d="M9 18V5l12-2v13"/>
-            <circle cx="6" cy="18" r="3"/>
-            <circle cx="18" cy="16" r="3"/>
-        `;
+    if (elements.btnToggleBGM) {
+        if (state.isMutedBGM) {
+            elements.btnToggleBGM.classList.add('muted');
+            elements.btnToggleBGM.querySelector('span').textContent = 'Tắt nhạc';
+            elements.iconBGM.innerHTML = `
+                <path d="M9 18V5l12-2v13"/>
+                <circle cx="6" cy="18" r="3"/>
+                <circle cx="18" cy="16" r="3"/>
+                <line x1="3" y1="3" x2="21" y2="21"/>
+            `;
+        } else {
+            elements.btnToggleBGM.classList.remove('muted');
+            elements.btnToggleBGM.querySelector('span').textContent = 'Nhạc nền';
+            elements.iconBGM.innerHTML = `
+                <path d="M9 18V5l12-2v13"/>
+                <circle cx="6" cy="18" r="3"/>
+                <circle cx="18" cy="16" r="3"/>
+            `;
+        }
+    }
+
+    if (elements.btnManageToggleBGM) {
+        if (state.isMutedBGM) {
+            elements.btnManageToggleBGM.textContent = 'Tắt';
+            elements.btnManageToggleBGM.className = 'btn btn-secondary btn-sm';
+        } else {
+            elements.btnManageToggleBGM.textContent = 'Bật';
+            elements.btnManageToggleBGM.className = 'btn btn-primary btn-sm';
+        }
     }
 }
 
@@ -4221,6 +4291,117 @@ function bindPWAUpdateChecker() {
             }
         });
     });
+}
+
+// --- DIAGNOSTIC BUG LOGGER LOGIC ---
+let bugLogs = [];
+
+function addBugLog(message, source, lineno, colno) {
+    // Format error log text
+    const timeStr = new Date().toLocaleTimeString();
+    const sourceFile = source ? source.split('/').pop() : 'inline';
+    const logText = `[${timeStr}] Lỗi: ${message} tại ${sourceFile}:${lineno || 0}:${colno || 0}`;
+    
+    bugLogs.push(logText);
+    
+    // Update DOM
+    if (elements.bugLogList) {
+        // Remove empty state message if present
+        const emptyMsg = elements.bugLogList.querySelector('.bug-log-empty');
+        if (emptyMsg) {
+            elements.bugLogList.innerHTML = '';
+        }
+        
+        const logDiv = document.createElement('div');
+        logDiv.className = 'bug-log-item';
+        logDiv.textContent = logText;
+        elements.bugLogList.appendChild(logDiv);
+        elements.bugLogList.scrollTop = elements.bugLogList.scrollHeight;
+    }
+    
+    // Update badge count
+    if (elements.bugCountBadge) {
+        elements.bugCountBadge.textContent = bugLogs.length;
+        elements.bugCountBadge.style.display = 'block';
+    }
+    
+    // Animate float button with warning color
+    if (elements.btnBugFloat) {
+        elements.btnBugFloat.classList.add('has-errors');
+    }
+}
+
+// Intercept window errors and unhandled promise rejections
+window.addEventListener('error', function(event) {
+    addBugLog(event.message, event.filename, event.lineno, event.colno);
+});
+
+window.addEventListener('unhandledrejection', function(event) {
+    const reason = event.reason ? (event.reason.message || event.reason) : 'Unknown Promise Rejection';
+    addBugLog('Promise Rejection: ' + reason, '', 0, 0);
+});
+
+function initBugLogger() {
+    // 1. Load Preference from localStorage
+    const showBug = localStorage.getItem('pcflex_show_bug_logger');
+    const isChecked = showBug !== 'false'; // Default to true
+    
+    if (elements.toggleBugLogger) {
+        elements.toggleBugLogger.checked = isChecked;
+    }
+    if (elements.btnBugFloat) {
+        elements.btnBugFloat.style.display = isChecked ? 'flex' : 'none';
+    }
+    
+    // 2. Bind click handlers
+    if (elements.btnBugFloat) {
+        elements.btnBugFloat.addEventListener('click', () => {
+            if (elements.bugConsole) {
+                elements.bugConsole.style.display = 'flex';
+            }
+        });
+    }
+    
+    if (elements.btnCloseBugConsole) {
+        elements.btnCloseBugConsole.addEventListener('click', () => {
+            if (elements.bugConsole) {
+                elements.bugConsole.style.display = 'none';
+            }
+        });
+    }
+    
+    if (elements.btnClearBugLogs) {
+        elements.btnClearBugLogs.addEventListener('click', () => {
+            bugLogs = [];
+            if (elements.bugLogList) {
+                elements.bugLogList.innerHTML = '<div class="bug-log-empty">Chưa ghi nhận lỗi nào. Ứng dụng hoạt động bình thường!</div>';
+            }
+            if (elements.bugCountBadge) {
+                elements.bugCountBadge.textContent = '0';
+                elements.bugCountBadge.style.display = 'none';
+            }
+            if (elements.btnBugFloat) {
+                elements.btnBugFloat.classList.remove('has-errors');
+            }
+            alert('Đã xóa sạch nhật ký lỗi!');
+        });
+    }
+    
+    if (elements.btnCopyBugLogs) {
+        elements.btnCopyBugLogs.addEventListener('click', () => {
+            if (bugLogs.length === 0) {
+                alert('Chưa có log lỗi nào để sao chép.');
+                return;
+            }
+            const fullLogText = bugLogs.join('\n');
+            navigator.clipboard.writeText(fullLogText).then(() => {
+                alert('Đã sao chép toàn bộ log lỗi vào clipboard!');
+            }).catch(err => {
+                console.error('Không thể sao chép:', err);
+                alert('Lỗi sao chép, vui lòng sao chép thủ công.');
+            });
+        });
+    }
 }
 
 

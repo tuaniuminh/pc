@@ -7,70 +7,52 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.2.30">
+    <link rel="stylesheet" href="styles.css?v=1.2.31">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <div class="brand">
-                <div class="logo-container">
-                    <img src="./logo.png" alt="PC Flex Logo" class="brand-logo">
-                </div>
-                <div class="version-update-container" id="btn-check-update" title="Kiểm tra bản cập nhật">
-                    VER v1.2.30 PRO
-                </div>
+        <!-- Top Navbar Navigation -->
+        <header class="top-navbar">
+            <div class="navbar-brand">
+                <span class="brand-title">PC Flex</span>
             </div>
             
             <nav class="nav-menu">
                 <button class="nav-item active" data-tab="practice" id="btn-tab-practice">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="5 3 19 12 5 21 5 3"/>
                     </svg>
                     <span>Luyện Tập</span>
                 </button>
-                <button class="nav-item" data-tab="library" id="btn-tab-library">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                    </svg>
-                    <span>Giáo Trình Y Khoa</span>
-                </button>
                 <button class="nav-item" data-tab="stats" id="btn-tab-stats">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="20" x2="18" y2="10"/>
                         <line x1="12" y1="20" x2="12" y2="4"/>
                         <line x1="6" y1="20" x2="6" y2="14"/>
                     </svg>
                     <span>Tiến Độ</span>
                 </button>
+                <button class="nav-item" data-tab="library" id="btn-tab-library">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    </svg>
+                    <span>Giáo Trình</span>
+                </button>
+                <button class="nav-item" data-tab="manage" id="btn-tab-manage">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                    <span>Quản Lý</span>
+                </button>
             </nav>
-
-            <div class="user-quick-stats">
-                <div class="quick-stat-item">
-                    <span class="label">Chuỗi ngày tập (Streak)</span>
-                    <span class="value" id="sidebar-streak"><span class="emoji">🔥</span> 0 ngày</span>
-                </div>
-                <div class="quick-stat-item">
-                    <span class="label">Tổng hiệp đã tập</span>
-                    <span class="value" id="sidebar-total-sessions">0 hiệp</span>
-                </div>
-            </div>
-        </aside>
+        </header>
 
         <!-- Main Content Area -->
         <main class="main-content">
-            <!-- Mobile Header Top Bar -->
-            <header class="mobile-top-bar">
-                <div class="logo-container">
-                    <img src="./logo.png" alt="PC Flex Logo" class="brand-logo">
-                </div>
-                <div class="version-update-container" title="Kiểm tra bản cập nhật">
-                    VER v1.2.26 PRO
-                </div>
-            </header>
             
             <!-- SECTION: PRACTICE -->
             <section id="tab-practice" class="content-section active">
@@ -551,6 +533,12 @@
 
             <!-- SECTION: PROGRESS / STATS -->
             <section id="tab-stats" class="content-section">
+                <!-- Hidden elements for sidebar state bindings -->
+                <div style="display: none;">
+                    <span id="sidebar-streak">0 ngày</span>
+                    <span id="sidebar-total-sessions">0 hiệp</span>
+                </div>
+                
                 <div class="header-section">
                     <h1>Tiến Độ Tập Luyện</h1>
                     <p class="subtitle">Theo dõi hành trình kiên trì rèn luyện sức mạnh nam giới của bạn.</p>
@@ -684,92 +672,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- User Profile Card (Nam/Nữ & Năm sinh) -->
-                <div class="profile-card">
-                    <h3 class="profile-title">👤 Hồ Sơ Tập Luyện</h3>
-                    <p class="profile-desc">Cung cấp giới tính sinh học và năm sinh chính xác để Trợ lý A.I nhận xét sinh lý học lâm sàng sát thực tế nhất.</p>
-                    
-                    <div class="profile-form-grid">
-                        <!-- Gender Selection -->
-                        <div class="profile-form-group">
-                            <label class="profile-form-label">Giới tính sinh học:</label>
-                            <div class="gender-selector" style="margin: 0;">
-                                <button class="gender-btn active btn-gender-male" id="btn-profile-gender-male" data-gender="male">Nam giới</button>
-                                <button class="gender-btn btn-gender-female" id="btn-profile-gender-female" data-gender="female">Nữ giới</button>
-                            </div>
-                        </div>
-                        
-                        <!-- Birth Year Input -->
-                        <div class="profile-form-group">
-                            <label for="profile-birth-year" class="profile-form-label">Năm sinh:</label>
-                            <input type="number" id="profile-birth-year" class="profile-input" placeholder="Ví dụ: 1995" min="1930" max="2020">
-                        </div>
-                        
-                        <!-- Gemini API Key Input -->
-                        <div class="profile-form-group" style="flex: 1; min-width: 260px;">
-                            <label for="profile-gemini-key" class="profile-form-label" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                Gemini API Key:
-                                <a href="https://aistudio.google.com/" target="_blank" style="color: var(--color-primary); font-size: 0.725rem; font-weight: 500; text-decoration: underline; text-transform: none; letter-spacing: 0;">Lấy key tại đây</a>
-                            </label>
-                            <input type="password" id="profile-gemini-key" class="profile-input" style="width: 100%; box-sizing: border-box;" placeholder="Nhập khóa API (AIzaSy...)">
-                        </div>
-                        
-                        <!-- Save Button -->
-                        <div class="profile-form-group profile-submit-group">
-                            <button class="btn btn-profile-save" id="btn-save-profile">Lưu hồ sơ</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Data Management Card -->
-                <div class="profile-card" id="data-management-card">
-                    <h3 class="profile-title">💾 Quản Lý Dữ Liệu</h3>
-                    <p class="profile-desc">Sao lưu dữ liệu luyện tập và hồ sơ cá nhân của bạn thành tệp tin JSON hoặc khôi phục dữ liệu từ tệp tin đã sao lưu.</p>
-                    
-                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem;">
-                        <button class="btn btn-secondary" id="btn-backup-data" style="padding: 0.5rem 1rem !important; border-radius: 10px !important; font-size: 0.85rem !important; font-weight: 500 !important; display: flex; align-items: center; gap: 0.4rem; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); color: #93c5fd; cursor: pointer; transition: all 0.2s ease;">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="17 8 12 3 7 8"></polyline>
-                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                            </svg>
-                            <span>Sao lưu dữ liệu (Xuất JSON)</span>
-                        </button>
-                        
-                        <button class="btn btn-secondary" id="btn-restore-trigger" style="padding: 0.5rem 1rem !important; border-radius: 10px !important; font-size: 0.85rem !important; font-weight: 500 !important; display: flex; align-items: center; gap: 0.4rem; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); color: #6ee7b7; cursor: pointer; transition: all 0.2s ease;">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="7 10 12 15 17 10"></polyline>
-                                <line x1="12" y1="15" x2="12" y2="3"></line>
-                            </svg>
-                            <span>Khôi phục dữ liệu (Nhập JSON)</span>
-                        </button>
-                        <input type="file" id="restore-file-input" accept=".json" style="display: none;">
-                    </div>
-                </div>
-
-                <!-- Sound Studio Settings Panel inside Tiến Độ tab -->
-                <div class="sound-studio-card">
-                    <div class="sound-studio-header">
-                        <div class="sound-studio-title-group">
-                            <span class="sound-studio-icon">🎙️</span>
-                            <div>
-                                <h3>Studio Thiết Lập Âm Thanh Bài Tập</h3>
-                                <p class="sound-studio-desc">Tự do gán 50 âm thanh thư thái & y khoa cho từng nhịp tập (Siết, Thả lỏng, Kegel ngược, Nghỉ chuyển, Hoàn thành)</p>
-                            </div>
-                        </div>
-                        <button class="btn btn-primary" id="btn-open-sound-studio-modal" style="padding: 0.65rem 1.25rem; font-size: 0.875rem;">
-                            🎧 Mở Studio 50 Âm Thanh
-                        </button>
-                    </div>
-
-                    <!-- Summary Grid of Current Sound Assignments -->
-                    <div class="sound-assignments-grid" id="sound-assignments-summary">
-                        <!-- 5 action assignment cards inserted dynamically -->
-                    </div>
-                </div>
-
                 <!-- History Log Table Card -->
                 <div class="history-card">
                     <div class="history-header">
@@ -800,9 +702,155 @@
                 </div>
             </section>
 
+            <!-- SECTION: MANAGE -->
+            <section id="tab-manage" class="content-section">
+                <div class="header-section">
+                    <h1>Hệ Thống Quản Lý</h1>
+                    <p class="subtitle">Thiết lập cấu hình AI, hồ sơ cá nhân, tùy chỉnh âm thanh và quản lý dữ liệu.</p>
+                </div>
 
+                <div class="manage-content-grid" style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+                    <!-- User Profile & Gemini API Key -->
+                    <div class="profile-card">
+                        <h3 class="profile-title">👤 Hồ Sơ & Trí Tuệ Nhân Tạo</h3>
+                        <p class="profile-desc">Cung cấp giới tính sinh học, năm sinh và Gemini API Key để Trợ lý Bác sĩ AI chẩn đoán sinh lý lâm sàng chính xác nhất.</p>
+                        
+                        <div class="profile-form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-top: 1.25rem;">
+                            <!-- Gender Selection -->
+                            <div class="profile-form-group">
+                                <label class="profile-form-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--color-text-secondary);">Giới tính sinh học:</label>
+                                <div class="gender-selector" style="margin: 0; display: flex; gap: 8px;">
+                                    <button class="gender-btn active btn-gender-male" id="btn-profile-gender-male" data-gender="male" style="flex: 1; padding: 0.6rem; font-size: 0.85rem; border-radius: 10px;">Nam giới</button>
+                                    <button class="gender-btn btn-gender-female" id="btn-profile-gender-female" data-gender="female" style="flex: 1; padding: 0.6rem; font-size: 0.85rem; border-radius: 10px;">Nữ giới</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Birth Year Input -->
+                            <div class="profile-form-group">
+                                <label for="profile-birth-year" class="profile-form-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--color-text-secondary);">Năm sinh:</label>
+                                <input type="number" id="profile-birth-year" class="profile-input" placeholder="Ví dụ: 1995" min="1930" max="2020" style="width: 100%; box-sizing: border-box; padding: 0.6rem; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: white;">
+                            </div>
+                            
+                            <!-- Gemini API Key Input -->
+                            <div class="profile-form-group" style="grid-column: span 2;">
+                                <label for="profile-gemini-key" class="profile-form-label" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--color-text-secondary);">
+                                    Gemini API Key:
+                                    <a href="https://aistudio.google.com/" target="_blank" style="color: var(--color-primary); font-size: 0.725rem; font-weight: 500; text-decoration: underline; text-transform: none; letter-spacing: 0;">Lấy key tại đây</a>
+                                </label>
+                                <input type="password" id="profile-gemini-key" class="profile-input" style="width: 100%; box-sizing: border-box; padding: 0.6rem; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: white;" placeholder="Nhập khóa API (AIzaSy...)">
+                            </div>
+                        </div>
+                        <div style="margin-top: 1.25rem; text-align: right;">
+                            <button class="btn btn-primary" id="btn-save-profile" style="padding: 0.65rem 1.5rem; font-size: 0.85rem; border-radius: 10px;">Lưu Cấu Hình Hồ Sơ</button>
+                        </div>
+                    </div>
 
+                    <!-- Interface & Sound Toggles -->
+                    <div class="profile-card">
+                        <h3 class="profile-title">⚙️ Thiết Lập Âm Thanh & Giao Diện</h3>
+                        <p class="profile-desc">Bật tắt âm báo, nhạc nền thiền định và tùy chọn hiển thị công cụ chẩn đoán.</p>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.25rem;">
+                            <!-- SFX Toggle -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px;">
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: white;">Âm báo bài tập</span>
+                                    <span style="font-size: 0.75rem; color: var(--color-text-secondary);">Nhịp siết/thả cơ chậu</span>
+                                </div>
+                                <button class="btn btn-secondary btn-sm" id="btn-manage-toggle-sfx" style="min-width: 80px;">Bật</button>
+                            </div>
+                            
+                            <!-- BGM Toggle -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px;">
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: white;">Nhạc nền thiền</span>
+                                    <span style="font-size: 0.75rem; color: var(--color-text-secondary);">Nhạc không lời thư thái</span>
+                                </div>
+                                <button class="btn btn-secondary btn-sm" id="btn-manage-toggle-bgm" style="min-width: 80px;">Bật</button>
+                            </div>
+                            
+                            <!-- Bug Logger Toggle -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; grid-column: span 1;">
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: white;">Con bọ chẩn đoán</span>
+                                    <span style="font-size: 0.75rem; color: var(--color-text-secondary);">Hiện nút 🐞 báo lỗi trên màn hình</span>
+                                </div>
+                                <div style="display: flex; align-items: center; height: 100%;">
+                                    <input type="checkbox" id="toggle-bug-logger" checked style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--color-primary);">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sound Studio Settings Panel -->
+                    <div class="sound-studio-card" style="margin: 0;">
+                        <div class="sound-studio-header">
+                            <div class="sound-studio-title-group">
+                                <span class="sound-studio-icon">🎙️</span>
+                                <div>
+                                    <h3>Studio Thiết Lập Âm Thanh Bài Tập</h3>
+                                    <p class="sound-studio-desc">Tự do gán 50 âm thanh thư thái & y khoa cho từng nhịp tập (Siết, Thả lỏng, Kegel ngược, Nghỉ chuyển, Hoàn thành)</p>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" id="btn-open-sound-studio-modal" style="padding: 0.65rem 1.25rem; font-size: 0.875rem;">
+                                🎧 Mở Studio 50 Âm Thanh
+                            </button>
+                        </div>
+                        <!-- Summary Grid of Current Sound Assignments -->
+                        <div class="sound-assignments-grid" id="sound-assignments-summary">
+                            <!-- 5 action assignment cards inserted dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Data Management -->
+                    <div class="profile-card" id="data-management-card">
+                        <h3 class="profile-title">💾 Quản Lý Dữ Liệu</h3>
+                        <p class="profile-desc">Sao lưu dữ liệu luyện tập và hồ sơ cá nhân của bạn thành tệp tin JSON hoặc khôi phục dữ liệu từ tệp tin đã sao lưu.</p>
+                        
+                        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem;">
+                            <button class="btn btn-secondary" id="btn-backup-data" style="padding: 0.5rem 1rem !important; border-radius: 10px !important; font-size: 0.85rem !important; font-weight: 500 !important; display: flex; align-items: center; gap: 0.4rem; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); color: #93c5fd; cursor: pointer; transition: all 0.2s ease;">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                <span>Sao lưu dữ liệu (Xuất JSON)</span>
+                            </button>
+                            
+                            <button class="btn btn-secondary" id="btn-restore-trigger" style="padding: 0.5rem 1rem !important; border-radius: 10px !important; font-size: 0.85rem !important; font-weight: 500 !important; display: flex; align-items: center; gap: 0.4rem; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); color: #6ee7b7; cursor: pointer; transition: all 0.2s ease;">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                <span>Khôi phục dữ liệu (Nhập JSON)</span>
+                            </button>
+                            
+                            <button class="btn btn-secondary" id="btn-clear-data" style="padding: 0.5rem 1rem !important; border-radius: 10px !important; font-size: 0.85rem !important; font-weight: 500 !important; display: flex; align-items: center; gap: 0.4rem; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); color: #f87171; cursor: pointer; transition: all 0.2s ease;">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                                </svg>
+                                <span>Xóa toàn bộ dữ liệu</span>
+                            </button>
+                            <input type="file" id="restore-file-input" accept=".json" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
+        
+        <footer class="app-footer">
+            <div class="footer-content">
+                <span class="footer-version" id="footer-version-label">VER v1.2.31 PRO</span>
+                <span class="footer-dot">•</span>
+                <div class="version-update-container" id="btn-check-update" title="Kiểm tra bản cập nhật">
+                    Kiểm tra cập nhật
+                </div>
+            </div>
+        </footer>
     </div>
 
     <!-- Script connection -->
@@ -959,6 +1007,29 @@
         <button id="btn-pwa-update">Cập nhật ngay</button>
     </div>
 
-    <script src="app.js?v=1.2.30"></script>
+    <!-- Diagnostic Bug Logger Panel -->
+    <div class="bug-console-overlay" id="bug-console" style="display: none;">
+        <div class="bug-console-card">
+            <div class="bug-console-header">
+                <h4>🐞 Nhật Ký Chẩn Đoán Lỗi</h4>
+                <button id="btn-close-bug-console">&times;</button>
+            </div>
+            <div class="bug-console-body" id="bug-log-list">
+                <div class="bug-log-empty">Chưa ghi nhận lỗi nào. Ứng dụng hoạt động bình thường!</div>
+            </div>
+            <div class="bug-console-footer">
+                <button class="btn btn-secondary btn-sm" id="btn-clear-bug-logs">Xóa log</button>
+                <button class="btn btn-primary btn-sm" id="btn-copy-bug-logs">Sao chép log</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Floating Bug Button -->
+    <button class="bug-floating-btn" id="btn-bug-float" title="Nhật ký chẩn đoán lỗi">
+        <span class="bug-badge" id="bug-count-badge" style="display: none;">0</span>
+        🐞
+    </button>
+
+    <script src="app.js?v=1.2.31"></script>
 </body>
 </html>
