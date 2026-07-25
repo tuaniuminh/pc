@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.2.27';
+const APP_VERSION = 'v1.2.28';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -872,6 +872,9 @@ const elements = {
     btnBackupData: document.getElementById('btn-backup-data'),
     btnRestoreTrigger: document.getElementById('btn-restore-trigger'),
     restoreFileInput: document.getElementById('restore-file-input'),
+    statsPsiValue: document.getElementById('stats-psi-value'),
+    statsPsiDesc: document.getElementById('stats-psi-desc'),
+    btnExportPDFReport: document.getElementById('btn-export-pdf-report'),
     
     // Supabase DOM Elements
     btnCloudSync: document.getElementById('btn-cloud-sync'),
@@ -1576,6 +1579,12 @@ function setupEventHandlers() {
                 restoreData(e.target.files[0]);
                 e.target.value = ''; // Reset to allow selecting the same file
             }
+        });
+    }
+
+    if (elements.btnExportPDFReport) {
+        elements.btnExportPDFReport.addEventListener('click', () => {
+            exportMedicalPDFReport();
         });
     }
 
@@ -2965,6 +2974,12 @@ function renderStats() {
         elements.statsTotalReps.textContent = `${state.totalRepsCompleted} lượt`;
     }
 
+    if (elements.statsPsiValue && elements.statsPsiDesc) {
+        const psi = calculatePSI();
+        elements.statsPsiValue.textContent = psi.score;
+        elements.statsPsiDesc.textContent = psi.desc;
+    }
+
     // 3. Home Page Stats Badge
     const homeRepsCount = document.getElementById('home-total-reps-count');
     if (homeRepsCount) {
@@ -4171,5 +4186,35 @@ function bindPWAUpdateChecker() {
         });
     });
 }
+// --- PELVIC STRENGTH INDEX (PSI SCORE) ---
+function calculatePSI() {
+    const streak = state.streak || 0;
+    const sessions = state.totalSessions || 0;
+    const reps = state.totalRepsCompleted || 0;
+    
+    let score = Math.min(100, Math.round(streak * 3 + sessions * 2 + Math.floor(reps / 25)));
+    if (score < 10) score = 10;
 
+    let desc = '';
+    if (score >= 80) desc = '🔥 Cực Kỳ Tối Ưu: Cơ sàn chậu dày dặn, bệ đỡ niệu đạo vững chắc và phản xạ sinh lý hoàn hảo.';
+    else if (score >= 50) desc = '💪 Trương Lực Cơ Khá: Độ dẻo dai cơ PC phát triển tốt, khả năng kiểm soát xuất tinh & độ cứng ổn định.';
+    else if (score >= 30) desc = '⚡ Tiến Bộ Rõ Rệt: Bạn đang xây dựng nền tảng sợi cơ chậu vững vàng. Tiếp tục giữ vững chuỗi tập!';
+    else desc = '🌱 Khởi Đầu Sinh Lý: Cơ sàn chậu mới bắt đầu làm quen nhịp siết/thả. Hãy kiên trì tập luyện để thăng cấp!';
 
+    return { score, desc };
+}
+
+// --- MEDICAL PDF REPORT EXPORTER ---
+function exportMedicalPDFReport() {
+    const psi = calculatePSI();
+    
+    alert(`📄 Đang chuẩn bị tệp Báo Cáo Y Khoa PC Flex...
+- Chỉ số PSI: ${psi.score}/100
+- Chuỗi ngày tập: ${state.streak} ngày
+- Tổng số hiệp: ${state.totalSessions} hiệp
+- Tổng số lượt co thắt: ${state.totalRepsCompleted} lượt
+
+Bấm OK để mở cửa sổ in / xuất PDF!`);
+
+    window.print();
+}

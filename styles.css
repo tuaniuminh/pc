@@ -4044,3 +4044,84 @@ body.light-mode .badges-panel, body.light-mode .history-card {
 [data-theme="light"] .sound-preset-desc, body.light-mode .sound-preset-desc {
     color: #475569 !important;
 }
+
+/* --- PELVIC STRENGTH INDEX (PSI) CARD & GAUGE --- */
+.card-psi {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.psi-gauge-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 1.5rem 0;
+    position: relative;
+}
+
+.psi-gauge-value {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    text-shadow: 0 0 20px rgba(0, 245, 212, 0.4);
+    font-family: var(--font-secondary);
+    line-height: 1;
+}
+
+.psi-gauge-label {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 0.5rem;
+    font-weight: 600;
+}
+
+.psi-desc {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    text-align: center;
+    margin: 0;
+}
+
+/* Light mode overrides for PSI */
+[data-theme="light"] .card-psi, body.light-mode .card-psi {
+    background: rgba(255, 255, 255, 0.88) !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+}
+[data-theme="light"] .psi-gauge-value, body.light-mode .psi-gauge-value {
+    color: #0d9488 !important;
+}
+[data-theme="light"] .psi-desc, body.light-mode .psi-desc {
+    color: #475569 !important;
+}
+
+/* @media print styles to export the page cleanly */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #tab-stats, #tab-stats * {
+        visibility: visible;
+    }
+    #tab-stats {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white !important;
+        color: black !important;
+    }
+    .stats-card, .stat-card, .badges-panel, .card-psi {
+        background: white !important;
+        color: black !important;
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+    }
+    #btn-export-pdf-report {
+        display: none !important;
+    }
+}
+

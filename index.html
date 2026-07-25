@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1.2.27">
+    <link rel="stylesheet" href="styles.css?v=1.2.28">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -20,7 +20,7 @@
                     <img src="./logo.png" alt="PC Flex Logo" class="brand-logo">
                 </div>
                 <div class="version-update-container" id="btn-check-update" title="Kiểm tra bản cập nhật">
-                    VER v1.2.27 PRO
+                    VER v1.2.28 PRO
                 </div>
             </div>
             
@@ -640,6 +640,20 @@
                         <div class="stat-label">Tổng số lượt siết/thả</div>
                         <p class="stat-desc">Số lần cơ PC của bạn được vận động co thắt cơ sàn chậu.</p>
                     </div>
+
+                    <!-- Stat Card: PSI Strength Index -->
+                    <div class="stat-card card-psi" id="stats-psi-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-value id-stats-psi-val" id="stats-psi-value">10</div>
+                        <div class="stat-label">Chỉ Số Sức Mạnh Sàn Chậu (PSI)</div>
+                        <p class="stat-desc psi-desc" id="stats-psi-desc">🌱 Khởi Đầu Sinh Lý: Cơ sàn chậu mới bắt đầu làm quen nhịp siết/thả. Hãy kiên trì tập luyện để thăng cấp!</p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; text-align: center;">
+                    <button class="btn btn-primary" id="btn-export-pdf-report" style="width: 100%; max-width: 400px; padding: 0.8rem 2rem; font-size: 1rem; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 15px rgba(0, 245, 212, 0.25);">
+                        <span>📄 Xuất Báo Cáo PDF Y Khoa</span>
+                    </button>
                 </div>
 
                 <!-- Achievement Badges Panel -->
@@ -950,6 +964,6 @@
         <button id="btn-pwa-update">Cập nhật ngay</button>
     </div>
 
-    <script src="app.js?v=1.2.27"></script>
+    <script src="app.js?v=1.2.28"></script>
 </body>
 </html>
