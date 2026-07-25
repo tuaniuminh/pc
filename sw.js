@@ -1,9 +1,9 @@
-const CACHE_NAME = 'pc-flex-cache-v1.3.7';
+const CACHE_NAME = 'pc-flex-cache-v1.3.8';
 const ASSETS = [
     './',
     './index.html',
-    './app.js?v=1.3.7',
-    './styles.css?v=1.3.7',
+    './app.js?v=1.3.8',
+    './styles.css?v=1.3.8',
     './logo.png',
     './manifest.json',
     './icon-192.png',
@@ -61,6 +61,22 @@ self.addEventListener('fetch', event => {
         return;
     }
     
+    // Network First for HTML navigation and JS scripts to guarantee fresh bug fixes
+    if (event.request.mode === 'navigate' || url.pathname.endsWith('.js') || url.pathname.endsWith('.html')) {
+        event.respondWith(
+            fetch(event.request).then(networkResponse => {
+                if (networkResponse.status === 200) {
+                    const responseClone = networkResponse.clone();
+                    caches.open(CACHE_NAME).then(cache => {
+                        cache.put(event.request, responseClone);
+                    });
+                }
+                return networkResponse;
+            }).catch(() => caches.match(event.request))
+        );
+        return;
+    }
+
     // Internal assets - Stale While Revalidate
     event.respondWith(
         caches.match(event.request).then(cachedResponse => {

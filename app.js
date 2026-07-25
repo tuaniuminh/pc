@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.3.7';
+const APP_VERSION = 'v1.3.8';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -1371,53 +1371,49 @@ function syncVersionBadges() {
 }
 
 function initApp() {
-    loadData();
-    initTheme();
-    syncVersionBadges();
-    
-    // Khởi tạo class giới tính cho body
-    document.body.classList.add('gender-' + state.gender);
-    renderLevelsList();
-    
-    renderCustomWorkoutsList();
-    autoSelectLevelByTime();
     setupEventHandlers();
     setupGlobalButtonHaptics();
-    setupSoundModalHandlers();
-    setupSoundStudioHandlers();
-    setupAIChatHandlers();
-    setupChallengeHandlers();
-    renderRankBadge();
-    updatePelvicHeatmap();
 
-    const btnPDF = document.getElementById('btn-export-pdf-report');
-    if (btnPDF) btnPDF.addEventListener('click', exportMedicalPDFReport);
+    try { loadData(); } catch(e) { console.warn("Lỗi loadData:", e); }
+    try { initTheme(); } catch(e) { console.warn("Lỗi initTheme:", e); }
+    try { syncVersionBadges(); } catch(e) { console.warn("Lỗi syncVersionBadges:", e); }
+    
+    try {
+        document.body.classList.add('gender-' + (state.gender || 'male'));
+    } catch(e) {}
 
-    updateUIConfigs();
-    renderStats();
-    initSupabaseConnection();
+    try { renderLevelsList(); } catch(e) { console.warn("Lỗi renderLevelsList:", e); }
+    try { renderCustomWorkoutsList(); } catch(e) { console.warn("Lỗi renderCustomWorkoutsList:", e); }
+    try { autoSelectLevelByTime(); } catch(e) { console.warn("Lỗi autoSelectLevelByTime:", e); }
     
-    // Đảm bảo tất cả các nút giới tính hiển thị đúng active state ban đầu
-    const btnMales = document.querySelectorAll('.btn-gender-male, #btn-gender-male');
-    const btnFemales = document.querySelectorAll('.btn-gender-female, #btn-gender-female');
+    try { setupSoundModalHandlers(); } catch(e) { console.warn("Lỗi setupSoundModalHandlers:", e); }
+    try { setupSoundStudioHandlers(); } catch(e) { console.warn("Lỗi setupSoundStudioHandlers:", e); }
+    try { setupAIChatHandlers(); } catch(e) { console.warn("Lỗi setupAIChatHandlers:", e); }
+    try { setupChallengeHandlers(); } catch(e) { console.warn("Lỗi setupChallengeHandlers:", e); }
+    try { renderRankBadge(); } catch(e) { console.warn("Lỗi renderRankBadge:", e); }
+    try { updatePelvicHeatmap(); } catch(e) { console.warn("Lỗi updatePelvicHeatmap:", e); }
+
+    try {
+        const btnPDF = document.getElementById('btn-export-pdf-report');
+        if (btnPDF) btnPDF.addEventListener('click', exportMedicalPDFReport);
+    } catch(e) {}
+
+    try { updateUIConfigs(); } catch(e) { console.warn("Lỗi updateUIConfigs:", e); }
+    try { renderStats(); } catch(e) { console.warn("Lỗi renderStats:", e); }
+    try { initSupabaseConnection(); } catch(e) { console.warn("Lỗi initSupabaseConnection:", e); }
     
-    btnMales.forEach(btn => {
-        if (state.gender === 'male') {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
-    });
+    try {
+        const btnMales = document.querySelectorAll('.btn-gender-male, #btn-gender-male');
+        const btnFemales = document.querySelectorAll('.btn-gender-female, #btn-gender-female');
+        btnMales.forEach(btn => {
+            if (btn) btn.classList.toggle('active', state.gender === 'male');
+        });
+        btnFemales.forEach(btn => {
+            if (btn) btn.classList.toggle('active', state.gender === 'female');
+        });
+    } catch(e) {}
     
-    btnFemales.forEach(btn => {
-        if (state.gender === 'female') {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
-    });
-    
-    initProfileAndAI();
+    try { initProfileAndAI(); } catch(e) { console.warn("Lỗi initProfileAndAI:", e); }
 }
 
 // Automatically select default workout level based on the time of day
@@ -3841,12 +3837,30 @@ document.addEventListener('gesturestart', function (event) {
     event.preventDefault();
 });
 
-// --- START APP ON DOCUMENT LOAD ---
-document.addEventListener('DOMContentLoaded', () => {
-    initApp();
-    registerServiceWorker();
-    bindPWAUpdateChecker();
-});
+// --- START APP ON DOCUMENT LOAD (RACE CONDITION PROOF) ---
+function startApp() {
+    try {
+        initApp();
+    } catch (err) {
+        console.error("Lỗi khi khởi chạy initApp:", err);
+    }
+    try {
+        registerServiceWorker();
+    } catch (err) {
+        console.warn("Lỗi ServiceWorker:", err);
+    }
+    try {
+        bindPWAUpdateChecker();
+    } catch (err) {
+        console.warn("Lỗi PWA Update Checker:", err);
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startApp);
+} else {
+    startApp();
+}
 
 // --- PWA SERVICE WORKER REGISTRATION & UPDATE HANDLER ---
 function registerServiceWorker() {
