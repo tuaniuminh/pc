@@ -2332,7 +2332,7 @@ body {
     background: rgba(4, 6, 12, 0.88);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     z-index: 2000;

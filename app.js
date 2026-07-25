@@ -3,7 +3,14 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.3.9';
+const APP_VERSION = 'v1.3.10';
+
+// --- CRITICAL ERROR DIAGNOSTICS ---
+window.onerror = function (message, source, lineno, colno, error) {
+    console.error("Critical error detected:", message, "at", source, ":", lineno);
+    // Silent in production, but logs error details to console
+    return false;
+};
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -3228,69 +3235,70 @@ class SupabaseRestWrapper {
         this.key = key;
         this.token = localStorage.getItem('supabase_access_token') || null;
         this.user = JSON.parse(localStorage.getItem('supabase_user_data') || 'null');
+        
+        const self = this;
+        this.auth = {
+            getSession: async () => {
+                if (!self.token || !self.user) return { data: { session: null }, error: null };
+                return { data: { session: { user: self.user, access_token: self.token } }, error: null };
+            },
+
+            getUser: async () => {
+                if (!self.user) return { data: { user: null }, error: null };
+                return { data: { user: self.user }, error: null };
+            },
+
+            signInWithPassword: async ({ email, password }) => {
+                const resp = await fetch(`${self.url}/auth/v1/token?grant_type=password`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': self.key,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await resp.json();
+                if (!resp.ok) {
+                    return { data: null, error: { message: data.error_description || data.msg || data.message || 'Đăng nhập không thành công' } };
+                }
+                self.token = data.access_token;
+                self.user = data.user;
+                localStorage.setItem('supabase_access_token', self.token);
+                localStorage.setItem('supabase_user_data', JSON.stringify(self.user));
+                return { data: { user: data.user, session: data }, error: null };
+            },
+
+            signUp: async ({ email, password }) => {
+                const resp = await fetch(`${self.url}/auth/v1/signup`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': self.key,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await resp.json();
+                if (!resp.ok) {
+                    return { data: null, error: { message: data.msg || data.message || 'Đăng ký không thành công' } };
+                }
+                if (data.access_token && data.user) {
+                    self.token = data.access_token;
+                    self.user = data.user;
+                    localStorage.setItem('supabase_access_token', self.token);
+                    localStorage.setItem('supabase_user_data', JSON.stringify(self.user));
+                }
+                return { data: { user: data.user, session: data.access_token ? data : null }, error: null };
+            },
+
+            signOut: async () => {
+                self.token = null;
+                self.user = null;
+                localStorage.removeItem('supabase_access_token');
+                localStorage.removeItem('supabase_user_data');
+                return { error: null };
+            }
+        };
     }
-
-    auth = {
-        getSession: async () => {
-            if (!this.token || !this.user) return { data: { session: null }, error: null };
-            return { data: { session: { user: this.user, access_token: this.token } }, error: null };
-        },
-
-        getUser: async () => {
-            if (!this.user) return { data: { user: null }, error: null };
-            return { data: { user: this.user }, error: null };
-        },
-
-        signInWithPassword: async ({ email, password }) => {
-            const resp = await fetch(`${this.url}/auth/v1/token?grant_type=password`, {
-                method: 'POST',
-                headers: {
-                    'apikey': this.key,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
-            });
-            const data = await resp.json();
-            if (!resp.ok) {
-                return { data: null, error: { message: data.error_description || data.msg || data.message || 'Đăng nhập không thành công' } };
-            }
-            this.token = data.access_token;
-            this.user = data.user;
-            localStorage.setItem('supabase_access_token', this.token);
-            localStorage.setItem('supabase_user_data', JSON.stringify(this.user));
-            return { data: { user: data.user, session: data }, error: null };
-        },
-
-        signUp: async ({ email, password }) => {
-            const resp = await fetch(`${this.url}/auth/v1/signup`, {
-                method: 'POST',
-                headers: {
-                    'apikey': this.key,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
-            });
-            const data = await resp.json();
-            if (!resp.ok) {
-                return { data: null, error: { message: data.msg || data.message || 'Đăng ký không thành công' } };
-            }
-            if (data.access_token && data.user) {
-                this.token = data.access_token;
-                this.user = data.user;
-                localStorage.setItem('supabase_access_token', this.token);
-                localStorage.setItem('supabase_user_data', JSON.stringify(this.user));
-            }
-            return { data: { user: data.user, session: data.access_token ? data : null }, error: null };
-        },
-
-        signOut: async () => {
-            this.token = null;
-            this.user = null;
-            localStorage.removeItem('supabase_access_token');
-            localStorage.removeItem('supabase_user_data');
-            return { error: null };
-        }
-    };
 
     from(tableName) {
         const self = this;
