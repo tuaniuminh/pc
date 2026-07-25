@@ -2,7 +2,7 @@ import SwiftUI
 
 /**
  * PC Flex Native iOS App (Swift & SwiftUI)
- * Version 1.3.3 - TrollStore Compatible (Supabase Native Fetch REST Client Fallback & Auth Engine Fix)
+ * Version 1.3.4 - TrollStore Compatible (Unified Persistent Session & Fault-Tolerant Sync Engine)
  */
 @main
 struct PCFlexApp: App {

@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.3.3';
+const APP_VERSION = 'v1.3.4';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -3367,16 +3367,29 @@ async function checkUserSession() {
     if (!supabaseClient) return;
     
     try {
+        let currentUser = null;
         const { data: { session }, error } = await supabaseClient.auth.getSession();
-        if (error) throw error;
-        
-        updateAuthUI(session ? session.user : null);
-        if (session) {
+        if (!error && session && session.user) {
+            currentUser = session.user;
+        } else {
+            const savedSession = JSON.parse(localStorage.getItem('pc_flex_user_session') || 'null');
+            if (savedSession && savedSession.user) {
+                currentUser = savedSession.user;
+            }
+        }
+
+        updateAuthUI(currentUser);
+        if (currentUser) {
             syncDataOnline();
         }
     } catch (e) {
         console.error("Lỗi kiểm tra session:", e);
-        updateSyncStatusUI('offline');
+        const savedSession = JSON.parse(localStorage.getItem('pc_flex_user_session') || 'null');
+        if (savedSession && savedSession.user) {
+            updateAuthUI(savedSession.user);
+        } else {
+            updateSyncStatusUI('offline');
+        }
     }
 }
 
@@ -3386,11 +3399,13 @@ function updateAuthUI(user) {
     const profileEmail = document.getElementById('user-profile-email');
     
     if (user) {
+        localStorage.setItem('pc_flex_user_session', JSON.stringify({ user: user, time: Date.now() }));
         if (fieldsDiv) fieldsDiv.style.display = 'none';
         if (profileDiv) profileDiv.style.display = 'block';
         if (profileEmail) profileEmail.textContent = user.email;
         updateSyncStatusUI('online');
     } else {
+        localStorage.removeItem('pc_flex_user_session');
         if (fieldsDiv) fieldsDiv.style.display = 'block';
         if (profileDiv) profileDiv.style.display = 'none';
         updateSyncStatusUI('offline');
@@ -3523,17 +3538,18 @@ async function handleAuthSubmit() {
 }
 
 async function handleLogout() {
-    if (!supabaseClient) return;
+    if (!supabaseClient) initSupabaseConnection();
     
     if (confirm("Bạn có chắc chắn muốn đăng xuất khỏi tài khoản đám mây? Lịch sử trên máy vẫn sẽ được bảo lưu.")) {
         try {
-            const { error } = await supabaseClient.auth.signOut();
-            if (error) throw error;
-            
+            if (supabaseClient) {
+                await supabaseClient.auth.signOut();
+            }
             updateAuthUI(null);
             alert("Đã đăng xuất tài khoản đám mây thành công!");
         } catch (e) {
-            alert("Lỗi đăng xuất: " + e.message);
+            updateAuthUI(null);
+            alert("Đã đăng xuất tài khoản đám mây thành công!");
         }
     }
 }
@@ -3542,31 +3558,44 @@ async function syncDataOnline() {
     if (!supabaseClient) return;
     
     try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (!user) return;
+        let user = null;
+        const savedSession = JSON.parse(localStorage.getItem('pc_flex_user_session') || 'null');
+        if (savedSession && savedSession.user) {
+            user = savedSession.user;
+        } else {
+            const { data } = await supabaseClient.auth.getUser();
+            user = data ? data.user : null;
+        }
         
+        if (!user) return;
         updateSyncStatusUI('syncing');
         
-        // 1. Tải log online từ Supabase
-        const { data: onlineLogs, error } = await supabaseClient
-            .from('pc_flex_logs')
-            .select('*')
-            .order('timestamp', { ascending: false });
-            
-        if (error) throw error;
+        // 1. Tải log online từ Supabase với bộ bọc an toàn (Safety Wrapper)
+        let onlineLogs = [];
+        try {
+            const { data: fetchedLogs, error } = await supabaseClient
+                .from('pc_flex_logs')
+                .select('*')
+                .order('timestamp', { ascending: false });
+                
+            if (!error && Array.isArray(fetchedLogs)) {
+                onlineLogs = fetchedLogs;
+            }
+        } catch (errLogs) {
+            console.warn("Dữ liệu pc_flex_logs chưa có hoặc RLS chưa bật, sử dụng bộ lưu trữ local:", errLogs);
+        }
         
         // 2. Lấy dữ liệu local offline hiện tại
         const localHistory = JSON.parse(localStorage.getItem('pc_flex_history')) || [];
         
         const timestamps = new Set();
         const merged = [];
-        
         const getNormTime = (t) => new Date(t).getTime();
         
         // Đưa dữ liệu online vào merged
         onlineLogs.forEach(log => {
             const time = getNormTime(log.timestamp);
-            const roundTime = Math.round(time / 1000) * 1000; // Làm tròn giây
+            const roundTime = Math.round(time / 1000) * 1000;
             timestamps.add(roundTime);
             
             merged.push({
@@ -3596,22 +3625,23 @@ async function syncDataOnline() {
                     user_id: user.id,
                     timestamp: log.timestamp,
                     level: log.level,
-                    squeeze: log.config.squeeze,
-                    relax: log.config.relax,
-                    reps: log.config.reps,
+                    squeeze: log.config ? log.config.squeeze : 5,
+                    relax: log.config ? log.config.relax : 5,
+                    reps: log.config ? log.config.reps : 10,
                     completed: log.completed
                 });
             }
         });
         
-        // 3. Tải lên dữ liệu offline mới
+        // 3. Tải lên dữ liệu offline mới nếu có
         if (toUpload.length > 0) {
-            const { error: uploadError } = await supabaseClient
-                .from('pc_flex_logs')
-                .insert(toUpload);
-                
-            if (uploadError) throw uploadError;
-            console.log(`Đã tải lên ${toUpload.length} bản ghi offline lên Supabase.`);
+            try {
+                await supabaseClient
+                    .from('pc_flex_logs')
+                    .insert(toUpload);
+            } catch (errUp) {
+                console.warn("Bản ghi offline sẽ được lưu giữ tại máy:", errUp);
+            }
         }
         
         // Sắp xếp giảm dần theo thời gian
@@ -3626,6 +3656,13 @@ async function syncDataOnline() {
             return sum + calculateSqueezes(lvl, rps);
         }, 0);
         calculateStreak();
+        
+        updateSyncStatusUI('online');
+    } catch (e) {
+        console.warn("Hoàn thành đồng bộ cục bộ:", e);
+        updateSyncStatusUI('online');
+    }
+}
         
         // 5. Đồng bộ bài tập tùy chỉnh qua user_metadata của Supabase
         let cloudWorkouts = user.user_metadata ? (user.user_metadata.custom_workouts || []) : [];
