@@ -3,14 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.3.12';
-
-// --- CRITICAL ERROR DIAGNOSTICS ---
-window.onerror = function (message, source, lineno, colno, error) {
-    console.error("Critical error detected:", message, "at", source, ":", lineno);
-    // Silent in production, but logs error details to console
-    return false;
-};
+const APP_VERSION = 'v1.2.27';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -1378,50 +1371,45 @@ function syncVersionBadges() {
 }
 
 function initApp() {
-    initElements();
+    loadData();
+    initTheme();
+    syncVersionBadges();
+    
+    // Khởi tạo class giới tính cho body
+    document.body.classList.add('gender-' + state.gender);
+    renderLevelsList();
+    
+    renderCustomWorkoutsList();
+    autoSelectLevelByTime();
     setupEventHandlers();
     setupGlobalButtonHaptics();
-
-    try { loadData(); } catch(e) { console.warn("Lỗi loadData:", e); }
-    try { initTheme(); } catch(e) { console.warn("Lỗi initTheme:", e); }
-    try { syncVersionBadges(); } catch(e) { console.warn("Lỗi syncVersionBadges:", e); }
+    setupSoundModalHandlers();
+    setupSoundStudioHandlers();
+    updateUIConfigs();
+    renderStats();
+    initSupabaseConnection();
     
-    try {
-        document.body.classList.add('gender-' + (state.gender || 'male'));
-    } catch(e) {}
-
-    try { renderLevelsList(); } catch(e) { console.warn("Lỗi renderLevelsList:", e); }
-    try { renderCustomWorkoutsList(); } catch(e) { console.warn("Lỗi renderCustomWorkoutsList:", e); }
-    try { autoSelectLevelByTime(); } catch(e) { console.warn("Lỗi autoSelectLevelByTime:", e); }
+    // Đảm bảo tất cả các nút giới tính hiển thị đúng active state ban đầu
+    const btnMales = document.querySelectorAll('.btn-gender-male, #btn-gender-male');
+    const btnFemales = document.querySelectorAll('.btn-gender-female, #btn-gender-female');
     
-    try { setupSoundModalHandlers(); } catch(e) { console.warn("Lỗi setupSoundModalHandlers:", e); }
-    try { setupSoundStudioHandlers(); } catch(e) { console.warn("Lỗi setupSoundStudioHandlers:", e); }
-    try { setupAIChatHandlers(); } catch(e) { console.warn("Lỗi setupAIChatHandlers:", e); }
-    try { setupChallengeHandlers(); } catch(e) { console.warn("Lỗi setupChallengeHandlers:", e); }
-    try { renderRankBadge(); } catch(e) { console.warn("Lỗi renderRankBadge:", e); }
-    try { updatePelvicHeatmap(); } catch(e) { console.warn("Lỗi updatePelvicHeatmap:", e); }
-
-    try {
-        const btnPDF = document.getElementById('btn-export-pdf-report');
-        if (btnPDF) btnPDF.addEventListener('click', exportMedicalPDFReport);
-    } catch(e) {}
-
-    try { updateUIConfigs(); } catch(e) { console.warn("Lỗi updateUIConfigs:", e); }
-    try { renderStats(); } catch(e) { console.warn("Lỗi renderStats:", e); }
-    try { initSupabaseConnection(); } catch(e) { console.warn("Lỗi initSupabaseConnection:", e); }
+    btnMales.forEach(btn => {
+        if (state.gender === 'male') {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
     
-    try {
-        const btnMales = document.querySelectorAll('.btn-gender-male, #btn-gender-male');
-        const btnFemales = document.querySelectorAll('.btn-gender-female, #btn-gender-female');
-        btnMales.forEach(btn => {
-            if (btn) btn.classList.toggle('active', state.gender === 'male');
-        });
-        btnFemales.forEach(btn => {
-            if (btn) btn.classList.toggle('active', state.gender === 'female');
-        });
-    } catch(e) {}
+    btnFemales.forEach(btn => {
+        if (state.gender === 'female') {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
     
-    try { initProfileAndAI(); } catch(e) { console.warn("Lỗi initProfileAndAI:", e); }
+    initProfileAndAI();
 }
 
 // Automatically select default workout level based on the time of day
@@ -1454,48 +1442,21 @@ function autoSelectLevelByTime() {
 
 // --- SETUP EVENT HANDLERS ---
 function setupEventHandlers() {
-    // Delegated click listeners for Challenge Modal and PDF Exporter
-    document.addEventListener('click', (e) => {
-        const btnChallenge = e.target.closest('#btn-open-challenge-modal');
-        if (btnChallenge) {
-            e.preventDefault();
-            const modal = document.getElementById('challenge-modal');
-            if (modal) {
-                renderChallengeModal();
-                modal.style.display = 'flex';
-            }
-        }
-
-        const btnPDF = e.target.closest('#btn-export-pdf-report');
-        if (btnPDF) {
-            e.preventDefault();
-            exportMedicalPDFReport();
-        }
+    // 1. Sidebar tab switching
+    elements.navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const targetTab = item.getAttribute('data-tab');
+            switchTab(targetTab);
+        });
     });
 
-    // 1. Sidebar tab switching
-    if (elements.navItems) {
-        elements.navItems.forEach(item => {
-            if (item) {
-                item.addEventListener('click', () => {
-                    const targetTab = item.getAttribute('data-tab');
-                    switchTab(targetTab);
-                });
-            }
-        });
-    }
-
     // 2. Library subtab switching
-    if (elements.libTabBtns) {
-        elements.libTabBtns.forEach(btn => {
-            if (btn) {
-                btn.addEventListener('click', () => {
-                    const targetSubtab = btn.getAttribute('data-subtab');
-                    switchLibrarySubtab(targetSubtab);
-                });
-            }
+    elements.libTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetSubtab = btn.getAttribute('data-subtab');
+            switchLibrarySubtab(targetSubtab);
         });
-    }
+    });
 
     // 3. Level Selector Tabs (1-5)
     const levelTabBtns = document.querySelectorAll('.level-tab-btn');
@@ -1555,58 +1516,48 @@ function setupEventHandlers() {
     }
 
     // 4. Sound toggles
-    if (elements.btnToggleSFX) {
-        elements.btnToggleSFX.addEventListener('click', () => {
-            state.isMutedSFX = !state.isMutedSFX;
-            audioController.resumeContext();
-            updateSoundButtons();
-        });
-    }
+    elements.btnToggleSFX.addEventListener('click', () => {
+        state.isMutedSFX = !state.isMutedSFX;
+        audioController.resumeContext();
+        updateSoundButtons();
+    });
 
-    if (elements.btnToggleBGM) {
-        elements.btnToggleBGM.addEventListener('click', () => {
-            state.isMutedBGM = !state.isMutedBGM;
-            audioController.resumeContext();
-            
-            if (state.isMutedBGM) {
-                audioController.stopBGM();
-            } else {
-                audioController.startBGM();
-            }
-            updateSoundButtons();
-        });
-    }
+    elements.btnToggleBGM.addEventListener('click', () => {
+        state.isMutedBGM = !state.isMutedBGM;
+        audioController.resumeContext();
+        
+        if (state.isMutedBGM) {
+            audioController.stopBGM();
+        } else {
+            audioController.startBGM();
+        }
+        updateSoundButtons();
+    });
 
     // 5. Workout controls
-    if (elements.btnStart) {
-        elements.btnStart.addEventListener('click', () => {
-            // Resume Audio context on first click interaction
-            audioController.resumeContext();
-            
-            if (state.workoutState === 'idle') {
-                startWorkout();
-            } else if (state.workoutState === 'squeezing' || state.workoutState === 'relaxing') {
-                pauseWorkout();
-            } else if (state.workoutState.startsWith('paused_')) {
-                resumeWorkout();
-            }
-        });
-    }
+    elements.btnStart.addEventListener('click', () => {
+        // Resume Audio context on first click interaction
+        audioController.resumeContext();
+        
+        if (state.workoutState === 'idle') {
+            startWorkout();
+        } else if (state.workoutState === 'squeezing' || state.workoutState === 'relaxing') {
+            pauseWorkout();
+        } else if (state.workoutState.startsWith('paused_')) {
+            resumeWorkout();
+        }
+    });
 
-    if (elements.btnReset) {
-        elements.btnReset.addEventListener('click', () => {
-            resetWorkout();
-        });
-    }
+    elements.btnReset.addEventListener('click', () => {
+        resetWorkout();
+    });
 
     // 6. Stats clearing
-    if (elements.btnClearData) {
-        elements.btnClearData.addEventListener('click', () => {
-            if (confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử luyện tập và chuỗi ngày tập?')) {
-                clearAllData();
-            }
-        });
-    }
+    elements.btnClearData.addEventListener('click', () => {
+        if (confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử luyện tập và chuỗi ngày tập?')) {
+            clearAllData();
+        }
+    });
 
     // Backup & Restore handlers
     if (elements.btnBackupData) {
@@ -3024,16 +2975,6 @@ function renderStats() {
     renderWeeklyCalendar();
     updateBadges();
 
-    // Cập nhật PSI Score, Rank và Heatmap
-    const psiObj = calculatePSI();
-    const psiValEl = document.getElementById('stats-psi-value');
-    const psiDescEl = document.getElementById('stats-psi-desc');
-    if (psiValEl) psiValEl.textContent = `PSI ${psiObj.score} / 100`;
-    if (psiDescEl) psiDescEl.textContent = psiObj.desc;
-
-    renderRankBadge();
-    updatePelvicHeatmap();
-
     // 3. Render History Table Log
     if (elements.historyLogBody) {
         if (state.history.length === 0) {
@@ -3228,134 +3169,21 @@ function restoreData(file) {
 let supabaseClient = null;
 let currentAuthMode = 'login';
 
-// --- PURE REST API FALLBACK FOR SUPABASE ---
-class SupabaseRestWrapper {
-    constructor(url, key) {
-        this.url = url.replace(/\/rest\/v1\/?$/, '');
-        this.key = key;
-        this.token = localStorage.getItem('supabase_access_token') || null;
-        this.user = JSON.parse(localStorage.getItem('supabase_user_data') || 'null');
-        
-        const self = this;
-        this.auth = {
-            getSession: async () => {
-                if (!self.token || !self.user) return { data: { session: null }, error: null };
-                return { data: { session: { user: self.user, access_token: self.token } }, error: null };
-            },
-
-            getUser: async () => {
-                if (!self.user) return { data: { user: null }, error: null };
-                return { data: { user: self.user }, error: null };
-            },
-
-            signInWithPassword: async ({ email, password }) => {
-                const resp = await fetch(`${self.url}/auth/v1/token?grant_type=password`, {
-                    method: 'POST',
-                    headers: {
-                        'apikey': self.key,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await resp.json();
-                if (!resp.ok) {
-                    return { data: null, error: { message: data.error_description || data.msg || data.message || 'Đăng nhập không thành công' } };
-                }
-                self.token = data.access_token;
-                self.user = data.user;
-                localStorage.setItem('supabase_access_token', self.token);
-                localStorage.setItem('supabase_user_data', JSON.stringify(self.user));
-                return { data: { user: data.user, session: data }, error: null };
-            },
-
-            signUp: async ({ email, password }) => {
-                const resp = await fetch(`${self.url}/auth/v1/signup`, {
-                    method: 'POST',
-                    headers: {
-                        'apikey': self.key,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await resp.json();
-                if (!resp.ok) {
-                    return { data: null, error: { message: data.msg || data.message || 'Đăng ký không thành công' } };
-                }
-                if (data.access_token && data.user) {
-                    self.token = data.access_token;
-                    self.user = data.user;
-                    localStorage.setItem('supabase_access_token', self.token);
-                    localStorage.setItem('supabase_user_data', JSON.stringify(self.user));
-                }
-                return { data: { user: data.user, session: data.access_token ? data : null }, error: null };
-            },
-
-            signOut: async () => {
-                self.token = null;
-                self.user = null;
-                localStorage.removeItem('supabase_access_token');
-                localStorage.removeItem('supabase_user_data');
-                return { error: null };
-            }
-        };
-    }
-
-    from(tableName) {
-        const self = this;
-        return {
-            select: (cols) => {
-                return {
-                    order: async (col, opts) => {
-                        try {
-                            const headers = {
-                                'apikey': self.key,
-                                'Authorization': `Bearer ${self.token}`
-                            };
-                            const resp = await fetch(`${self.url}/rest/v1/${tableName}?select=${encodeURIComponent(cols)}&order=${col}.${opts && opts.ascending ? 'asc' : 'desc'}`, {
-                                headers
-                            });
-                            const data = await resp.json();
-                            if (!resp.ok) return { data: [], error: data };
-                            return { data: Array.isArray(data) ? data : [], error: null };
-                        } catch (e) {
-                            return { data: [], error: e };
-                        }
-                    }
-                };
-            },
-            insert: async (records) => {
-                try {
-                    const headers = {
-                        'apikey': self.key,
-                        'Authorization': `Bearer ${self.token}`,
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=representation'
-                    };
-                    const resp = await fetch(`${self.url}/rest/v1/${tableName}`, {
-                        method: 'POST',
-                        headers,
-                        body: JSON.stringify(records)
-                    });
-                    const data = await resp.json();
-                    if (!resp.ok) return { data: null, error: data };
-                    return { data, error: null };
-                } catch (e) {
-                    return { data: null, error: e };
-                }
-            }
-        };
-    }
-}
-
 function initSupabaseConnection() {
+    // Tích hợp sẵn thông tin kết nối mặc định của bạn
     const defaultUrl = 'https://rwmhivfwjusezxedjtgw.supabase.co';
     const defaultKey = 'sb_publishable_sOm6SWd3dIIerce97LHXNw_OVCroPTr';
     
-    let url = localStorage.getItem('supabase_url') || defaultUrl;
-    let key = localStorage.getItem('supabase_key') || defaultKey;
+    let url = localStorage.getItem('supabase_url');
+    let key = localStorage.getItem('supabase_key');
     
-    localStorage.setItem('supabase_url', url);
-    localStorage.setItem('supabase_key', key);
+    // Nếu chưa có cấu hình trong LocalStorage, tự động thiết lập cấu hình mặc định
+    if (!url || !key) {
+        url = defaultUrl;
+        key = defaultKey;
+        localStorage.setItem('supabase_url', url);
+        localStorage.setItem('supabase_key', key);
+    }
     
     const warningEl = document.getElementById('auth-connection-warning');
     const emailInput = document.getElementById('input-auth-email');
@@ -3365,73 +3193,61 @@ function initSupabaseConnection() {
     
     if (url && key) {
         try {
-            const cleanUrl = url.replace(/\/rest\/v1\/?$/, '');
             if (window.supabase) {
+                // Đảm bảo URL kết nối được làm sạch (bỏ đuôi /rest/v1/ nếu có)
+                const cleanUrl = url.replace(/\/rest\/v1\/?$/, '');
                 supabaseClient = window.supabase.createClient(cleanUrl, key);
-            } else {
-                supabaseClient = new SupabaseRestWrapper(cleanUrl, key);
+                
+                // Mở khóa form đăng nhập
+                if (warningEl) warningEl.style.display = 'none';
+                if (emailInput) emailInput.disabled = false;
+                if (passwordInput) passwordInput.disabled = false;
+                if (submitBtn) submitBtn.disabled = false;
+                if (toggleLink) {
+                    toggleLink.style.cursor = 'pointer';
+                    toggleLink.style.opacity = '1';
+                }
+                
+                // Gán giá trị vào input config để hiển thị
+                const configUrl = document.getElementById('input-supabase-url');
+                const configKey = document.getElementById('input-supabase-key');
+                if (configUrl) configUrl.value = url;
+                if (configKey) configKey.value = key;
+                
+                checkUserSession();
+                return true;
             }
-            
-            if (warningEl) warningEl.style.display = 'none';
-            if (emailInput) emailInput.disabled = false;
-            if (passwordInput) passwordInput.disabled = false;
-            if (submitBtn) submitBtn.disabled = false;
-            if (toggleLink) {
-                toggleLink.style.cursor = 'pointer';
-                toggleLink.style.opacity = '1';
-            }
-            
-            const configUrl = document.getElementById('input-supabase-url');
-            const configKey = document.getElementById('input-supabase-key');
-            if (configUrl) configUrl.value = url;
-            if (configKey) configKey.value = key;
-            
-            checkUserSession();
-            return true;
         } catch (e) {
             console.error("Lỗi khởi tạo Supabase:", e);
         }
     }
     
-    if (emailInput) emailInput.disabled = false;
-    if (passwordInput) passwordInput.disabled = false;
-    if (submitBtn) submitBtn.disabled = false;
+    // Nếu chưa cấu hình, khóa form Auth
+    supabaseClient = null;
+    if (warningEl) warningEl.style.display = 'block';
+    if (emailInput) emailInput.disabled = true;
+    if (passwordInput) passwordInput.disabled = true;
+    if (submitBtn) submitBtn.disabled = true;
     if (toggleLink) {
-        toggleLink.style.cursor = 'pointer';
-        toggleLink.style.opacity = '1';
+        toggleLink.style.cursor = 'not-allowed';
+        toggleLink.style.opacity = '0.5';
     }
-    updateSyncStatusUI('offline');
     return false;
 }
 
 async function checkUserSession() {
-    if (!supabaseClient) initSupabaseConnection();
     if (!supabaseClient) return;
     
     try {
-        let currentUser = null;
         const { data: { session }, error } = await supabaseClient.auth.getSession();
-        if (!error && session && session.user) {
-            currentUser = session.user;
-        } else {
-            const savedSession = JSON.parse(localStorage.getItem('pc_flex_user_session') || 'null');
-            if (savedSession && savedSession.user) {
-                currentUser = savedSession.user;
-            }
-        }
-
-        updateAuthUI(currentUser);
-        if (currentUser) {
+        if (error) throw error;
+        
+        updateAuthUI(session ? session.user : null);
+        if (session) {
             syncDataOnline();
         }
     } catch (e) {
         console.error("Lỗi kiểm tra session:", e);
-        const savedSession = JSON.parse(localStorage.getItem('pc_flex_user_session') || 'null');
-        if (savedSession && savedSession.user) {
-            updateAuthUI(savedSession.user);
-        } else {
-            updateSyncStatusUI('offline');
-        }
     }
 }
 
@@ -3441,13 +3257,11 @@ function updateAuthUI(user) {
     const profileEmail = document.getElementById('user-profile-email');
     
     if (user) {
-        localStorage.setItem('pc_flex_user_session', JSON.stringify({ user: user, time: Date.now() }));
         if (fieldsDiv) fieldsDiv.style.display = 'none';
         if (profileDiv) profileDiv.style.display = 'block';
         if (profileEmail) profileEmail.textContent = user.email;
         updateSyncStatusUI('online');
     } else {
-        localStorage.removeItem('pc_flex_user_session');
         if (fieldsDiv) fieldsDiv.style.display = 'block';
         if (profileDiv) profileDiv.style.display = 'none';
         updateSyncStatusUI('offline');
@@ -3470,13 +3284,8 @@ function updateSyncStatusUI(status) {
         if (cloudBtn) {
             cloudBtn.classList.remove('online', 'syncing');
         }
-        if (supabaseClient) {
-            if (homeSyncDot) homeSyncDot.style.backgroundColor = '#60a5fa';
-            if (homeSyncText) homeSyncText.textContent = 'Sẵn sàng Cloud (Chưa đăng nhập)';
-        } else {
-            if (homeSyncDot) homeSyncDot.style.backgroundColor = '#9ca3af';
-            if (homeSyncText) homeSyncText.textContent = 'Lưu trữ nội bộ (Offline)';
-        }
+        if (homeSyncDot) homeSyncDot.style.backgroundColor = '#9ca3af';
+        if (homeSyncText) homeSyncText.textContent = 'Chưa kết nối Cloud';
         if (homeSyncStatus) {
             homeSyncStatus.style.borderColor = 'rgba(255, 255, 255, 0.08)';
             homeSyncStatus.style.background = 'rgba(255, 255, 255, 0.03)';
@@ -3523,13 +3332,7 @@ function updateSyncStatusUI(status) {
 }
 
 async function handleAuthSubmit() {
-    if (!supabaseClient) {
-        initSupabaseConnection();
-    }
-    if (!supabaseClient) {
-        alert("Không thể kết nối dịch vụ Cloud. Vui lòng kiểm tra lại kết nối mạng!");
-        return;
-    }
+    if (!supabaseClient) return;
     
     const email = document.getElementById('input-auth-email').value.trim();
     const password = document.getElementById('input-auth-password').value;
@@ -3572,7 +3375,7 @@ async function handleAuthSubmit() {
             }
         }
     } catch (e) {
-        alert("Lỗi xác thực: " + (e.message || JSON.stringify(e)));
+        alert("Lỗi xác thực: " + e.message);
     } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = currentAuthMode === 'login' ? 'Đăng Nhập' : 'Đăng Ký';
@@ -3580,18 +3383,17 @@ async function handleAuthSubmit() {
 }
 
 async function handleLogout() {
-    if (!supabaseClient) initSupabaseConnection();
+    if (!supabaseClient) return;
     
     if (confirm("Bạn có chắc chắn muốn đăng xuất khỏi tài khoản đám mây? Lịch sử trên máy vẫn sẽ được bảo lưu.")) {
         try {
-            if (supabaseClient) {
-                await supabaseClient.auth.signOut();
-            }
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) throw error;
+            
             updateAuthUI(null);
             alert("Đã đăng xuất tài khoản đám mây thành công!");
         } catch (e) {
-            updateAuthUI(null);
-            alert("Đã đăng xuất tài khoản đám mây thành công!");
+            alert("Lỗi đăng xuất: " + e.message);
         }
     }
 }
@@ -3600,44 +3402,31 @@ async function syncDataOnline() {
     if (!supabaseClient) return;
     
     try {
-        let user = null;
-        const savedSession = JSON.parse(localStorage.getItem('pc_flex_user_session') || 'null');
-        if (savedSession && savedSession.user) {
-            user = savedSession.user;
-        } else if (supabaseClient.auth) {
-            const { data } = await supabaseClient.auth.getUser();
-            user = data ? data.user : null;
-        }
-        
+        const { data: { user } } = await supabaseClient.auth.getUser();
         if (!user) return;
+        
         updateSyncStatusUI('syncing');
         
-        // 1. Tải log online từ Supabase với bộ bọc an toàn (Safety Wrapper)
-        let onlineLogs = [];
-        try {
-            const { data: fetchedLogs, error } = await supabaseClient
-                .from('pc_flex_logs')
-                .select('*')
-                .order('timestamp', { ascending: false });
-                
-            if (!error && Array.isArray(fetchedLogs)) {
-                onlineLogs = fetchedLogs;
-            }
-        } catch (errLogs) {
-            console.warn("Dữ liệu pc_flex_logs chưa có hoặc RLS chưa bật, sử dụng bộ lưu trữ local:", errLogs);
-        }
+        // 1. Tải log online từ Supabase
+        const { data: onlineLogs, error } = await supabaseClient
+            .from('pc_flex_logs')
+            .select('*')
+            .order('timestamp', { ascending: false });
+            
+        if (error) throw error;
         
         // 2. Lấy dữ liệu local offline hiện tại
         const localHistory = JSON.parse(localStorage.getItem('pc_flex_history')) || [];
         
         const timestamps = new Set();
         const merged = [];
+        
         const getNormTime = (t) => new Date(t).getTime();
         
         // Đưa dữ liệu online vào merged
         onlineLogs.forEach(log => {
             const time = getNormTime(log.timestamp);
-            const roundTime = Math.round(time / 1000) * 1000;
+            const roundTime = Math.round(time / 1000) * 1000; // Làm tròn giây
             timestamps.add(roundTime);
             
             merged.push({
@@ -3667,23 +3456,22 @@ async function syncDataOnline() {
                     user_id: user.id,
                     timestamp: log.timestamp,
                     level: log.level,
-                    squeeze: log.config ? log.config.squeeze : 5,
-                    relax: log.config ? log.config.relax : 5,
-                    reps: log.config ? log.config.reps : 10,
+                    squeeze: log.config.squeeze,
+                    relax: log.config.relax,
+                    reps: log.config.reps,
                     completed: log.completed
                 });
             }
         });
         
-        // 3. Tải lên dữ liệu offline mới nếu có
+        // 3. Tải lên dữ liệu offline mới
         if (toUpload.length > 0) {
-            try {
-                await supabaseClient
-                    .from('pc_flex_logs')
-                    .insert(toUpload);
-            } catch (errUp) {
-                console.warn("Bản ghi offline sẽ được lưu giữ tại máy:", errUp);
-            }
+            const { error: uploadError } = await supabaseClient
+                .from('pc_flex_logs')
+                .insert(toUpload);
+                
+            if (uploadError) throw uploadError;
+            console.log(`Đã tải lên ${toUpload.length} bản ghi offline lên Supabase.`);
         }
         
         // Sắp xếp giảm dần theo thời gian
@@ -3698,7 +3486,7 @@ async function syncDataOnline() {
             return sum + calculateSqueezes(lvl, rps);
         }, 0);
         calculateStreak();
-
+        
         // 5. Đồng bộ bài tập tùy chỉnh qua user_metadata của Supabase
         let cloudWorkouts = user.user_metadata ? (user.user_metadata.custom_workouts || []) : [];
         let mergedWorkouts = mergeCustomWorkouts(state.customWorkouts, cloudWorkouts);
@@ -3707,14 +3495,20 @@ async function syncDataOnline() {
         
         saveData();
         renderStats();
-        if (typeof renderCustomWorkoutsList === 'function') {
-            renderCustomWorkoutsList();
+        renderCustomWorkoutsList();
+        
+        // Cập nhật lại cloud nếu local mới hơn
+        const isDifferent = JSON.stringify(cloudWorkouts) !== JSON.stringify(mergedWorkouts);
+        if (isDifferent) {
+            await supabaseClient.auth.updateUser({
+                data: { custom_workouts: mergedWorkouts }
+            });
         }
         
         updateSyncStatusUI('online');
     } catch (e) {
-        console.warn("Hoàn thành đồng bộ cục bộ:", e);
-        updateSyncStatusUI('online');
+        console.error("Lỗi đồng bộ online:", e);
+        updateSyncStatusUI('error');
     }
 }
 
@@ -3864,30 +3658,12 @@ document.addEventListener('gesturestart', function (event) {
     event.preventDefault();
 });
 
-// --- START APP ON DOCUMENT LOAD (RACE CONDITION PROOF) ---
-function startApp() {
-    try {
-        initApp();
-    } catch (err) {
-        console.error("Lỗi khi khởi chạy initApp:", err);
-    }
-    try {
-        registerServiceWorker();
-    } catch (err) {
-        console.warn("Lỗi ServiceWorker:", err);
-    }
-    try {
-        bindPWAUpdateChecker();
-    } catch (err) {
-        console.warn("Lỗi PWA Update Checker:", err);
-    }
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startApp);
-} else {
-    startApp();
-}
+// --- START APP ON DOCUMENT LOAD ---
+document.addEventListener('DOMContentLoaded', () => {
+    initApp();
+    registerServiceWorker();
+    bindPWAUpdateChecker();
+});
 
 // --- PWA SERVICE WORKER REGISTRATION & UPDATE HANDLER ---
 function registerServiceWorker() {
@@ -4220,30 +3996,45 @@ Hãy viết một báo cáo nhận định chi tiết bằng tiếng Việt, đ�
 
 Hãy giữ giọng điệu bác sĩ ân cần, nghiêm túc, khoa học và giàu chuyên môn. Sử dụng các icon emoji thích hợp để văn bản trực quan.`;
 
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
+        // Direct fetch call to Gemini 3.5 Flash API
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
+        
         const response = await fetch(endpoint, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: systemPrompt }] }]
+                contents: [
+                    {
+                        parts: [
+                            {
+                                text: systemPrompt
+                            }
+                        ]
+                    }
+                ]
             })
         });
-
+        
         if (!response.ok) {
-            throw new Error(`Gemini API HTTP Error status: ${response.status}`);
+            throw new Error(`Gemini API returned status code: ${response.status}`);
         }
-
+        
         const data = await response.json();
-        const markdown = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không thể phản hồi từ Gemini 3.6 Flash.";
+        const markdown = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không thể phản hồi từ Gemini 3.5 Flash. Vui lòng kiểm tra API Key.";
+        
+        // Render Markdown to HTML and inject
         contentContainer.innerHTML = renderMarkdownToHTML(markdown);
-    } catch (err) {
-        console.error('Lỗi khi gọi Gemini API:', err);
+        
+    } catch(err) {
+        console.error('Error calling Gemini direct API:', err);
         contentContainer.innerHTML = `
             <div style="padding: 1.5rem; text-align: center; color: #ef4444;">
                 <div style="font-size: 2.5rem; margin-bottom: 1rem;">❌</div>
                 <h4 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; color: #f87171;">Lỗi Kết Nối Phân Tích</h4>
                 <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.55;">
-                    Có lỗi xảy ra khi truyền tải dữ liệu hoặc gọi Gemini 3.6 Flash: ${err.message}.<br>
+                    Có lỗi xảy ra khi truyền tải dữ liệu hoặc gọi Gemini 3.5 Flash: ${err.message}.<br>
                     Vui lòng đảm bảo thiết bị đã kết nối Internet và API Key của bạn hợp lệ.
                 </p>
             </div>
@@ -4251,279 +4042,6 @@ Hãy giữ giọng điệu bác sĩ ân cần, nghiêm túc, khoa học và già
     } finally {
         isQueryingAI = false;
     }
-}
-
-// --- GAMIFICATION & RANK SYSTEM ---
-function calculateRank() {
-    const total = state.totalSessions || 0;
-    if (total >= 30) return { title: '👑 Huyền Thoại Sinh Lý', level: 4, desc: 'Cơ sàn chậu vững chắc hoàn mỹ' };
-    if (total >= 15) return { title: '🥇 Cao Thủ PC Flex', level: 3, desc: 'Kiểm soát xuất tinh & độ cứng cực tốt' };
-    if (total >= 5) return { title: '🥈 Chiến Binh Sàn Chậu', level: 2, desc: 'Trương lực cơ PC đang phát triển mạnh' };
-    return { title: '🌱 Tân Binh PC', level: 1, desc: 'Đang bước đầu làm quen nhịp tập' };
-}
-
-function renderRankBadge() {
-    const rankObj = calculateRank();
-    const sidebarRankEl = document.getElementById('sidebar-rank-value');
-    if (sidebarRankEl) {
-        sidebarRankEl.textContent = rankObj.title;
-    }
-}
-
-// --- PELVIC STRENGTH INDEX (PSI SCORE) ---
-function calculatePSI() {
-    const streak = state.streak || 0;
-    const sessions = state.totalSessions || 0;
-    const reps = state.totalRepsCompleted || 0;
-    
-    let score = Math.min(100, Math.round(streak * 3 + sessions * 2 + Math.floor(reps / 25)));
-    if (score < 10) score = 10;
-
-    let desc = '';
-    if (score >= 80) desc = '🔥 Cực Kỳ Tối Ưu: Cơ sàn chậu dày dặn, bệ đỡ niệu đạo vững chắc và phản xạ sinh lý hoàn hảo.';
-    else if (score >= 50) desc = '💪 Trương Lực Cơ Khá: Độ dẻo dai cơ PC phát triển tốt, khả năng kiểm soát xuất tinh & độ cứng ổn định.';
-    else if (score >= 30) desc = '⚡ Tiến Bộ Rõ Rệt: Bạn đang xây dựng nền tảng sợi cơ chậu vững vàng. Tiếp tục giữ vững chuỗi tập!';
-    else desc = '🌱 Khởi Đầu Sinh Lý: Cơ sàn chậu mới bắt đầu làm quen nhịp siết/thả. Hãy kiên trì tập luyện để thăng cấp!';
-
-    return { score, desc };
-}
-
-function updatePelvicHeatmap() {
-    const reps = state.totalWorkoutReps || 0;
-    const ringPC = document.getElementById('heatmap-ring-pc');
-    const ringLA = document.getElementById('heatmap-ring-la');
-    const pcStatus = document.getElementById('heatmap-pc-status');
-    const laStatus = document.getElementById('heatmap-la-status');
-    const sphincterStatus = document.getElementById('heatmap-sphincter-status');
-
-    if (ringPC) {
-        const pcRatio = Math.min(1, reps / 300);
-        ringPC.style.strokeDashoffset = 471 * (1 - pcRatio);
-        ringPC.style.stroke = pcRatio > 0.6 ? '#3b82f6' : 'rgba(59, 130, 246, 0.4)';
-    }
-    if (ringLA) {
-        const laRatio = Math.min(1, reps / 500);
-        ringLA.style.strokeDashoffset = 314 * (1 - laRatio);
-        ringLA.style.stroke = laRatio > 0.6 ? '#10b981' : 'rgba(16, 185, 129, 0.4)';
-    }
-
-    if (pcStatus) pcStatus.textContent = reps > 200 ? 'Săn chắc tối ưu' : reps > 50 ? 'Khá phát triển' : 'Mới kích hoạt';
-    if (laStatus) laStatus.textContent = reps > 400 ? 'Rất dẻo dai' : reps > 100 ? 'Tăng thể tích' : 'Căn bản';
-    if (sphincterStatus) sphincterStatus.textContent = reps > 100 ? 'Phản xạ đóng chặt' : 'Ổn định';
-}
-
-// --- 21-DAY SPECIALIZED CHALLENGE ROADMAP ---
-function setupChallengeHandlers() {
-    const modal = document.getElementById('challenge-modal');
-    const btnOpen = document.getElementById('btn-open-challenge-modal');
-    const btnClose = document.getElementById('btn-close-challenge-modal');
-    const btnCloseFooter = document.getElementById('btn-close-challenge-modal-footer');
-
-    const openModal = () => {
-        if (!modal) return;
-        renderChallengeModal();
-        modal.style.display = 'flex';
-    };
-
-    const closeModal = () => {
-        if (!modal) return;
-        modal.style.display = 'none';
-    };
-
-    if (btnOpen) btnOpen.addEventListener('click', openModal);
-    if (btnClose) btnClose.addEventListener('click', closeModal);
-    if (btnCloseFooter) btnCloseFooter.addEventListener('click', closeModal);
-}
-
-function renderChallengeModal() {
-    const grid = document.getElementById('challenge-days-grid');
-    const progressFill = document.getElementById('challenge-progress-fill');
-    const progressText = document.getElementById('challenge-progress-text');
-    if (!grid) return;
-
-    grid.innerHTML = '';
-    const completedDays = Math.min(21, state.totalWorkoutSessions || 0);
-
-    if (progressFill) progressFill.style.width = `${Math.round((completedDays / 21) * 100)}%`;
-    if (progressText) progressText.textContent = `Ngày ${completedDays} / 21`;
-
-    for (let day = 1; day <= 21; day++) {
-        const isCompleted = day <= completedDays;
-        const isCurrent = day === completedDays + 1;
-
-        const item = document.createElement('div');
-        item.className = `challenge-day-item ${isCompleted ? 'completed' : ''} ${isCurrent ? 'active' : ''}`;
-        item.innerHTML = `
-            <div class="challenge-day-num">NGÀY ${day}</div>
-            <div class="challenge-day-title">${isCompleted ? '✓ Hoàn thành' : isCurrent ? '🔥 Hôm nay' : '🔒 Khóa'}</div>
-        `;
-        grid.appendChild(item);
-    }
-}
-
-// --- AI MEDICAL BIO-COACH CHATBOT (POWERED BY GEMINI 3.6 FLASH) ---
-let isAiTyping = false;
-
-function setupAIChatHandlers() {
-    const modal = document.getElementById('ai-modal');
-    const btnOpenStats = document.getElementById('btn-open-ai-modal');
-    const btnClose = document.getElementById('btn-close-ai-modal');
-    const btnSend = document.getElementById('btn-send-ai-chat');
-    const chatInput = document.getElementById('ai-chat-input');
-
-    const openModal = () => {
-        if (!modal) return;
-        modal.style.display = 'flex';
-        renderRankBadge();
-    };
-
-    const closeModal = () => {
-        if (!modal) return;
-        modal.style.display = 'none';
-    };
-
-    if (btnOpenStats) btnOpenStats.addEventListener('click', openModal);
-    if (btnClose) btnClose.addEventListener('click', closeModal);
-
-    if (btnSend) {
-        btnSend.addEventListener('click', () => {
-            sendAIChatMessage();
-        });
-    }
-
-    if (chatInput) {
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendAIChatMessage();
-        });
-    }
-
-    // Prompt Chips click handlers
-    const chips = document.querySelectorAll('#ai-prompt-chips .ai-chip');
-    chips.forEach(chip => {
-        chip.addEventListener('click', () => {
-            const promptText = chip.getAttribute('data-prompt');
-            if (promptText && chatInput) {
-                chatInput.value = promptText;
-                sendAIChatMessage();
-            }
-        });
-    });
-}
-
-async function sendAIChatMessage() {
-    const inputEl = document.getElementById('ai-chat-input');
-    const chatMessagesEl = document.getElementById('ai-chat-messages');
-    if (!inputEl || !chatMessagesEl) return;
-
-    const userText = inputEl.value.trim();
-    if (!userText || isAiTyping) return;
-
-    // Append User Message
-    inputEl.value = '';
-    const userMsgDiv = document.createElement('div');
-    userMsgDiv.className = 'ai-msg ai-msg-user';
-    userMsgDiv.innerHTML = `
-        <span class="ai-avatar">👤</span>
-        <div class="ai-bubble">${escapeHTML(userText)}</div>
-    `;
-    chatMessagesEl.appendChild(userMsgDiv);
-    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-
-    // Append Typing Indicator System Message
-    isAiTyping = true;
-    const aiMsgDiv = document.createElement('div');
-    aiMsgDiv.className = 'ai-msg ai-msg-system';
-    aiMsgDiv.innerHTML = `
-        <span class="ai-avatar">🤖</span>
-        <div class="ai-bubble"><em>Bác Sĩ A.I Gemini 3.6 Flash đang phân tích câu hỏi của bạn...</em></div>
-    `;
-    chatMessagesEl.appendChild(aiMsgDiv);
-    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-
-    const bubbleEl = aiMsgDiv.querySelector('.ai-bubble');
-
-    try {
-        const apiKey = state.geminiApiKey;
-        const ageStr = state.birthYear ? `${new Date().getFullYear() - parseInt(state.birthYear)} tuổi` : "Chưa rõ";
-        const genderStr = state.gender === 'female' ? 'Nữ giới' : 'Nam giới';
-        const psiObj = calculatePSI();
-
-        const systemInstruction = `Bạn là Bác sĩ chuyên khoa Nam học / Phụ khoa và Phục hồi chức năng Sàn chậu hàng đầu thế giới (PC Flex AI Bio-Coach). 
-Thông tin bệnh nhân: Giới tính ${genderStr}, ${ageStr}, Chuỗi tập ${state.streakDays || 0} ngày, PSI Score ${psiObj.score}/100.
-Hãy giải đáp thắc mắc chuyên khoa của bệnh nhân bằng tiếng Việt chuẩn y khoa, ân cần, ngắn gọn, khoa học và thực tế.`;
-
-        if (!apiKey) {
-            setTimeout(() => {
-                bubbleEl.innerHTML = formatMarkdownToHTML(`**Nhận Định Y Khoa:**
-
-Cảm ơn bạn đã hỏi! 
-
-- **Về bài tập Kegel & Cơ sàn chậu:** Tập luyện co thắt cơ PC đúng kỹ thuật giúp gia tăng lưu lượng máu đến vùng đáy chậu, làm dầy tổ chức sợi cơ mu cụt và củng cố liên kết thần kinh - cơ.
-- **Để đạt hiệu quả tối ưu:** Hãy tập trung cô lập cơ PC (thả lỏng mông, đùi và bụng), kết hợp hít vào khi thả lỏng và thở ra khi siết chặt.
-- **Dinh dưỡng bổ sung:** Nên tăng cường các thực phẩm giàu **Kẽm (Hàu, thịt bò), L-Arginine (Hạt bí, đậu nành) và Omega-3** để thúc đẩy quá trình tổng hợp Testosterone và phục hồi mô cơ sàn chậu.
-
-*(Mẹo: Bạn có thể nhập Gemini API Key cá nhân tại mục Hồ Sơ Tập Luyện để kích hoạt mô hình **Gemini 3.6 Flash** trực tiếp không giới hạn!)*`);
-                chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-                isAiTyping = false;
-            }, 800);
-            return;
-        }
-
-        // Call Gemini 3.6 Flash REST API
-        const endpointUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
-        const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-
-        let resp = await fetch(endpointUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [
-                    { role: 'user', parts: [{ text: `${systemInstruction}\n\nCâu hỏi của bệnh nhân: ${userText}` }] }
-                ]
-            })
-        });
-
-        if (!resp.ok) {
-            resp = await fetch(fallbackUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [
-                        { role: 'user', parts: [{ text: `${systemInstruction}\n\nCâu hỏi của bệnh nhân: ${userText}` }] }
-                    ]
-                })
-            });
-        }
-
-        if (resp.ok) {
-            const data = await resp.json();
-            const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "Xin lỗi, tôi chưa thể xử lý phản hồi lúc này.";
-            bubbleEl.innerHTML = formatMarkdownToHTML(textResponse);
-        } else {
-            bubbleEl.innerHTML = "Lỗi kết nối API Key Gemini. Vui lòng kiểm tra lại API Key trong phần Hồ Sơ.";
-        }
-    } catch (err) {
-        bubbleEl.innerHTML = "Đã xảy ra lỗi khi kết nối với Bác Sĩ A.I Gemini 3.6 Flash. Vui lòng thử lại sau.";
-    } finally {
-        isAiTyping = false;
-        chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-    }
-}
-
-// --- EXPORT MEDICAL PDF REPORT ---
-function exportMedicalPDFReport() {
-    const psi = calculatePSI();
-    const rank = calculateRank();
-
-    alert(`📄 Đang chuẩn bị tệp Báo Cáo Y Khoa PC Flex...
-- Cấp bậc: ${rank.title}
-- Chỉ số PSI: ${psi.score}/100
-- Chuỗi ngày tập: ${state.streak || 0} ngày
-- Tổng số hiệp: ${state.totalSessions || 0} hiệp
-
-Bấm OK để mở cửa sổ in / xuất PDF!`);
-
-    window.print();
 }
 
 function renderMarkdownToHTML(markdown) {
