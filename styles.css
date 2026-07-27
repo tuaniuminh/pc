@@ -3667,21 +3667,21 @@ body.gender-female .level-tab-btn.active {
 }
 
 /* Frosted Glassmorphism for Cards (FamiLife Style) */
-[data-theme="light"] .routine-card,
-[data-theme="light"] .level-item,
-[data-theme="light"] .stats-card,
-[data-theme="light"] .metric-card,
-[data-theme="light"] .modal-content,
-[data-theme="light"] .medical-guide-card,
-[data-theme="light"] .history-item,
-[data-theme="light"] .setting-card,
+[data-theme="light"] .trainer-card,
+[data-theme="light"] .config-card,
+[data-theme="light"] .step-card,
+[data-theme="light"] .stat-card,
+[data-theme="light"] .streak-card,
+[data-theme="light"] .history-card,
+[data-theme="light"] .schedule-card,
+[data-theme="light"] .custom-stage-card,
 [data-theme="light"] .profile-card,
-[data-theme="light"] .stat-box,
-[data-theme="light"] .sound-studio-card,
 [data-theme="light"] .stats-explainer-card,
 [data-theme="light"] .weekly-calendar-card,
-[data-theme="light"] .badges-panel,
-[data-theme="light"] .history-card {
+[data-theme="light"] .auth-modal-card,
+[data-theme="light"] .ai-modal-card,
+[data-theme="light"] .level-item,
+[data-theme="light"] .history-item {
     background: rgba(255, 255, 255, 0.8) !important;
     backdrop-filter: blur(20px) !important;
     -webkit-backdrop-filter: blur(20px) !important;
@@ -3691,11 +3691,14 @@ body.gender-female .level-tab-btn.active {
 }
 
 /* Card Hover States */
-[data-theme="light"] .routine-card:hover,
+[data-theme="light"] .trainer-card:hover,
+[data-theme="light"] .config-card:hover,
+[data-theme="light"] .step-card:hover,
+[data-theme="light"] .stat-card:hover,
+[data-theme="light"] .history-card:hover,
+[data-theme="light"] .profile-card:hover,
 [data-theme="light"] .level-item:hover,
-[data-theme="light"] .stats-card:hover,
-[data-theme="light"] .setting-card:hover,
-[data-theme="light"] .profile-card:hover {
+[data-theme="light"] .history-item:hover {
     background: rgba(255, 255, 255, 0.95) !important;
     border-color: rgba(2, 132, 199, 0.2) !important;
     transform: translateY(-4px);
@@ -3728,19 +3731,28 @@ body.gender-female .level-tab-btn.active {
 [data-theme="light"] h1, [data-theme="light"] h2, [data-theme="light"] h3,
 [data-theme="light"] h4, [data-theme="light"] h5, [data-theme="light"] h6,
 body.light-mode h1, body.light-mode h2, body.light-mode h3,
-body.light-mode h4, body.light-mode h5, body.light-mode h6 {
+body.light-mode h4, body.light-mode h5, body.light-mode h6,
+[data-theme="light"] .header-section h1, body.light-mode .header-section h1 {
+    background: none !important;
+    -webkit-text-fill-color: #111827 !important;
     color: #111827 !important;
 }
 
 [data-theme="light"] .subtitle, [data-theme="light"] .description,
 [data-theme="light"] p, [data-theme="light"] label, [data-theme="light"] .text-muted,
 [data-theme="light"] .explainer-text, [data-theme="light"] .calendar-desc,
+[data-theme="light"] .stat-label, [data-theme="light"] .stat-desc,
+[data-theme="light"] .badge-desc, [data-theme="light"] .step-card p,
+[data-theme="light"] .faq-answer, [data-theme="light"] .history-item-details,
 body.light-mode .subtitle, body.light-mode .description,
-body.light-mode p, body.light-mode label, body.light-mode .text-muted {
+body.light-mode p, body.light-mode label, body.light-mode .text-muted,
+body.light-mode .stat-label, body.light-mode .stat-desc {
     color: #4b5563 !important;
 }
 
-[data-theme="light"] .explainer-text strong, body.light-mode .explainer-text strong {
+[data-theme="light"] .explainer-text strong, body.light-mode .explainer-text strong,
+[data-theme="light"] .step-num, [data-theme="light"] .badge-name,
+[data-theme="light"] .faq-question, [data-theme="light"] .history-item-header {
     color: #111827 !important;
 }
 
@@ -3828,14 +3840,30 @@ body.light-mode p, body.light-mode label, body.light-mode .text-muted {
     border-color: rgba(16, 185, 129, 0.4) !important;
 }
 
-[data-theme="light"] .orb-timer {
+[data-theme="light"] .orb-timer,
+[data-theme="light"] .visualizer-orb.squeezing .orb-timer,
+[data-theme="light"] .visualizer-orb.relaxing .orb-timer,
+[data-theme="light"] .visualizer-orb.resting .orb-timer,
+body.light-mode .orb-timer {
+    background: none !important;
+    -webkit-text-fill-color: #111827 !important;
     color: #111827 !important;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.03) !important;
 }
 
-[data-theme="light"] .orb-action-text {
+[data-theme="light"] .orb-action,
+[data-theme="light"] .visualizer-orb.squeezing .orb-action,
+[data-theme="light"] .visualizer-orb.relaxing .orb-action,
+[data-theme="light"] .visualizer-orb.resting .orb-action,
+body.light-mode .orb-action {
     color: #0284c7 !important;
     font-weight: 800 !important;
+    text-shadow: none !important;
+}
+
+[data-theme="light"] .orb-sub-text,
+body.light-mode .orb-sub-text {
+    color: #4b5563 !important;
 }
 
 /* Modals backdrop & card styling */
@@ -3927,7 +3955,15 @@ body.light-mode textarea:focus {
 
 /* Statistics and Badges */
 [data-theme="light"] .stat-value, body.light-mode .stat-value {
+    background: none !important;
+    -webkit-text-fill-color: #111827 !important;
     color: #111827 !important;
+}
+
+[data-theme="light"] .streak-card .stat-value, body.light-mode .streak-card .stat-value {
+    background: none !important;
+    -webkit-text-fill-color: #ea580c !important;
+    color: #ea580c !important;
 }
 
 [data-theme="light"] .stat-label, body.light-mode .stat-label {
@@ -3944,6 +3980,16 @@ body.light-mode textarea:focus {
 
 [data-theme="light"] .badge-desc, body.light-mode .badge-desc {
     color: #9ca3af !important;
+}
+
+[data-theme="light"] .home-stat-badge, body.light-mode .home-stat-badge {
+    background: rgba(99, 102, 241, 0.08) !important;
+    border: 1px solid rgba(99, 102, 241, 0.25) !important;
+    color: #4338ca !important;
+}
+
+[data-theme="light"] .home-stat-badge strong, body.light-mode .home-stat-badge strong {
+    color: #312e81 !important;
 }
 
 /* Accordions (FAQ & History) */
