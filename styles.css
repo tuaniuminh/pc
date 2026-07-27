@@ -3584,9 +3584,45 @@ body.gender-female .level-tab-btn.active {
     
 }
 
-/* ==========================================================================
-   WORLD-CLASS LIGHT THEME (GIAO DIỆN SÁNG PREMIUM - FAMILIFE STYLE)
-   ========================================================================== */
+/* Theme Toggle Button */
+.theme-toggle-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-color);
+    color: var(--color-text-primary);
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+}
+
+.theme-toggle-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    border-color: var(--color-primary);
+    box-shadow: var(--glow-primary);
+}
+
+.theme-toggle-btn svg {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.theme-toggle-btn .sun-icon { display: block; }
+.theme-toggle-btn .moon-icon { display: none; }
+
+[data-theme="light"] .theme-toggle-btn .sun-icon, body.light-mode .theme-toggle-btn .sun-icon {
+    display: none;
+}
+[data-theme="light"] .theme-toggle-btn .moon-icon, body.light-mode .theme-toggle-btn .moon-icon {
+    display: block;
+    color: #1d4ed8;
+}
 
 [data-theme="light"], body.light-mode {
     color-scheme: light;
