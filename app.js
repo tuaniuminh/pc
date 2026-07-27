@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.2.32';
+const APP_VERSION = 'v1.2.35';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -3916,31 +3916,80 @@ function renderHistoryPagination(totalItems) {
     }
 }
 
+function getWorkoutAIDetailedDescription(log) {
+    let stages = [];
+    const levelTab = resolveLevelTab(log);
+    let workoutName = '';
+    
+    if (log.level && log.level.startsWith('custom_')) {
+        const workout = state.customWorkouts.find(w => w.id === log.level);
+        if (workout && workout.stages) {
+            stages = workout.stages;
+            workoutName = workout.name || 'Tùy chỉnh';
+        }
+    } else if (log.level === 'custom') {
+        stages = [{ type: 'normal', squeeze: log.config.squeeze, relax: log.config.relax, reps: log.config.reps }];
+        workoutName = 'Tùy chỉnh';
+    } else if (levelTab) {
+        const genderKey = state.gender === 'female' ? 'female' : 'male';
+        const levelConfig = clinicalLevels[levelTab]?.[genderKey]?.[log.level];
+        if (levelConfig && levelConfig.stages) {
+            stages = levelConfig.stages;
+            workoutName = levelConfig.name;
+        }
+    }
+    
+    if (stages.length === 0) {
+        return `Siết: ${log.config.squeeze}s/Thả: ${log.config.relax}s x ${log.config.reps} lượt`;
+    }
+    
+    let descParts = [];
+    for (let i = 0; i < stages.length; i++) {
+        const stage = stages[i];
+        let stageDesc = '';
+        if (stage.type === 'normal') {
+            stageDesc = `Siết ${stage.squeeze}s/Thả ${stage.relax}s x ${stage.reps} lượt`;
+        } else if (stage.type === 'reverse') {
+            stageDesc = `Kegel ngược ${stage.squeeze}s/Thả ${stage.relax}s x ${stage.reps} lượt`;
+        } else if (stage.type === 'breathing') {
+            stageDesc = `Thở bụng ${stage.squeeze}s/Thở ra ${stage.relax}s x ${stage.reps} lượt`;
+        } else {
+            stageDesc = `Tập ${stage.squeeze}s/Thả ${stage.relax}s x ${stage.reps} lượt`;
+        }
+        
+        descParts.push(stageDesc);
+        
+        // Check for transition rest
+        if (i < stages.length - 1) {
+            const nextStage = stages[i + 1];
+            const tRest = getTransitionRestDuration(stage, nextStage, workoutName);
+            if (tRest > 0) {
+                descParts.push(`Nghỉ chuyển chặng: ${tRest}s`);
+            }
+        }
+    }
+    
+    return descParts.join(' ➔ ');
+}
+
 function getWorkoutAIDescription(log) {
     const resolvedTab = resolveLevelTab(log);
     let levelName = log.level;
-    let timingDesc = '';
-    let reverseReps = getReverseRepsCount(log);
     
     if (log.level && log.level.startsWith('custom_')) {
         levelName = 'Bài tập tự thiết kế';
-        timingDesc = getWorkoutTimingDescription(log);
     } else if (log.level === 'custom') {
         levelName = 'Bài tập tùy chỉnh';
-        timingDesc = getWorkoutTimingDescription(log);
     } else if (resolvedTab) {
         const genderKey = state.gender === 'female' ? 'female' : 'male';
         const levelConfig = clinicalLevels[resolvedTab]?.[genderKey]?.[log.level];
         if (levelConfig) {
             levelName = `Cấp độ ${resolvedTab} (${clinicalLevels[resolvedTab].name}) - ${levelConfig.name}`;
-            timingDesc = getWorkoutTimingDescription(log);
         }
     }
     
-    const timingClean = timingDesc ? timingDesc.replace(/<\/?strong>/g, '') : `Siết: ${log.config.squeeze}s • Thả: ${log.config.relax}s`;
-    const reverseStr = reverseReps > 0 ? ` • Kegel ngược: ${reverseReps} lượt` : '';
-    
-    return `"${levelName}" (${timingClean} • Tổng lượt: ${log.config.reps}${reverseStr})`;
+    const detailedDesc = getWorkoutAIDetailedDescription(log);
+    return `"${levelName}" (${detailedDesc})`;
 }
 
 function initProfileAndAI() {
@@ -4064,6 +4113,53 @@ function initAIChat() {
         appendChatMessage('model', '👋 Xin chào! Tôi là **Bác sĩ Bio-Coach AI** chuyên khoa phục hồi chức năng cơ sàn chậu của bạn. \n\nTôi có thể giúp bạn giải đáp các vấn đề về bài tập Kegel, cơ mu cụt (PC), hướng dẫn thở hoặc trực tiếp phân tích nhật ký tập luyện của bạn. Hãy trò chuyện với tôi hoặc bấm các gợi ý nhanh phía dưới nhé!');
     }
 }
+function generateAIPromptHistory() {
+    if (!state.history || state.history.length === 0) {
+        return { templatesText: "", logsText: "Không có nhật ký luyện tập nào." };
+    }
+    
+    const templates = new Map();
+    const logsList = [];
+    
+    state.history.forEach(log => {
+        const date = log.timestamp ? log.timestamp.split('T')[0] : 'Không rõ';
+        
+        // Resolve level name
+        const resolvedTab = resolveLevelTab(log);
+        let levelName = log.level;
+        
+        if (log.level && log.level.startsWith('custom_')) {
+            const workout = state.customWorkouts.find(w => w.id === log.level);
+            levelName = workout ? `Bài tập tự thiết kế: ${workout.name}` : 'Bài tập tự thiết kế';
+        } else if (log.level === 'custom') {
+            levelName = `Bài tập tùy chỉnh (${log.config.squeeze}s/${log.config.relax}s x ${log.config.reps})`;
+        } else if (resolvedTab) {
+            const genderKey = state.gender === 'female' ? 'female' : 'male';
+            const levelConfig = clinicalLevels[resolvedTab]?.[genderKey]?.[log.level];
+            if (levelConfig) {
+                levelName = `Cấp độ ${resolvedTab} (${clinicalLevels[resolvedTab].name}) - ${levelConfig.name}`;
+            }
+        }
+        
+        // If not already in templates, generate its detailed description
+        if (!templates.has(levelName)) {
+            const detailedDesc = getWorkoutAIDetailedDescription(log);
+            templates.set(levelName, detailedDesc);
+        }
+        
+        logsList.push(`- Ngày ${date}: Tập bài "${levelName}"`);
+    });
+    
+    // Format templates
+    let templatesText = "Định nghĩa cấu trúc chi tiết của các bài tập:\n";
+    templates.forEach((desc, name) => {
+        templatesText += `- Bài "${name}": ${desc}\n`;
+    });
+    
+    const logsText = logsList.join('\n');
+    return { templatesText, logsText };
+}
+
 async function sendAIChatMessage(messageText) {
     if (isQueryingAI) return;
     
@@ -4089,23 +4185,17 @@ async function sendAIChatMessage(messageText) {
         const ageStr = state.birthYear ? `${new Date().getFullYear() - parseInt(state.birthYear)} tuổi` : "Không rõ";
         const genderStr = state.gender === 'female' ? 'Nữ giới' : 'Nam giới';
         
-        let historyText = "";
-        if (!state.history || state.history.length === 0) {
-            historyText = "Không có nhật ký luyện tập nào.";
-        } else {
-            historyText = state.history.map(log => {
-                const date = log.timestamp ? log.timestamp.split('T')[0] : 'Không rõ';
-                return `- Ngày ${date}: Tập bài ${getWorkoutAIDescription(log)}`;
-            }).join('\n');
-        }
+        const { templatesText, logsText } = generateAIPromptHistory();
 
         const systemPrompt = `Bạn là một Bác sĩ chuyên khoa đầu ngành về Nam khoa và Phụ khoa, đồng thời là chuyên gia vật lý trị liệu phục hồi chức năng cơ sàn chậu (cơ mu cụt - PC).
 Nhiệm vụ của bạn là trò chuyện trực tiếp và tư vấn y khoa ân cần cho người dùng về các bài tập sàn chậu (Kegel, Reverse Kegel, breathing).
 Hãy trả lời câu hỏi hiện tại dựa trên bối cảnh sức khỏe người dùng:
 - Giới tính sinh học: ${genderStr}
 - Độ tuổi: ${ageStr}
-- Nhật ký luyện tập:
-${historyText}
+
+${templatesText}
+Nhật ký các buổi tập đã thực hiện theo ngày:
+${logsText}
 
 Quy tắc trả lời:
 1. Trả lời trực tiếp câu hỏi của người dùng một cách ngắn gọn, khoa học, chuyên nghiệp bằng tiếng Việt.
@@ -4169,15 +4259,22 @@ function renderMarkdownToHTML(markdown) {
     if (!markdown) return '';
     let html = markdown;
     
-    // Replace Headers ###
-    html = html.replace(/^### (.*?)$/gm, '<h4 style="color: var(--color-primary); font-size: 1rem; font-weight: 700; margin-top: 1.25rem; margin-bottom: 0.5rem;">$1</h4>');
-    // Replace Headers ##
-    html = html.replace(/^## (.*?)$/gm, '<h3 style="color: var(--color-primary); font-size: 1.1rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 4px;">$1</h3>');
-    // Replace Bold Text **text**
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--text-light); font-weight: 700;">$1</strong>');
-    // Replace Bullets (- or *)
-    html = html.replace(/^\- (.*?)$/gm, '<li style="margin-left: 1.25rem; margin-bottom: 0.4rem; list-style-type: disc;">$1</li>');
-    html = html.replace(/^\* (.*?)$/gm, '<li style="margin-left: 1.25rem; margin-bottom: 0.4rem; list-style-type: disc;">$1</li>');
+    // Replace Headers
+    html = html.replace(/^[ \t]*###[ \t]+(.*?)$/gm, '<h4 style="color: var(--color-primary); font-size: 1rem; font-weight: 700; margin-top: 1.25rem; margin-bottom: 0.5rem;">$1</h4>');
+    html = html.replace(/^[ \t]*##[ \t]+(.*?)$/gm, '<h3 style="color: var(--color-primary); font-size: 1.1rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 4px;">$1</h3>');
+    html = html.replace(/^[ \t]*#[ \t]+(.*?)$/gm, '<h2 style="color: var(--color-primary); font-size: 1.25rem; font-weight: 700; margin-top: 1.75rem; margin-bottom: 1rem;">$1</h2>');
+    html = html.replace(/^[ \t]*####[ \t]+(.*?)$/gm, '<h5 style="color: var(--color-primary); font-size: 0.9rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.4rem;">$1</h5>');
+    
+    // Replace Bullets (- or *) - must be done before italic replacements to avoid conflict with bullet asterisks
+    html = html.replace(/^[ \t]*[\-\*][ \t]+(.*?)$/gm, '<li style="margin-left: 1.25rem; margin-bottom: 0.4rem; list-style-type: disc;">$1</li>');
+    
+    // Replace Bold Text **text** or __text__
+    html = html.replace(/\*\*([^\s\*](?:.*?[^\s\*])?)\*\*/g, '<strong style="color: var(--text-light); font-weight: 700;">$1</strong>');
+    html = html.replace(/__([^\s_](?:.*?[^\s_])?)__/g, '<strong style="color: var(--text-light); font-weight: 700;">$1</strong>');
+    
+    // Replace Italic Text *text* or _text_
+    html = html.replace(/\*([^\s\*](?:.*?[^\s\*])?)\*/g, '<em style="color: var(--text-light); font-style: italic;">$1</em>');
+    html = html.replace(/_([^\s_](?:.*?[^\s_])?)_/g, '<em style="color: var(--text-light); font-style: italic;">$1</em>');
     
     // Wrap lists <li> in <ul>
     const lines = html.split('\n');
