@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.2.37';
+const APP_VERSION = 'v1.2.38';
 
 // --- STATE MANAGEMENT ---
 const state = {
@@ -1355,31 +1355,15 @@ function renderSoundStudioList() {
     });
 }
 
-// --- THEME MANAGEMENT (SÁNG / TỐI) ---
+// --- THEME MANAGEMENT (MẶC ĐỊNH TỐI) ---
 function initTheme() {
-    const savedTheme = localStorage.getItem('pc_flex_theme') || 'light';
-    setTheme(savedTheme);
-    
-    const themeBtns = document.querySelectorAll('#btn-theme-toggle, .theme-toggle-btn');
-    themeBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const currentTheme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
-            const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
-            setTheme(nextTheme);
-            triggerHapticFeedback('light');
-        });
-    });
+    setTheme('dark');
 }
 
 function setTheme(theme) {
-    if (theme === 'light') {
-        document.documentElement.setAttribute('data-theme', 'light');
-        document.body.classList.add('light-mode');
-    } else {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        document.body.classList.remove('light-mode');
-    }
-    localStorage.setItem('pc_flex_theme', theme);
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.body.classList.remove('light-mode');
+    localStorage.setItem('pc_flex_theme', 'dark');
 }
 
 function syncVersionBadges() {
