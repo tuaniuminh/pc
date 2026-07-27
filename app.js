@@ -3,7 +3,7 @@
  * JavaScript Core Logic & Audio Synthesizer
  */
 
-const APP_VERSION = 'v1.2.36';
+const APP_VERSION = 'v1.2.37';
 
 // --- STATE MANAGEMENT ---
 const state = {
