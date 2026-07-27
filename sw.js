@@ -1,9 +1,9 @@
-const CACHE_NAME = 'pc-flex-cache-v1.2.38';
+const CACHE_NAME = 'pc-flex-cache-v1.2.39';
 const ASSETS = [
     './',
     './index.html',
-    './app.js?v=1.2.38',
-    './styles.css?v=1.2.38',
+    './app.js?v=1.2.39',
+    './styles.css?v=1.2.39',
     './logo.png',
     './manifest.json',
     './icon-192.png',
