@@ -2,26 +2,19 @@ import React from 'react';
 
 /**
  * Quả Cầu Visualizer HUD 120 FPS cho PC Flex (Kegel & Pelvic Floor Trainer)
- * Hỗ trợ co siết (Squeeze), thả lỏng (Relax), Kegel ngược (Reverse Kegel) và nghỉ chuyển bài (Transition Rest)
+ * Thiết kế tinh gọn, sang trọng, loại bỏ thanh tiến trình quét để tối ưu quan sát
  */
 const OrbVisualizer = ({
   actionState = 'idle', // 'idle' | 'squeezing' | 'relaxing' | 'reverse' | 'transition' | 'breathing'
   timeRemaining = 0,
-  stageDuration = 1,
   currentRep = 0,
   totalReps = 20,
   stageLabel = '',
-  stageIndex = 0,
-  totalStages = 1,
   isActive = false
 }) => {
-  const size = 260;
-  const strokeWidth = 10;
+  const size = 210;
+  const strokeWidth = 6;
   const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-
-  const progress = stageDuration > 0 ? ((stageDuration - timeRemaining) / stageDuration) * 100 : 0;
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   // Cấu hình màu sắc, gradient và hiệu ứng theo trạng thái
   let stateConfig = {
@@ -87,10 +80,10 @@ const OrbVisualizer = ({
   }
 
   return (
-    <div className="relative flex items-center justify-center select-none">
+    <div className="relative flex items-center justify-center select-none my-1">
       {/* 1. Lớp hào quang Radial Glow nền phía sau */}
       <div
-        className="absolute w-64 h-64 rounded-full blur-3xl opacity-30 dark:opacity-45 transition-all duration-700 pointer-events-none"
+        className="absolute w-52 h-52 rounded-full blur-2xl opacity-35 dark:opacity-45 transition-all duration-700 pointer-events-none"
         style={{
           background: stateConfig.orbBg,
           transform: 'translateZ(0)'
@@ -99,17 +92,17 @@ const OrbVisualizer = ({
 
       {/* 2. Quả cầu trung tâm biến hình động theo nhịp co/giãn */}
       <div
-        className={`absolute w-44 h-44 rounded-full transition-all duration-500 flex items-center justify-center ${stateConfig.scaleClass}`}
+        className={`absolute w-36 h-36 rounded-full transition-all duration-500 flex items-center justify-center ${stateConfig.scaleClass}`}
         style={{
           background: stateConfig.orbBg,
-          boxShadow: isActive ? `0 0 35px ${stateConfig.glowColor}` : 'none',
+          boxShadow: isActive ? `0 0 30px ${stateConfig.glowColor}` : 'none',
           filter: 'blur(1px)',
           transform: 'translateZ(0)'
         }}
       />
 
-      {/* 3. Vòng SVG Progress Bar quét mượt mà 120 FPS */}
-      <svg width={size} height={size} className="transform -rotate-90 z-10">
+      {/* 3. Viền Khung Kính Phát Sáng Tinh Tế (Không quét vòng tiến độ) */}
+      <svg width={size} height={size} className="transform -rotate-90 z-10 pointer-events-none">
         <defs>
           <linearGradient id="idleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#10b981" />
@@ -144,31 +137,17 @@ const OrbVisualizer = ({
           </linearGradient>
         </defs>
 
-        {/* Vòng nền rãnh */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="currentColor"
-          strokeWidth={strokeWidth}
-          className="text-slate-200/80 dark:text-white/10 fill-transparent"
-        />
-
-        {/* Vòng quét tiến độ 120 FPS */}
+        {/* Viền tròn phát sáng đồng bộ theo trạng thái */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           stroke={`url(#${stateConfig.gradientId})`}
           strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-          className="fill-transparent"
+          className="fill-transparent opacity-60 dark:opacity-80"
           style={{
-            transition: isActive ? 'stroke-dashoffset 980ms linear' : 'stroke-dashoffset 300ms ease-out',
-            filter: isActive ? `drop-shadow(0 0 12px ${stateConfig.glowColor})` : 'none',
-            willChange: 'stroke-dashoffset'
+            filter: isActive ? `drop-shadow(0 0 8px ${stateConfig.glowColor})` : 'none',
+            transform: 'translateZ(0)'
           }}
         />
       </svg>
@@ -176,7 +155,7 @@ const OrbVisualizer = ({
       {/* 4. Thông tin trung tâm Quả cầu */}
       <div className="absolute z-20 flex flex-col items-center justify-center text-center px-4">
         {/* Nhãn trạng thái */}
-        <span className={`text-[10px] font-extrabold uppercase px-3 py-1 rounded-full mb-1 tracking-wider border backdrop-blur-md transition-all ${stateConfig.badgeClass}`}>
+        <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full mb-0.5 tracking-wider border backdrop-blur-md transition-all ${stateConfig.badgeClass}`}>
           {stateConfig.icon} {stateConfig.title}
         </span>
 

@@ -310,9 +310,9 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
   };
 
   return (
-    <div className="flex flex-col h-full max-w-lg mx-auto px-4 py-2 justify-between">
+    <div className="flex flex-col h-full max-w-lg mx-auto px-4 py-1.5 justify-between">
       {/* 1. TOP CAROUSEL: CHỌN CẤP ĐỘ (LEVEL 1-5) & BÀI TẬP LÂM SÀNG */}
-      <div className="space-y-2.5">
+      <div className="space-y-1.5">
         {/* Cấp độ Tabs (1 - 5) */}
         <div className="flex items-center justify-between bg-slate-200/80 dark:bg-white/5 p-1 rounded-2xl border border-slate-300/60 dark:border-white/10">
           {[1, 2, 3, 4, 5].map((lvl) => (
@@ -361,7 +361,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
 
         {/* 3 Bài tập mẫu trong Cấp độ hiện tại */}
         {selectedPresetType !== 'custom' ? (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-1.5">
             {[
               { type: 'goodMorning', name: 'Chào Buổi Sáng', icon: '🌅' },
               { type: 'powerCombo', name: 'Combo Sức Mạnh', icon: '⚡' },
@@ -373,14 +373,14 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
                   key={p.type}
                   onClick={() => { if (!isActive) setSelectedPresetType(p.type); }}
                   disabled={isActive}
-                  className={`p-2.5 rounded-2xl border text-left transition-all ${
+                  className={`p-2 rounded-2xl border text-left transition-all ${
                     isSelected
                       ? 'bg-emerald-50/90 dark:bg-emerald-500/15 border-emerald-500 shadow-sm ring-1 ring-emerald-500/40'
                       : 'bg-white/80 dark:bg-white/5 border-slate-200 dark:border-white/10 opacity-75'
                   }`}
                 >
-                  <div className="text-base">{p.icon}</div>
-                  <div className="text-[11px] font-black text-slate-900 dark:text-white mt-1 line-clamp-1">
+                  <div className="text-sm">{p.icon}</div>
+                  <div className="text-[11px] font-black text-slate-900 dark:text-white mt-0.5 line-clamp-1">
                     {p.name}
                   </div>
                 </button>
@@ -388,9 +388,9 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
             })}
           </div>
         ) : (
-          <div className="glass-panel p-3 rounded-2xl border border-cyan-500/30 flex items-center justify-between">
+          <div className="glass-panel p-2.5 rounded-2xl border border-cyan-500/30 flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Sparkles size={18} className="text-cyan-500" />
+              <Sparkles size={16} className="text-cyan-500" />
               <div>
                 <div className="text-xs font-black text-slate-900 dark:text-white">
                   {selectedCustomPlan ? selectedCustomPlan.planName : "Chưa chọn giáo án"}
@@ -402,7 +402,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
             </div>
             <button
               onClick={onOpenAIPlan}
-              className="py-1 px-2.5 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-neon border border-cyan-500/30 text-[10px] font-bold"
+              className="py-1 px-2 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-neon border border-cyan-500/30 text-[10px] font-bold"
             >
               Đổi Bài
             </button>
@@ -410,67 +410,36 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
         )}
       </div>
 
-      {/* 2. CẢNH BÁO ĐI TIỂU TRƯỚC KHI TẬP */}
+      {/* 2. CẢNH BÁO ĐI TIỂU TRƯỚC KHI TẬP (NHỎ GỌN) */}
       {showBladderWarning && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-2.5 flex items-center space-x-2.5 text-xs text-amber-700 dark:text-amber-300 animate-pulse">
-          <AlertTriangle size={16} className="shrink-0 text-amber-500" />
-          <div className="text-[11px] leading-tight">
-            <strong>Lời khuyên:</strong> Hãy đi tiểu sạch trước khi tập để bảo vệ bàng quang và cảm nhận cơ sàn chậu tốt nhất.
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-2 flex items-center space-x-2 text-xs text-amber-700 dark:text-amber-300">
+          <AlertTriangle size={14} className="shrink-0 text-amber-500" />
+          <div className="text-[10px] leading-tight">
+            <strong>Lời khuyên:</strong> Hãy đi tiểu sạch trước khi tập để bảo vệ bàng quang.
           </div>
         </div>
       )}
 
-      {/* 3. BỘ ĐỒNG HỒ HUD & QUẢ CẦU VISUALIZER TRUNG TÂM */}
-      <div className="my-auto py-2 flex flex-col items-center justify-center">
+      {/* 3. BỘ ĐỒNG HỒ HUD & QUẢ CẦU VISUALIZER TRUNG TÂM (ĐÃ XÓA THANH TIẾN TRÌNH QUÉT) */}
+      <div className="my-auto py-1 flex flex-col items-center justify-center">
         <OrbVisualizer
           actionState={actionState}
           timeRemaining={timeRemaining}
-          stageDuration={stageDuration}
           currentRep={currentRep}
           totalReps={currentStage?.reps || 0}
           stageLabel={currentStage?.label || ''}
-          stageIndex={currentStageIndex}
-          totalStages={currentStages.length}
           isActive={isActive}
         />
-
-        {/* Thanh Tiến Trình Phân Đoạn (Segmented Stage Progress Bar) */}
-        <div className="w-full max-w-[280px] mt-4 space-y-1.5">
-          <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-gray-400">
-            <span>Chặng {currentStageIndex + 1} / {currentStages.length}</span>
-            <span className="text-emerald-600 dark:text-neon">
-              {currentStage?.type === 'reverse' ? '🌊 Kegel Ngược' : currentStage?.type === 'transition' ? '⏳ Nghỉ' : '⚡ Siết Cơ'}
-            </span>
-          </div>
-          <div className="flex space-x-1.5 h-2 bg-slate-200 dark:bg-white/10 rounded-full p-0.5 overflow-hidden">
-            {currentStages.map((st, idx) => {
-              const isPast = idx < currentStageIndex;
-              const isCurrent = idx === currentStageIndex;
-              return (
-                <div
-                  key={idx}
-                  className={`h-full rounded-full transition-all duration-300 ${
-                    isPast
-                      ? 'bg-emerald-500 flex-1'
-                      : isCurrent
-                      ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 flex-1 ring-1 ring-white/50'
-                      : 'bg-slate-300 dark:bg-white/10 flex-1'
-                  }`}
-                />
-              );
-            })}
-          </div>
-        </div>
       </div>
 
-      {/* 4. NÚT ĐIỀU KHIỂN KHỔNG LỒ (BẮT ĐẦU / TẠM DỪNG / KẾT THÚC) */}
-      <div className="space-y-3 pt-2">
+      {/* 4. NÚT ĐIỀU KHIỂN KHỔNG LỒ (HOÀN TOÀN KHÔNG BỊ BOTTOM NAV CHE LẸM) */}
+      <div className="space-y-2 pt-1 pb-1">
         <div className="flex items-center space-x-3">
           {/* Nút Reset */}
           <button
             onClick={handleResetWorkout}
             disabled={!isActive && actionState === 'idle'}
-            className="w-14 h-14 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white flex items-center justify-center transition-all active:scale-95 disabled:opacity-40"
+            className="w-13 h-13 sm:w-14 sm:h-14 p-3.5 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white flex items-center justify-center transition-all active:scale-95 disabled:opacity-40"
             title="Đặt lại từ đầu"
           >
             <RotateCcw size={20} />
@@ -480,17 +449,17 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
           {!isActive ? (
             <button
               onClick={handleStartWorkout}
-              className="flex-1 h-14 rounded-2xl bg-gradient-to-r from-emerald-500 via-neon to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-oled dark:text-oled font-black text-base uppercase tracking-wider shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-2.5 active:scale-95 transition-all"
+              className="flex-1 h-13 sm:h-14 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-neon to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-oled dark:text-oled font-black text-sm sm:text-base uppercase tracking-wider shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all"
             >
-              <Play size={22} fill="currentColor" />
+              <Play size={20} fill="currentColor" />
               <span>{actionState === 'idle' ? 'BẮT ĐẦU TẬP' : 'TIẾP TỤC'}</span>
             </button>
           ) : (
             <button
               onClick={handlePauseWorkout}
-              className="flex-1 h-14 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-black text-base uppercase tracking-wider shadow-lg shadow-amber-500/30 flex items-center justify-center space-x-2.5 active:scale-95 transition-all"
+              className="flex-1 h-13 sm:h-14 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-black text-sm sm:text-base uppercase tracking-wider shadow-lg shadow-amber-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all"
             >
-              <Pause size={22} fill="currentColor" />
+              <Pause size={20} fill="currentColor" />
               <span>TẠM DỪNG</span>
             </button>
           )}
@@ -499,7 +468,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
           <button
             onClick={handleSkipStage}
             disabled={!isActive}
-            className="w-14 h-14 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white flex items-center justify-center transition-all active:scale-95 disabled:opacity-40"
+            className="w-13 h-13 sm:w-14 sm:h-14 p-3.5 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white flex items-center justify-center transition-all active:scale-95 disabled:opacity-40"
             title="Bỏ qua sang chặng tiếp theo"
           >
             <SkipForward size={20} />
@@ -507,7 +476,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
         </div>
 
         {/* Chỉ số nhanh buổi tập hiện tại */}
-        <div className="flex items-center justify-around py-1.5 px-3 bg-white/60 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 text-[11px] text-slate-600 dark:text-gray-300 font-semibold">
+        <div className="flex items-center justify-around py-1.5 px-3 bg-white/70 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 text-[10px] sm:text-[11px] text-slate-600 dark:text-gray-300 font-semibold">
           <span>⚡ Đã siết: <strong className="text-emerald-600 dark:text-neon">{sessionSqueezes}</strong></span>
           <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-white/20" />
           <span>🌊 Ngược: <strong className="text-cyan-600 dark:text-cyan-neon">{sessionReverseKegels}</strong></span>
