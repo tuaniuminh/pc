@@ -95,8 +95,8 @@ function App() {
         activeRoutineName={activeTab === 'timer' ? 'Sàn Chậu & Kegel AI' : null}
       />
 
-      {/* 2. Phần Thân Chứa 4 Tab Tính Năng (Tab Tập Luyện có khoảng đệm đáy để không bị Bottom Nav che) */}
-      <main className={`flex-1 relative ${activeTab === 'timer' ? 'overflow-hidden pb-[86px]' : 'overflow-y-auto overflow-x-hidden pb-24'}`}>
+      {/* 2. Phần Thân Chứa 4 Tab Tính Năng (Cho phép cuộn trang mượt mà trên mọi tab) */}
+      <main className="flex-1 relative overflow-y-auto overflow-x-hidden pb-28">
         {activeTab === 'timer' && (
           <Timer 
             settings={settings}

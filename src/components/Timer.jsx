@@ -20,19 +20,17 @@ import {
   RotateCcw, 
   SkipForward, 
   Sparkles, 
-  CheckCircle2, 
   Award,
   Volume2,
   VolumeX,
-  Music,
-  AlertTriangle
+  Music
 } from 'lucide-react';
 
-const Timer = ({ settings, userProfile, onOpenAIPlan, onToggleSFX, onToggleBGM }) => {
+const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
   // Trạng thái bài tập
   const [selectedGender, setSelectedGender] = useState(userProfile.gender || 'male');
   const [selectedLevel, setSelectedLevel] = useState(1);
-  const [selectedPresetType, setSelectedPresetType] = useState('goodMorning'); // 'goodMorning' | 'powerCombo' | 'nightRecovery' | 'custom'
+  const [selectedPresetType, setSelectedPresetType] = useState('nightRecovery'); // 'goodMorning' | 'powerCombo' | 'nightRecovery' | 'custom'
   const [customPlansList, setCustomPlansList] = useState(getCustomPlans());
   const [selectedCustomPlan, setSelectedCustomPlan] = useState(null);
 
@@ -41,7 +39,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onToggleSFX, onToggleBGM }
   const [actionState, setActionState] = useState('idle'); // 'idle' | 'squeezing' | 'relaxing' | 'reverse' | 'transition' | 'breathing'
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
   const [currentRep, setCurrentRep] = useState(1);
-  const [timeRemaining, setTimeRemaining] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState(1);
   const [stageDuration, setStageDuration] = useState(1);
 
   // Thống kê buổi tập đang diễn ra
@@ -52,7 +50,6 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onToggleSFX, onToggleBGM }
   // Hộp thoại chúc mừng & cảnh báo đi tiểu
   const [showCelebration, setShowCelebration] = useState(false);
   const [completedSummary, setCompletedSummary] = useState(null);
-  const [showBladderWarning, setShowBladderWarning] = useState(true);
 
   // Quick sound toggles
   const [sfxEnabled, setSfxEnabled] = useState(settings.soundEnabled ?? true);
@@ -66,21 +63,37 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onToggleSFX, onToggleBGM }
       ];
     }
     const lvl = CLINICAL_LEVELS[selectedLevel]?.[selectedGender] || CLINICAL_LEVELS[1].male;
-    const preset = lvl[selectedPresetType] || lvl.goodMorning;
+    const preset = lvl[selectedPresetType] || lvl.nightRecovery || lvl.goodMorning;
     return preset.stages;
   };
 
-  const getCurrentRoutineName = () => {
+  const getCurrentRoutineObj = () => {
     if (selectedPresetType === 'custom' && selectedCustomPlan) {
-      return selectedCustomPlan.planName || 'Giáo Án AI Cá Nhân Hóa';
+      return {
+        name: selectedCustomPlan.planName || 'Giáo Án Tùy Chỉnh AI',
+        meta: `${selectedCustomPlan.stages?.length || 0} chặng tập đa giai đoạn`,
+        icon: '★'
+      };
     }
     const lvl = CLINICAL_LEVELS[selectedLevel]?.[selectedGender] || CLINICAL_LEVELS[1].male;
-    const preset = lvl[selectedPresetType] || lvl.goodMorning;
-    return `Cấp ${selectedLevel}: ${preset.name}`;
+    return lvl[selectedPresetType] || lvl.nightRecovery || lvl.goodMorning;
   };
 
   const currentStages = getCurrentStages();
   const currentStage = currentStages[currentStageIndex] || currentStages[0];
+  const currentRoutine = getCurrentRoutineObj();
+
+  // Tính tổng số lượt tập trong toàn bộ bài
+  const totalRoutineReps = currentStages.reduce((sum, st) => {
+    if (st.type === 'transition') return sum;
+    return sum + (st.reps || 0);
+  }, 0);
+
+  // Tổng số lượt tập đã hoàn thành tới thời điểm hiện tại
+  const currentCompletedReps = currentStages.slice(0, currentStageIndex).reduce((sum, st) => {
+    if (st.type === 'transition') return sum;
+    return sum + (st.reps || 0);
+  }, 0) + (actionState !== 'idle' ? currentRep - 1 : 0);
 
   // Khởi tạo thời gian khi đổi bài tập
   useEffect(() => {
@@ -235,7 +248,6 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onToggleSFX, onToggleBGM }
 
   const handleStartWorkout = () => {
     audioEngine.resumeContext();
-    setShowBladderWarning(false);
     setIsActive(true);
 
     if (actionState === 'idle') {
@@ -274,12 +286,6 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onToggleSFX, onToggleBGM }
     triggerHapticMedium();
   };
 
-  const handleSkipStage = () => {
-    if (!isActive) return;
-    advanceToNextStage();
-    triggerHapticMedium();
-  };
-
   const completeSession = () => {
     setIsActive(false);
     setActionState('idle');
@@ -289,7 +295,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onToggleSFX, onToggleBGM }
     const sessionData = {
       level: selectedPresetType === 'custom' ? 'custom' : selectedLevel,
       routineType: selectedPresetType,
-      routineName: getCurrentRoutineName(),
+      routineName: currentRoutine.name,
       gender: selectedGender,
       durationSeconds: sessionTotalSeconds,
       totalSqueezes: sessionSqueezes,
@@ -306,25 +312,24 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onToggleSFX, onToggleBGM }
   };
 
   return (
-    <div className="flex flex-col h-full max-w-lg mx-auto px-4 py-1 justify-between">
-      {/* 1. KHU VỰC ĐỒNG HỒ & BÀI TẬP CHÍNH (TRAINER CARD CHUẨN V1.2.41) */}
-      <div className="glass-panel rounded-3xl p-3.5 border border-slate-200 dark:border-white/10 flex flex-col items-center justify-between relative shadow-sm">
-        {/* Nút bật/tắt nhanh âm thanh (Âm báo & Nhạc nền) */}
-        <div className="w-full flex items-center justify-between pb-1">
+    <div className="p-4 sm:p-5 space-y-5 max-w-lg mx-auto">
+      {/* 1. KHU VỰC ĐỒNG HỒ & BÀI TẬP CHÍNH (TRAINER CARD CHUẨN ẢNH) */}
+      <div className="glass-panel rounded-[32px] p-5 border border-slate-200 dark:border-white/10 space-y-4 shadow-xl">
+        {/* Nút bật/tắt nhanh âm thanh (Âm báo & Nhạc nền dạng Pill) */}
+        <div className="flex items-center justify-center space-x-3">
           <button
             onClick={() => {
               const next = !sfxEnabled;
               setSfxEnabled(next);
               if (next) audioEngine.playBeep(880, 0.1, 0.3);
             }}
-            className={`flex items-center space-x-1.5 py-1 px-2.5 rounded-xl border text-[11px] font-bold transition-all ${
+            className={`flex items-center space-x-2 py-2 px-5 rounded-full border text-xs font-bold transition-all active:scale-95 ${
               sfxEnabled 
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-neon shadow-sm'
-                : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 dark:text-gray-500'
+                ? 'bg-slate-100/90 dark:bg-white/10 border-slate-300 dark:border-white/15 text-slate-900 dark:text-white'
+                : 'bg-slate-100/40 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 dark:text-gray-500'
             }`}
-            title="Bật/Tắt âm thanh hiệu ứng"
           >
-            {sfxEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+            {sfxEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
             <span>Âm báo</span>
           </button>
 
@@ -335,212 +340,261 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onToggleSFX, onToggleBGM }
               if (next && isActive) audioEngine.startBGM();
               else if (!next) audioEngine.stopBGM();
             }}
-            className={`flex items-center space-x-1.5 py-1 px-2.5 rounded-xl border text-[11px] font-bold transition-all ${
+            className={`flex items-center space-x-2 py-2 px-5 rounded-full border text-xs font-bold transition-all active:scale-95 ${
               bgmActive 
-                ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-600 dark:text-cyan-neon shadow-sm'
-                : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 dark:text-gray-500'
+                ? 'bg-slate-100/90 dark:bg-white/10 border-slate-300 dark:border-white/15 text-slate-900 dark:text-white'
+                : 'bg-slate-100/40 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 dark:text-gray-500'
             }`}
-            title="Bật/Tắt nhạc nền sóng biển thư giãn"
           >
-            <Music size={14} />
+            <Music size={15} />
             <span>Nhạc nền</span>
           </button>
         </div>
 
-        {/* Quả Cầu Visualizer 3D Sinh Học (v1.2.41) */}
-        <div className="my-1">
-          <OrbVisualizer
-            actionState={actionState}
-            timeRemaining={timeRemaining}
-            currentRep={currentRep}
-            totalReps={currentStage?.reps || 0}
-            stageLabel={currentStage?.label || ''}
-            isActive={isActive}
-          />
+        {/* Quả Cầu Visualizer 3D Sinh Học */}
+        <OrbVisualizer
+          actionState={actionState}
+          timeRemaining={timeRemaining}
+          currentRep={currentRep}
+          totalReps={currentStage?.reps || 0}
+          stageLabel={currentStage?.label || ''}
+          routineName={currentRoutine.name}
+          totalRoutineReps={totalRoutineReps}
+          isActive={isActive}
+        />
+
+        {/* Chi tiết Lượt tập & Giai đoạn */}
+        <div className="space-y-1.5 pt-1">
+          <div className="flex items-center justify-between text-sm font-extrabold text-slate-800 dark:text-gray-200">
+            <span>Lượt tập:</span>
+            <span className="font-mono text-base">{currentCompletedReps} / {totalRoutineReps}</span>
+          </div>
+
+          {/* Thanh phân đoạn mờ */}
+          <div className="h-1.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden flex">
+            {currentStages.map((st, idx) => (
+              <div 
+                key={idx} 
+                className={`h-full flex-1 border-r border-slate-900/10 dark:border-black/30 ${
+                  idx < currentStageIndex ? 'bg-cyan-400' : idx === currentStageIndex ? 'bg-cyan-400/60' : 'bg-transparent'
+                }`} 
+              />
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-gray-500 font-medium pt-0.5">
+            {currentStages.slice(0, 3).map((st, idx) => (
+              <span key={idx}>{st.label || (st.type === 'reverse' ? `Kegel ngược ${st.squeeze}s` : `Siết ${st.squeeze}s`)}</span>
+            ))}
+          </div>
         </div>
 
-        {/* Lời khuyên bàng quang */}
-        {showBladderWarning && (
-          <div className="w-full bg-amber-500/10 border border-amber-500/25 rounded-xl p-2 mb-2 flex items-center space-x-2 text-[10px] text-amber-700 dark:text-amber-300">
-            <AlertTriangle size={13} className="shrink-0 text-amber-500" />
-            <span><strong>Lời khuyên:</strong> Hãy đi tiểu sạch trước khi tập để bảo vệ bàng quang tốt nhất.</span>
+        {/* Lời khuyên bàng quang (Hộp Lưu ý màu đỏ/hổ phách chuẩn ảnh) */}
+        <div className="bg-red-950/20 dark:bg-red-950/30 border border-red-500/30 rounded-2xl p-3.5 flex items-start space-x-3 text-xs text-red-200 dark:text-red-300">
+          <span className="text-lg shrink-0 mt-0.5">🚽</span>
+          <div className="text-[11px] leading-relaxed">
+            <strong className="text-red-400">Lưu ý:</strong> Nên đi tiểu sạch bàng quang trước khi tập để bảo vệ sức khỏe và đạt hiệu quả tốt nhất.
           </div>
-        )}
+        </div>
 
-        {/* Cụm Nút Điều Khiển Chính (Đặt lại + Bắt đầu / Tạm dừng) */}
-        <div className="w-full flex items-center space-x-2.5 pt-0.5">
+        {/* Cụm Nút Điều Khiển Chính (Đặt lại + Bắt đầu dạng Pill) */}
+        <div className="flex items-center space-x-3 pt-1">
           <button
             onClick={handleResetWorkout}
             disabled={!isActive && actionState === 'idle'}
-            className="w-12 h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white flex items-center justify-center transition-all active:scale-95 disabled:opacity-40 border border-slate-200 dark:border-white/10"
-            title="Đặt lại từ đầu"
+            className="w-1/2 py-3.5 rounded-2xl bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/15 text-slate-800 dark:text-white font-extrabold text-sm flex items-center justify-center space-x-2 border border-slate-300 dark:border-white/10 transition-all active:scale-95 disabled:opacity-40"
           >
-            <RotateCcw size={18} />
+            <RotateCcw size={16} />
+            <span>Đặt lại</span>
           </button>
 
           {!isActive ? (
             <button
               onClick={handleStartWorkout}
-              className="flex-1 h-12 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-neon to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm uppercase tracking-wider shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all"
+              className="w-1/2 py-3.5 rounded-2xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-black text-sm flex items-center justify-center space-x-2 shadow-lg shadow-cyan-500/30 active:scale-95 transition-all"
             >
-              <Play size={18} fill="currentColor" />
-              <span>{actionState === 'idle' ? 'BẮT ĐẦU TẬP' : 'TIẾP TỤC'}</span>
+              <Play size={16} fill="currentColor" />
+              <span>{actionState === 'idle' ? 'Bắt đầu' : 'Tiếp tục'}</span>
             </button>
           ) : (
             <button
               onClick={handlePauseWorkout}
-              className="flex-1 h-12 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-amber-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all"
+              className="w-1/2 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-black text-sm flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/30 active:scale-95 transition-all"
             >
-              <Pause size={18} fill="currentColor" />
-              <span>TẠM DỪNG</span>
+              <Pause size={16} fill="currentColor" />
+              <span>Tạm dừng</span>
             </button>
           )}
-
-          <button
-            onClick={handleSkipStage}
-            disabled={!isActive}
-            className="w-12 h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white flex items-center justify-center transition-all active:scale-95 disabled:opacity-40 border border-slate-200 dark:border-white/10"
-            title="Bỏ qua sang chặng tiếp theo"
-          >
-            <SkipForward size={18} />
-          </button>
         </div>
       </div>
 
-      {/* 2. KHU VỰC CẤU HÌNH BÀI TẬP (LEVEL & ROUTINE SELECTOR CHUẨN V1.2.41) */}
-      <div className="space-y-1.5 pt-1">
-        {/* Gender + Level Selector Bar */}
-        <div className="flex items-center space-x-1.5">
-          {/* Nút chọn Giới tính Nam/Nữ */}
-          <div className="flex bg-slate-200/80 dark:bg-white/5 p-0.5 rounded-xl border border-slate-300/60 dark:border-white/10 shrink-0">
-            <button
-              onClick={() => { if (!isActive) setSelectedGender('male'); }}
-              disabled={isActive}
-              className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${
-                selectedGender === 'male'
-                  ? 'bg-blue-500 text-white shadow-xs'
-                  : 'text-slate-600 dark:text-gray-400'
-              }`}
-            >
-              Nam
-            </button>
-            <button
-              onClick={() => { if (!isActive) setSelectedGender('female'); }}
-              disabled={isActive}
-              className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${
-                selectedGender === 'female'
-                  ? 'bg-rose-500 text-white shadow-xs'
-                  : 'text-slate-600 dark:text-gray-400'
-              }`}
-            >
-              Nữ
-            </button>
-          </div>
-
-          {/* Cấp độ Tabs (1 - 5 + AI) */}
-          <div className="flex-1 flex items-center justify-between bg-slate-200/80 dark:bg-white/5 p-0.5 rounded-xl border border-slate-300/60 dark:border-white/10">
-            {[1, 2, 3, 4, 5].map((lvl) => (
-              <button
-                key={lvl}
-                onClick={() => {
-                  if (!isActive) {
-                    setSelectedLevel(lvl);
-                    if (selectedPresetType === 'custom') setSelectedPresetType('goodMorning');
-                  }
-                }}
-                disabled={isActive}
-                className={`flex-1 py-1 rounded-lg text-[11px] font-black transition-all ${
-                  selectedLevel === lvl && selectedPresetType !== 'custom'
-                    ? 'bg-emerald-500 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-gray-400'
-                }`}
-              >
-                Cấp {lvl}
-              </button>
-            ))}
-            <button
-              onClick={() => {
-                if (!isActive) {
-                  const plans = getCustomPlans();
-                  setCustomPlansList(plans);
-                  if (plans.length > 0) {
-                    setSelectedCustomPlan(plans[0]);
-                    setSelectedPresetType('custom');
-                  } else {
-                    onOpenAIPlan();
-                  }
-                }
-              }}
-              disabled={isActive}
-              className={`px-2 py-1 rounded-lg text-[11px] font-black transition-all flex items-center space-x-0.5 ${
-                selectedPresetType === 'custom'
-                  ? 'bg-cyan-500 text-white shadow-xs'
-                  : 'text-slate-600 dark:text-gray-400'
-              }`}
-            >
-              <Sparkles size={10} />
-              <span>AI</span>
-            </button>
-          </div>
+      {/* 2. KHU VỰC CẤU HÌNH BÀI TẬP (WORKOUT CONFIGURATION CARD CHUẨN ẢNH) */}
+      <div className="glass-panel rounded-[32px] p-5 border border-slate-200 dark:border-white/10 space-y-4 shadow-xl">
+        <div>
+          <h3 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+            Cấu Hình Bài Tập
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">
+            Chọn bài tập được lập trình sẵn hoặc tùy chỉnh theo ý muốn của bạn.
+          </p>
         </div>
 
-        {/* 3 Bài tập mẫu trong Cấp độ hiện tại */}
-        {selectedPresetType !== 'custom' ? (
-          <div className="grid grid-cols-3 gap-1.5">
-            {[
-              { type: 'goodMorning', name: 'Chào Buổi Sáng', icon: '🌅' },
-              { type: 'powerCombo', name: 'Combo Sức Mạnh', icon: '⚡' },
-              { type: 'nightRecovery', name: 'Phục Hồi Đêm', icon: '🌙' },
-            ].map((p) => {
-              const isSelected = selectedPresetType === p.type;
+        {/* Gender Selection Group */}
+        <div className="grid grid-cols-2 gap-2.5 p-1 bg-slate-100 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/5">
+          <button
+            onClick={() => { if (!isActive) setSelectedGender('male'); }}
+            disabled={isActive}
+            className={`py-3 rounded-xl font-extrabold text-sm transition-all ${
+              selectedGender === 'male'
+                ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 shadow-md'
+                : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            Nam giới
+          </button>
+          <button
+            onClick={() => { if (!isActive) setSelectedGender('female'); }}
+            disabled={isActive}
+            className={`py-3 rounded-xl font-extrabold text-sm transition-all ${
+              selectedGender === 'female'
+                ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md'
+                : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            Nữ giới
+          </button>
+        </div>
+
+        {/* Level Selector Bar */}
+        <div className="flex items-center space-x-3 pt-1">
+          <span className="text-sm font-bold text-slate-600 dark:text-gray-400 shrink-0">Cấp độ:</span>
+          <div className="flex-1 flex items-center justify-between space-x-1.5">
+            {[1, 2, 3, 4, 5].map((lvl) => {
+              const isSelected = selectedLevel === lvl && selectedPresetType !== 'custom';
               return (
                 <button
-                  key={p.type}
-                  onClick={() => { if (!isActive) setSelectedPresetType(p.type); }}
+                  key={lvl}
+                  onClick={() => {
+                    if (!isActive) {
+                      setSelectedLevel(lvl);
+                      if (selectedPresetType === 'custom') setSelectedPresetType('nightRecovery');
+                    }
+                  }}
                   disabled={isActive}
-                  className={`p-2 rounded-2xl border text-left transition-all ${
+                  className={`flex-1 py-2 rounded-xl text-xs font-black transition-all ${
                     isSelected
-                      ? 'bg-emerald-50/90 dark:bg-emerald-500/15 border-emerald-500 shadow-sm ring-1 ring-emerald-500/40'
-                      : 'bg-white/80 dark:bg-white/5 border-slate-200 dark:border-white/10 opacity-75'
+                      ? 'bg-cyan-400 text-slate-950 shadow-sm'
+                      : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/5'
                   }`}
                 >
-                  <div className="text-sm">{p.icon}</div>
-                  <div className="text-[11px] font-black text-slate-900 dark:text-white mt-0.5 line-clamp-1">
-                    {p.name}
-                  </div>
+                  {lvl}
                 </button>
               );
             })}
           </div>
-        ) : (
-          <div className="glass-panel p-2 rounded-2xl border border-cyan-500/30 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Sparkles size={16} className="text-cyan-500" />
-              <div>
-                <div className="text-xs font-black text-slate-900 dark:text-white">
-                  {selectedCustomPlan ? selectedCustomPlan.planName : "Chưa chọn giáo án"}
-                </div>
-                <div className="text-[10px] text-slate-500 dark:text-gray-400">
-                  {selectedCustomPlan?.stages?.length || 0} chặng tập do Gemini thiết kế
-                </div>
+        </div>
+
+        {/* Danh Sách Các Bài Tập Trong Cấp Độ Hiện Tại */}
+        <div className="space-y-3 pt-2">
+          {/* Card 1: Chào Buổi Sáng */}
+          <div
+            onClick={() => { if (!isActive) setSelectedPresetType('goodMorning'); }}
+            className={`p-4 rounded-2xl border text-left cursor-pointer transition-all flex items-center space-x-3.5 ${
+              selectedPresetType === 'goodMorning'
+                ? 'bg-slate-100/90 dark:bg-white/10 border-amber-500 ring-1 ring-amber-500/40 shadow-sm'
+                : 'bg-slate-100/40 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-amber-500/40'
+            }`}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-2xl shrink-0">
+              🌅
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-black text-amber-500 dark:text-amber-400">
+                Chào Buổi Sáng
+              </div>
+              <div className="text-xs text-slate-500 dark:text-gray-400 mt-0.5 line-clamp-2">
+                20 lượt siết 1s - thả 2s | 5 lượt Kegel ngược giãn chậu
               </div>
             </div>
-            <button
-              onClick={onOpenAIPlan}
-              className="py-1 px-2 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-neon border border-cyan-500/30 text-[10px] font-bold"
-            >
-              Đổi Bài
-            </button>
           </div>
-        )}
 
-        {/* Chỉ số nhanh buổi tập */}
-        <div className="flex items-center justify-around py-1 px-3 bg-white/70 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 text-[10px] text-slate-600 dark:text-gray-300 font-semibold">
-          <span>⚡ Đã siết: <strong className="text-emerald-600 dark:text-neon">{sessionSqueezes}</strong></span>
-          <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-white/20" />
-          <span>🌊 Ngược: <strong className="text-cyan-600 dark:text-cyan-neon">{sessionReverseKegels}</strong></span>
-          <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-white/20" />
-          <span>⏱️ Thời gian: <strong>{Math.floor(sessionTotalSeconds / 60)}p {sessionTotalSeconds % 60}s</strong></span>
+          {/* Card 2: Combo Sức Mạnh */}
+          <div
+            onClick={() => { if (!isActive) setSelectedPresetType('powerCombo'); }}
+            className={`p-4 rounded-2xl border text-left cursor-pointer transition-all flex items-center space-x-3.5 ${
+              selectedPresetType === 'powerCombo'
+                ? 'bg-slate-100/90 dark:bg-white/10 border-emerald-500 ring-1 ring-emerald-500/40 shadow-sm'
+                : 'bg-slate-100/40 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-emerald-500/40'
+            }`}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-xl font-black text-emerald-400 shrink-0">
+              ★
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-black text-emerald-500 dark:text-neon">
+                Combo Sức Mạnh
+              </div>
+              <div className="text-xs text-slate-500 dark:text-gray-400 mt-0.5 line-clamp-2">
+                Siết nhanh 20 lượt 1s | Giữ 24 lượt 3s | Giữ 10 lượt 5s + Cooldown
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Phục Hồi Ban Đêm */}
+          <div
+            onClick={() => { if (!isActive) setSelectedPresetType('nightRecovery'); }}
+            className={`p-4 rounded-2xl border text-left cursor-pointer transition-all flex items-center space-x-3.5 ${
+              selectedPresetType === 'nightRecovery'
+                ? 'bg-slate-100/90 dark:bg-white/10 border-violet-500 ring-1 ring-violet-500/40 shadow-sm'
+                : 'bg-slate-100/40 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-violet-500/40'
+            }`}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-xl shrink-0">
+              🌙
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-black text-violet-500 dark:text-violet-400">
+                Phục Hồi Ban Đêm
+              </div>
+              <div className="text-xs text-slate-500 dark:text-gray-400 mt-0.5 line-clamp-2">
+                15 lượt siết nhanh | 10 lượt Kegel ngược | 5 lượt hít thở sâu
+              </div>
+            </div>
+          </div>
+
+          {/* Card 4: Thiết Kế Bài Tập Mới (Dashed Border) */}
+          <div
+            onClick={() => {
+              if (!isActive) {
+                const plans = getCustomPlans();
+                setCustomPlansList(plans);
+                if (plans.length > 0) {
+                  setSelectedCustomPlan(plans[0]);
+                  setSelectedPresetType('custom');
+                } else {
+                  onOpenAIPlan();
+                }
+              }
+            }}
+            className={`p-4 rounded-2xl border border-dashed border-slate-300 dark:border-white/20 text-left cursor-pointer transition-all flex items-center space-x-3.5 hover:border-cyan-500/50 ${
+              selectedPresetType === 'custom'
+                ? 'bg-cyan-500/10 border-cyan-500 ring-1 ring-cyan-500/40'
+                : 'bg-transparent'
+            }`}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-lg font-black text-amber-500 shrink-0">
+              C
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-black text-slate-900 dark:text-white flex items-center space-x-1.5">
+                <span>Thiết Kế Bài Tập Mới</span>
+                <Sparkles size={13} className="text-cyan-500" />
+              </div>
+              <div className="text-xs text-slate-500 dark:text-gray-400 mt-0.5 line-clamp-2">
+                Tùy chỉnh đa giai đoạn, nghỉ chuyển chặng & Kegel ngược
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
