@@ -573,6 +573,13 @@ export const getSettings = () => {
     soundEnabled: true,
     soundPreset: 'preset_14',
     reversePreset: 'preset_1',
+    actionSounds: {
+      squeeze: 'preset_14',
+      relax: 'preset_5',
+      reverse: 'preset_1',
+      transition: 'preset_27',
+      complete: 'preset_20'
+    },
     bgmEnabled: false,
     hapticsEnabled: true,
     gender: 'male',
@@ -580,7 +587,16 @@ export const getSettings = () => {
   };
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-    return raw ? { ...defaultSettings, ...JSON.parse(raw) } : defaultSettings;
+    if (!raw) return defaultSettings;
+    const parsed = JSON.parse(raw);
+    return {
+      ...defaultSettings,
+      ...parsed,
+      actionSounds: {
+        ...defaultSettings.actionSounds,
+        ...(parsed.actionSounds || {})
+      }
+    };
   } catch (e) {
     return defaultSettings;
   }

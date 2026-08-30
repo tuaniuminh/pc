@@ -1,7 +1,86 @@
 /**
- * PC Flex - High Performance Web Audio API Sound Synthesizer
- * Tích hợp 50 Sound Presets, BGM sóng biển thư giãn và âm thanh đếm nhịp
+ * PC Flex - High Performance Web Audio API Sound Synthesizer & 50 Sound Studio
+ * Hỗ trợ 50 âm thanh phòng thu, BGM sóng biển thư giãn và gán âm thanh độc lập cho 5 loại nhịp tập
  */
+
+export const SOUND_STUDIO_PRESETS = [
+  // --- NHÓM 1: ZEN & CHUÔNG THIỀN (1 - 10) ---
+  { id: 'preset_1', cat: 'zen', icon: '🧘', name: 'Chuông Xoay Zen', desc: 'Sóng âm 216Hz + 432Hz ngân trầm sâu Tây Tạng' },
+  { id: 'preset_2', cat: 'zen', icon: '🔔', name: 'Chuông Tây Tạng Thẫm', desc: 'Hợp âm trầm 144Hz + 288Hz giải tỏa căng thẳng' },
+  { id: 'preset_3', cat: 'zen', icon: '🎐', name: 'Chuông Gió Thạch Anh', desc: 'Sóng âm cao 864Hz + 1296Hz thanh khiết' },
+  { id: 'preset_4', cat: 'zen', icon: '🏛️', name: 'Chuông Chùa Tĩnh Lặng', desc: 'Âm chuông 108Hz + 324Hz tĩnh tại tâm trí' },
+  { id: 'preset_5', cat: 'zen', icon: '✨', name: 'Âm Ngân 432Hz Healing', desc: 'Tần số chữa lành sinh học 432Hz chuẩn quốc tế' },
+  { id: 'preset_6', cat: 'zen', icon: '☸️', name: 'Chuông Tam Bảo', desc: 'Hợp âm ba tầng 300Hz + 600Hz + 900Hz' },
+  { id: 'preset_7', cat: 'zen', icon: '📿', name: 'Chuông Ngân Thư Thái', desc: 'Dải âm 520Hz + 780Hz thư giãn cơ thể' },
+  { id: 'preset_8', cat: 'zen', icon: '🥁', name: 'Gong Thiền Vô Vi', desc: 'Tiếng Gong 96Hz ngân vang tĩnh lặng' },
+  { id: 'preset_9', cat: 'zen', icon: '💎', name: 'Chuông Ngọc Bích F-Major', desc: 'Hợp âm F5 + A5 + C6 tinh khiết y khoa' },
+  { id: 'preset_10', cat: 'zen', icon: '🪐', name: 'Vũ Trụ OM Tone 136.1Hz', desc: 'Tần số OM 136.1Hz cân bằng năng lượng' },
+
+  // --- NHÓM 2: NHẠC CỤ & GIAI ĐIỆU (11 - 20) ---
+  { id: 'preset_11', cat: 'instrument', icon: '🎼', name: 'Đàn Hạc Vuốt Nhẹ', desc: 'Hợp âm C4-E4-G4-C5 rải nhẹ tựa đàn hạc' },
+  { id: 'preset_12', cat: 'instrument', icon: '🪵', name: 'Đàn Marimba Mộc', desc: 'Tiếng gõ gỗ gụ G4 + B4 mộc mạc ấm áp' },
+  { id: 'preset_13', cat: 'instrument', icon: '🪕', name: 'Đàn Kalimba Châu Phi', desc: 'Tiếng phiến kim loại Kalimba D5 + F#5 + A5' },
+  { id: 'preset_14', cat: 'instrument', icon: '🎹', name: 'Đàn Organ Crystal', desc: 'Hợp âm phong cầm C4 + G4 + E5 du dương' },
+  { id: 'preset_15', cat: 'instrument', icon: '🪈', name: 'Tiếng Sáo Thiên Đường', desc: 'Tiếng sáo trúc vi vút E5 -> G5 thanh thoát' },
+  { id: 'preset_16', cat: 'instrument', icon: '🎻', name: 'Piano Hợp Âm Ấm', desc: 'Phím đàn Piano A3 + C#4 + E4 du dương' },
+  { id: 'preset_17', cat: 'instrument', icon: '🛎️', name: 'Đàn Celesta Thần Tiên', desc: 'Chuông phím Celesta C6 + E6 + G6 mộng mơ' },
+  { id: 'preset_18', cat: 'instrument', icon: '🎻', name: 'Violin Vĩ Kéo Êm', desc: 'Tiếng kéo vĩ Violin D4 + A4 mượt mà' },
+  { id: 'preset_19', cat: 'instrument', icon: '🪕', name: 'Đàn Tranh Dân Gian', desc: 'Tiếng gảy đàn tranh D4 -> F#4 -> A4' },
+  { id: 'preset_20', cat: 'instrument', icon: '🎉', name: 'Giai Điệu Chiến Thắng', desc: 'Hợp âm rải C-E-G-C-E hoan hỉ chúc mừng' },
+
+  // --- NHÓM 3: TỰ NHIÊN & SOMATIC (21 - 30) ---
+  { id: 'preset_21', cat: 'nature', icon: '🌊', name: 'Sóng Biển Êm Dịu', desc: 'Dải âm 180Hz -> 320Hz phập phồng sóng biển' },
+  { id: 'preset_22', cat: 'nature', icon: '💧', name: 'Giọt Sương Somatic', desc: 'Tiếng giọt nước đọng D5 -> A5 trong trẻo' },
+  { id: 'preset_23', cat: 'nature', icon: '🏞️', name: 'Tiếng Suối Róc Rách', desc: 'Âm thanh giọt nước suối đa tần róc rách' },
+  { id: 'preset_24', cat: 'nature', icon: '🎋', name: 'Gió Thoảng Rừng Trúc', desc: 'Tiếng gió lướt nhẹ qua tán trúc xào xạc' },
+  { id: 'preset_25', cat: 'nature', icon: '🎋', name: 'Cốc Gõ Gỗ Tre', desc: 'Âm thanh gõ ống tre 400Hz + 800Hz mộc mạc' },
+  { id: 'preset_26', cat: 'nature', icon: '🌧️', name: 'Mưa Rào Êm Dịu', desc: 'Tiếng mưa rơi nhẹ nhàng trên lá cây' },
+  { id: 'preset_27', cat: 'nature', icon: '🫀', name: 'Nhịp Tim Somatic', desc: 'Nhịp trầm 60Hz + 80Hz sâu lắng an yên' },
+  { id: 'preset_28', cat: 'nature', icon: '🐦', name: 'Tiếng Chim Rừng Hót', desc: 'Âm vang tiếng chim hót A5 -> C6 vi vút' },
+  { id: 'preset_29', cat: 'nature', icon: '💨', name: 'Hơi Thở Thả Lỏng Sâu', desc: 'Âm thanh sóng thở bung nén thư thái' },
+  { id: 'preset_30', cat: 'nature', icon: '🔥', name: 'Lửa Trại Đêm Thiền', desc: 'Tiếng nổ tí tách ấm áp lửa trại' },
+
+  // --- NHÓM 4: TẦN SỐ SOLFEGGIO & Y KHOA (31 - 40) ---
+  { id: 'preset_31', cat: 'solfeggio', icon: '⚡', name: 'Tần Số 528Hz Solfeggio', desc: 'Tần số 528Hz phục hồi tế bào & DNA' },
+  { id: 'preset_32', cat: 'solfeggio', icon: '💚', name: 'Tần Số 639Hz Gắn Kết', desc: 'Tần số 639Hz cân bằng cảm xúc & tim' },
+  { id: 'preset_33', cat: 'solfeggio', icon: '💜', name: 'Tần Số 741Hz Giải Độc', desc: 'Tần số 741Hz làm sạch năng lượng' },
+  { id: 'preset_34', cat: 'solfeggio', icon: '🩺', name: 'Bíp Y Khoa Chuẩn', desc: 'Âm bíp 880Hz báo nhịp y khoa sắc nét' },
+  { id: 'preset_35', cat: 'solfeggio', icon: '🏥', name: 'Bíp Y Khoa Kép', desc: 'Nhịp bíp đôi 880Hz + 1046Hz báo chuyển' },
+  { id: 'preset_36', cat: 'solfeggio', icon: '📈', name: 'Nhịp Mạch Sinh Lý', desc: 'Xung âm 523Hz mô phỏng nhịp sinh học' },
+  { id: 'preset_37', cat: 'solfeggio', icon: '🧠', name: 'Sóng Não Alpha 10Hz', desc: 'Âm nền 440Hz điều tần 10Hz tập trung' },
+  { id: 'preset_38', cat: 'solfeggio', icon: '🌙', name: 'Sóng Não Theta 6Hz', desc: 'Âm trầm 220Hz điều tần 6Hz thư giãn sâu' },
+  { id: 'preset_39', cat: 'solfeggio', icon: '🔔', name: 'Chuông Cảnh Báo Nhẹ', desc: 'Nhịp chuông A5 + E6 báo hoàn thành nhịp' },
+  { id: 'preset_40', cat: 'solfeggio', icon: '💓', name: 'Mạch Sinh Học 70BPM', desc: 'Nhịp đập sine 70 nhịp/phút chuẩn y khoa' },
+
+  // --- NHÓM 5: NHỊP NHÚN & ĐỘNG LỰC (41 - 50) ---
+  { id: 'preset_41', cat: 'rhythm', icon: '🎈', name: 'Tiếng Pop Động Lực', desc: 'Âm vuốt Pop 300Hz linh hoạt năng lượng' },
+  { id: 'preset_42', cat: 'rhythm', icon: '🚀', name: 'Synth Riser Bứt Phá', desc: 'Âm vuốt tăng tần số 200Hz -> 800Hz' },
+  { id: 'preset_43', cat: 'rhythm', icon: '💥', name: 'Bass Trầm Năng Lượng', desc: 'Nhịp Bass 80Hz dội mạnh mẽ tạo động lực' },
+  { id: 'preset_44', cat: 'rhythm', icon: '🥁', name: 'Trống Gỗ Thể Thao', desc: 'Nhịp gõ trống Snare gỗ gụ thể thao' },
+  { id: 'preset_45', cat: 'rhythm', icon: '⭐', name: 'Âm Thăng Cấp Level Up', desc: 'Hợp âm C5-E5-G5-C6 vinh quang' },
+  { id: 'preset_46', cat: 'rhythm', icon: '👏', name: 'Tiếng Vỗ Tay Chúc Mừng', desc: 'Âm thanh tán thưởng tán dương hoàn thành' },
+  { id: 'preset_47', cat: 'rhythm', icon: '🔔', name: 'Leng Keng Kim Loại', desc: 'Chuông kim loại 1200Hz vui tươi náo nhiệt' },
+  { id: 'preset_48', cat: 'rhythm', icon: '📳', name: 'Haptic Click Premium', desc: 'Tiếng gõ nhẹ 150Hz mô phỏng rung xúc giác' },
+  { id: 'preset_49', cat: 'rhythm', icon: '🌌', name: 'Sóng Âm Sci-Fi Chuyển', desc: 'Âm thanh viễn tưởng FM chuyển nhịp' },
+  { id: 'preset_50', cat: 'rhythm', icon: '🏆', name: 'Hợp Âm Hoàn Mỹ Final', desc: 'Hợp âm C Major 7th hoành tráng kết thúc' }
+];
+
+export const SOUND_CATEGORIES = [
+  { id: 'all', name: 'Tất cả (50)' },
+  { id: 'zen', name: '🧘 Chuông Thiền' },
+  { id: 'instrument', name: '🎼 Nhạc Cụ' },
+  { id: 'nature', name: '🌊 Tự Nhiên' },
+  { id: 'solfeggio', name: '⚡ Y Khoa' },
+  { id: 'rhythm', name: '🥁 Động Lực' }
+];
+
+export const SOUND_ACTIONS = [
+  { key: 'squeeze', name: '⚡ Siết Cơ', defaultPreset: 'preset_14' },
+  { key: 'relax', name: '🌀 Thả Lỏng', defaultPreset: 'preset_5' },
+  { key: 'reverse', name: '🔄 Kegel Ngược', defaultPreset: 'preset_1' },
+  { key: 'transition', name: '⏸️ Nghỉ Chuyển', defaultPreset: 'preset_27' },
+  { key: 'complete', name: '🎉 Hoàn Thành', defaultPreset: 'preset_20' }
+];
 
 class AudioSynthesizer {
   constructor() {
@@ -26,7 +105,33 @@ class AudioSynthesizer {
     }
   }
 
-  // Helper Methods for Tone Synthesis
+  // Action Sound Playback Wrappers
+  playSqueezeSFX(actionSounds = {}) {
+    const preset = actionSounds.squeeze || 'preset_14';
+    this.playSoundPreset(preset);
+  }
+
+  playRelaxSFX(actionSounds = {}) {
+    const preset = actionSounds.relax || 'preset_5';
+    this.playSoundPreset(preset);
+  }
+
+  playReverseKegelSFX(actionSounds = {}) {
+    const preset = actionSounds.reverse || 'preset_1';
+    this.playSoundPreset(preset);
+  }
+
+  playTransitionRestSFX(actionSounds = {}) {
+    const preset = actionSounds.transition || 'preset_27';
+    this.playSoundPreset(preset);
+  }
+
+  playCompletionSFX(actionSounds = {}) {
+    const preset = actionSounds.complete || 'preset_20';
+    this.playSoundPreset(preset);
+  }
+
+  // Tone Synthesis Engine
   playSineChord(freqs, vol = 0.5, dur = 1.2) {
     this.resumeContext();
     if (!this.audioCtx) return;
@@ -229,7 +334,6 @@ class AudioSynthesizer {
     else this.playSineChord([261.63, 392.00, 659.25], 0.35, 1.5);
   }
 
-  // Ocean wave meditation BGM soundscape
   startBGM(vol = 0.15) {
     this.resumeContext();
     if (!this.audioCtx || this.isBGMPlaying) return;
@@ -296,18 +400,3 @@ class AudioSynthesizer {
 }
 
 export const audioEngine = new AudioSynthesizer();
-
-export const SOUND_PRESETS_METADATA = [
-  { id: 'preset_1', name: 'Âm 432Hz An Lạc', tag: 'Solfeggio' },
-  { id: 'preset_5', name: 'Sóng Tần Số Gốc 432Hz', tag: 'Thiền Định' },
-  { id: 'preset_11', name: 'Hợp Âm Đô Trưởng (C-Major)', tag: 'Tươi Sáng' },
-  { id: 'preset_14', name: 'Chuông Pha Lê Sáng Rực', tag: 'Kích Hoạt' },
-  { id: 'preset_15', name: 'Lượn Sóng Tần Số Cao', tag: 'Bứt Phá' },
-  { id: 'preset_20', name: 'Chuông Ngũ Cung Hoàn Thành', tag: 'Chiến Thắng' },
-  { id: 'preset_27', name: 'Âm Trầm Chuyển Bài', tag: 'Chuyển Chặng' },
-  { id: 'preset_31', name: 'Tần Số 528Hz Tái Tạo Tế Bào', tag: 'Solfeggio' },
-  { id: 'preset_32', name: 'Tần Số 639Hz Gắn Kết Năng Lượng', tag: 'Solfeggio' },
-  { id: 'preset_33', name: 'Tần Số 741Hz Thức Tỉnh Trực Giác', tag: 'Solfeggio' },
-  { id: 'preset_45', name: 'Chuỗi Hợp Âm Thư Thái', tag: 'Phục Hồi' },
-  { id: 'preset_50', name: 'Đại Hợp Âm Vũ Trụ', tag: 'Đỉnh Cao' },
-];

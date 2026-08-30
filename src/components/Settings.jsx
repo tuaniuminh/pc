@@ -14,18 +14,36 @@ import {
   Download,
   Upload,
   Music,
-  ShieldCheck
+  Check,
+  Headphones
 } from 'lucide-react';
 import { testGeminiApiKey } from '../services/geminiService';
-import { audioEngine, SOUND_PRESETS_METADATA } from '../utils/audioEngine';
+import { 
+  audioEngine, 
+  SOUND_STUDIO_PRESETS, 
+  SOUND_CATEGORIES, 
+  SOUND_ACTIONS 
+} from '../utils/audioEngine';
 import { exportBackupJSON, importBackupJSON } from '../services/storageService';
-import { triggerHapticMedium } from '../utils/hapticsUtils';
+import { triggerHapticMedium, triggerHapticLight } from '../utils/hapticsUtils';
 
 const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
   const [showKey, setShowKey] = useState(false);
   const [testingKey, setTestingKey] = useState(false);
   const [testResult, setTestResult] = useState(null);
   const [backupMessage, setBackupMessage] = useState(null);
+
+  // Sound Studio State
+  const [activeActionKey, setActiveActionKey] = useState('squeeze'); // 'squeeze' | 'relax' | 'reverse' | 'transition' | 'complete'
+  const [activeCategory, setActiveCategory] = useState('all');
+
+  const actionSounds = settings.actionSounds || {
+    squeeze: 'preset_14',
+    relax: 'preset_5',
+    reverse: 'preset_1',
+    transition: 'preset_27',
+    complete: 'preset_20'
+  };
 
   const handleKeyChange = (val) => {
     onUpdateSettings({ ...settings, apiKey: val });
@@ -60,6 +78,22 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
     }
   };
 
+  const handleAssignSound = (presetId) => {
+    const updatedActionSounds = {
+      ...actionSounds,
+      [activeActionKey]: presetId
+    };
+    onUpdateSettings({
+      ...settings,
+      actionSounds: updatedActionSounds,
+      // Đồng bộ trường cũ nếu có
+      soundPreset: activeActionKey === 'squeeze' ? presetId : settings.soundPreset,
+      reversePreset: activeActionKey === 'reverse' ? presetId : settings.reversePreset
+    });
+    audioEngine.playSoundPreset(presetId);
+    triggerHapticLight();
+  };
+
   const handleFileImport = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -80,6 +114,14 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
     reader.readAsText(file);
   };
 
+  const filteredPresets = SOUND_STUDIO_PRESETS.filter(p => {
+    if (activeCategory === 'all') return true;
+    return p.cat === activeCategory;
+  });
+
+  const currentAssignedId = actionSounds[activeActionKey] || 'preset_1';
+  const currentActionObj = SOUND_ACTIONS.find(a => a.key === activeActionKey) || SOUND_ACTIONS[0];
+
   return (
     <div className="p-4 sm:p-6 space-y-6 pb-28 max-w-lg mx-auto">
       {/* Title */}
@@ -88,7 +130,7 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
           Cài Đặt Hệ Thống
         </h2>
         <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
-          Tùy chỉnh âm thanh, rung phản hồi Haptic, Gemini AI và sao lưu dữ liệu
+          Tùy chỉnh âm thanh độc lập 5 nhịp tập, rung Taptic Engine và Gemini AI
         </p>
       </div>
 
@@ -169,99 +211,120 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
         </div>
       </div>
 
-      {/* SECTION 2: CẤU HÌNH ÂM THANH & PRESETS */}
+      {/* SECTION 2: STUDIO CÀI ĐẶT 50 ÂM THANH TOÀN DIỆN CHO 5 NHỊP TẬP */}
       <div className="glass-panel p-5 rounded-3xl space-y-4 border border-emerald-300/40 dark:border-emerald-500/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <Volume2 size={16} />
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-neon flex items-center justify-center">
+              <Headphones size={16} />
             </div>
             <div>
-              <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Âm Thanh Tần Số (50 Presets)</h3>
-              <p className="text-[11px] text-slate-500 dark:text-gray-400">Bộ tổng hợp Web Audio API chất lượng phòng thu</p>
+              <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Studio 50 Âm Thanh Nhịp Tập</h3>
+              <p className="text-[11px] text-slate-500 dark:text-gray-400">Gán độc lập âm thanh cho từng loại nhịp co thắt</p>
             </div>
           </div>
         </div>
 
-        {/* Master Sound Toggle */}
-        <div className="flex items-center justify-between pt-1">
-          <div>
-            <div className="text-xs font-bold text-slate-900 dark:text-white">Bật Âm Thanh Nhịp Siết / Thả</div>
-            <div className="text-[11px] text-slate-500 dark:text-gray-400">Phát âm thanh khi chuyển nhịp co thắt</div>
-          </div>
-          <button
-            type="button"
-            onClick={() => onUpdateSettings({ ...settings, soundEnabled: !settings.soundEnabled })}
-            className={`w-12 h-7 rounded-full p-1 transition-all ${
-              settings.soundEnabled ? 'bg-emerald-500 shadow-sm' : 'bg-slate-300 dark:bg-white/20'
-            }`}
-          >
-            <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform ${
-              settings.soundEnabled ? 'translate-x-5' : 'translate-x-0'
-            }`} />
-          </button>
+        {/* Bảng tổng hợp âm thanh đang gán */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-1">
+          {SOUND_ACTIONS.map((act) => {
+            const assignedId = actionSounds[act.key] || act.defaultPreset;
+            const presetObj = SOUND_STUDIO_PRESETS.find(p => p.id === assignedId) || SOUND_STUDIO_PRESETS[0];
+            const isTabActive = activeActionKey === act.key;
+
+            return (
+              <button
+                key={act.key}
+                type="button"
+                onClick={() => {
+                  setActiveActionKey(act.key);
+                  audioEngine.playSoundPreset(assignedId);
+                }}
+                className={`p-2 rounded-2xl border text-left transition-all ${
+                  isTabActive
+                    ? 'bg-emerald-500/15 border-emerald-500 ring-1 ring-emerald-500/40 shadow-sm'
+                    : 'bg-slate-100/70 dark:bg-white/5 border-slate-200 dark:border-white/10'
+                }`}
+              >
+                <div className="text-[10px] font-extrabold text-slate-500 dark:text-gray-400">{act.name}</div>
+                <div className="text-[11px] font-bold text-slate-900 dark:text-white truncate mt-0.5">
+                  {presetObj.icon} {presetObj.name}
+                </div>
+              </button>
+            );
+          })}
         </div>
 
-        {/* BGM Sóng Biển Toggle */}
-        <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-white/5">
-          <div>
-            <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center space-x-1.5">
-              <span>🌊 Sóng Biển Thư Giãn (BGM)</span>
-            </div>
-            <div className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Âm thanh sóng biển trắng giúp thư giãn sâu khi tập</div>
+        {/* Thanh lọc thể loại (Categories) */}
+        <div className="pt-2 border-t border-slate-200 dark:border-white/5">
+          <div className="text-xs font-bold text-slate-900 dark:text-white mb-2 flex items-center justify-between">
+            <span>Chọn âm thanh cho: <strong className="text-emerald-600 dark:text-neon">{currentActionObj.name}</strong></span>
           </div>
-          <button
-            type="button"
-            onClick={() => onUpdateSettings({ ...settings, bgmEnabled: !settings.bgmEnabled })}
-            className={`w-12 h-7 rounded-full p-1 transition-all ${
-              settings.bgmEnabled ? 'bg-cyan-500 shadow-sm' : 'bg-slate-300 dark:bg-white/20'
-            }`}
-          >
-            <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform ${
-              settings.bgmEnabled ? 'translate-x-5' : 'translate-x-0'
-            }`} />
-          </button>
+
+          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {SOUND_CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setActiveCategory(cat.id)}
+                className={`px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all ${
+                  activeCategory === cat.id
+                    ? 'bg-emerald-500 text-white shadow-xs'
+                    : 'bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400'
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Bộ chọn Sound Preset */}
-        <div className="pt-3 border-t border-slate-200 dark:border-white/5 space-y-2">
-          <div className="text-xs font-bold text-slate-900 dark:text-white">Chọn Tần Số Âm Thanh Siết Cơ:</div>
-          <div className="grid grid-cols-2 gap-2">
-            {SOUND_PRESETS_METADATA.slice(0, 6).map((preset) => {
-              const isSelected = (settings.soundPreset || 'preset_14') === preset.id;
-              return (
-                <div
-                  key={preset.id}
-                  onClick={() => {
-                    onUpdateSettings({ ...settings, soundPreset: preset.id });
+        {/* Danh sách 50 Sound Presets Card */}
+        <div className="max-h-64 overflow-y-auto space-y-1.5 pr-1 pt-1">
+          {filteredPresets.map((preset) => {
+            const isAssigned = currentAssignedId === preset.id;
+
+            return (
+              <div
+                key={preset.id}
+                onClick={() => handleAssignSound(preset.id)}
+                className={`p-2.5 rounded-2xl border text-left cursor-pointer transition-all flex items-center justify-between ${
+                  isAssigned
+                    ? 'bg-emerald-500/15 border-emerald-500 ring-1 ring-emerald-500/40'
+                    : 'bg-slate-100/60 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-emerald-500/30'
+                }`}
+              >
+                <div className="flex items-center space-x-2.5 min-w-0 flex-1 pr-2">
+                  <span className="text-lg shrink-0">{preset.icon}</span>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center space-x-1.5">
+                      <span className="truncate">{preset.name}</span>
+                      {isAssigned && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-black shrink-0">
+                          ĐANG DÙNG
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-gray-400 truncate">
+                      {preset.desc}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
                     audioEngine.playSoundPreset(preset.id);
                   }}
-                  className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all flex items-center justify-between ${
-                    isSelected
-                      ? 'bg-emerald-500/15 border-emerald-500 ring-1 ring-emerald-500/30'
-                      : 'bg-slate-100/70 dark:bg-white/5 border-slate-200 dark:border-white/10'
-                  }`}
+                  className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-white/10 text-emerald-600 dark:text-neon flex items-center justify-center shrink-0 active:scale-95"
+                  title="Nghe thử"
                 >
-                  <div className="min-w-0 flex-1 pr-1">
-                    <div className="text-[11px] font-bold text-slate-900 dark:text-white truncate">
-                      {preset.name}
-                    </div>
-                    <span className="text-[9px] text-slate-500 dark:text-gray-400">{preset.tag}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      audioEngine.playSoundPreset(preset.id);
-                    }}
-                    className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-neon flex items-center justify-center"
-                  >
-                    <Play size={10} fill="currentColor" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+                  <Play size={12} fill="currentColor" />
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
 

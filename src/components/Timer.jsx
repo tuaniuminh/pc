@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import OrbVisualizer from './UI/OrbVisualizer';
 import { audioEngine } from '../utils/audioEngine';
 import { 
@@ -12,9 +12,7 @@ import {
   requestWakeLock, 
   releaseWakeLock, 
   CLINICAL_LEVELS,
-  getCustomPlans,
-  getActiveRoutine,
-  saveActiveRoutine
+  getCustomPlans
 } from '../services/storageService';
 import { 
   Play, 
@@ -22,27 +20,23 @@ import {
   RotateCcw, 
   SkipForward, 
   Sparkles, 
-  Flame, 
   CheckCircle2, 
-  ShieldCheck, 
-  AlertTriangle,
   Award,
-  ChevronRight,
-  Layers,
-  Clock,
-  Zap,
   Volume2,
-  VolumeX
+  VolumeX,
+  Music,
+  AlertTriangle
 } from 'lucide-react';
 
-const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
-  // Lấy dữ liệu bài tập
+const Timer = ({ settings, userProfile, onOpenAIPlan, onToggleSFX, onToggleBGM }) => {
+  // Trạng thái bài tập
+  const [selectedGender, setSelectedGender] = useState(userProfile.gender || 'male');
   const [selectedLevel, setSelectedLevel] = useState(1);
   const [selectedPresetType, setSelectedPresetType] = useState('goodMorning'); // 'goodMorning' | 'powerCombo' | 'nightRecovery' | 'custom'
   const [customPlansList, setCustomPlansList] = useState(getCustomPlans());
   const [selectedCustomPlan, setSelectedCustomPlan] = useState(null);
 
-  // Trạng thái vòng lặp bài tập
+  // Trạng thái đếm nhịp
   const [isActive, setIsActive] = useState(false);
   const [actionState, setActionState] = useState('idle'); // 'idle' | 'squeezing' | 'relaxing' | 'reverse' | 'transition' | 'breathing'
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
@@ -60,6 +54,10 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
   const [completedSummary, setCompletedSummary] = useState(null);
   const [showBladderWarning, setShowBladderWarning] = useState(true);
 
+  // Quick sound toggles
+  const [sfxEnabled, setSfxEnabled] = useState(settings.soundEnabled ?? true);
+  const [bgmActive, setBgmActive] = useState(settings.bgmEnabled ?? false);
+
   // Lấy cấu hình các stages của bài tập hiện tại
   const getCurrentStages = () => {
     if (selectedPresetType === 'custom' && selectedCustomPlan) {
@@ -67,8 +65,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
         { type: 'normal', squeeze: 3, relax: 3, reps: 15, label: 'Siết Tùy Chỉnh 3s' }
       ];
     }
-    const gender = userProfile.gender || 'male';
-    const lvl = CLINICAL_LEVELS[selectedLevel]?.[gender] || CLINICAL_LEVELS[1].male;
+    const lvl = CLINICAL_LEVELS[selectedLevel]?.[selectedGender] || CLINICAL_LEVELS[1].male;
     const preset = lvl[selectedPresetType] || lvl.goodMorning;
     return preset.stages;
   };
@@ -77,8 +74,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
     if (selectedPresetType === 'custom' && selectedCustomPlan) {
       return selectedCustomPlan.planName || 'Giáo Án AI Cá Nhân Hóa';
     }
-    const gender = userProfile.gender || 'male';
-    const lvl = CLINICAL_LEVELS[selectedLevel]?.[gender] || CLINICAL_LEVELS[1].male;
+    const lvl = CLINICAL_LEVELS[selectedLevel]?.[selectedGender] || CLINICAL_LEVELS[1].male;
     const preset = lvl[selectedPresetType] || lvl.goodMorning;
     return `Cấp ${selectedLevel}: ${preset.name}`;
   };
@@ -106,13 +102,13 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
       setSessionReverseKegels(0);
       setSessionTotalSeconds(0);
     }
-  }, [selectedLevel, selectedPresetType, selectedCustomPlan]);
+  }, [selectedLevel, selectedGender, selectedPresetType, selectedCustomPlan]);
 
   // Quản lý Screen Wake Lock & BGM
   useEffect(() => {
     if (isActive) {
       requestWakeLock();
-      if (settings.bgmEnabled) audioEngine.startBGM();
+      if (bgmActive) audioEngine.startBGM();
     } else {
       releaseWakeLock();
       audioEngine.stopBGM();
@@ -121,7 +117,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
       releaseWakeLock();
       audioEngine.stopBGM();
     };
-  }, [isActive, settings.bgmEnabled]);
+  }, [isActive, bgmActive]);
 
   // Main Engine Interval Loop
   useEffect(() => {
@@ -134,7 +130,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
         setTimeRemaining(prev => {
           if (prev > 1) {
             // Beep đếm ngược 3s cuối nếu là lượt siết dài
-            if (prev <= 4 && stageDuration >= 5 && settings.soundEnabled) {
+            if (prev <= 4 && stageDuration >= 5 && sfxEnabled) {
               audioEngine.playBeep(800, 0.08, 0.2);
               triggerHapticHeartbeat();
             }
@@ -157,13 +153,11 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
     if (!stage) return;
 
     if (stage.type === 'transition') {
-      // Đã xong thời gian nghỉ chuyển bài -> Sang chặng kế tiếp
       advanceToNextStage();
       return;
     }
 
-    if (actionState === 'squeezing') {
-      // Vừa siết xong -> Chuyển sang thả lỏng
+    if (actionState === 'squeezing' || actionState === 'reverse' || actionState === 'breathing') {
       if (stage.type === 'reverse') {
         setSessionReverseKegels(r => r + 1);
       } else {
@@ -174,13 +168,12 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
         setActionState('relaxing');
         setTimeRemaining(stage.relax);
         setStageDuration(stage.relax);
-        if (settings.soundEnabled) audioEngine.playSoundPreset(settings.reversePreset || 'preset_5');
+        if (sfxEnabled) audioEngine.playRelaxSFX(settings.actionSounds);
         triggerHapticMedium();
       } else {
         advanceRepOrStage();
       }
     } else if (actionState === 'relaxing' || actionState === 'idle') {
-      // Vừa thả lỏng xong -> Sang Rep tiếp theo hoặc chặng tiếp
       advanceRepOrStage();
     }
   };
@@ -190,11 +183,9 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
     if (!stage) return;
 
     if (currentRep < stage.reps) {
-      // Sang Rep tiếp theo trong cùng chặng
       setCurrentRep(r => r + 1);
       startSqueezePhase(stage);
     } else {
-      // Đã xong toàn bộ reps của chặng này
       advanceToNextStage();
     }
   };
@@ -210,13 +201,12 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
         setActionState('transition');
         setTimeRemaining(nextStage.relax || 10);
         setStageDuration(nextStage.relax || 10);
-        if (settings.soundEnabled) audioEngine.playSoundPreset('preset_27');
+        if (sfxEnabled) audioEngine.playTransitionRestSFX(settings.actionSounds);
         triggerHapticHeavy();
       } else {
         startSqueezePhase(nextStage);
       }
     } else {
-      // HOÀN THÀNH TOÀN BỘ BUỔI TẬP!
       completeSession();
     }
   };
@@ -226,19 +216,19 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
       setActionState('reverse');
       setTimeRemaining(stage.squeeze);
       setStageDuration(stage.squeeze);
-      if (settings.soundEnabled) audioEngine.playSoundPreset(settings.reversePreset || 'preset_1');
+      if (sfxEnabled) audioEngine.playReverseKegelSFX(settings.actionSounds);
       triggerHapticHeavy();
     } else if (stage.type === 'breathing') {
       setActionState('breathing');
       setTimeRemaining(stage.squeeze);
       setStageDuration(stage.squeeze);
-      if (settings.soundEnabled) audioEngine.playSoundPreset('preset_45');
+      if (sfxEnabled) audioEngine.playSoundPreset('preset_45');
       triggerHapticMedium();
     } else {
       setActionState('squeezing');
       setTimeRemaining(stage.squeeze);
       setStageDuration(stage.squeeze);
-      if (settings.soundEnabled) audioEngine.playSoundPreset(settings.soundPreset || 'preset_14');
+      if (sfxEnabled) audioEngine.playSqueezeSFX(settings.actionSounds);
       triggerHapticHeavy();
     }
   };
@@ -249,19 +239,23 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
     setIsActive(true);
 
     if (actionState === 'idle') {
-      const firstStage = currentStages[currentStageIndex];
-      if (firstStage.type === 'transition') {
-        setActionState('transition');
-        setTimeRemaining(firstStage.relax || 10);
-        setStageDuration(firstStage.relax || 10);
-      } else {
-        startSqueezePhase(firstStage);
+      const stage = currentStages[0];
+      if (stage) {
+        if (stage.type === 'transition') {
+          setActionState('transition');
+          setTimeRemaining(stage.relax || 10);
+          setStageDuration(stage.relax || 10);
+          if (sfxEnabled) audioEngine.playTransitionRestSFX(settings.actionSounds);
+        } else {
+          startSqueezePhase(stage);
+        }
       }
     }
   };
 
   const handlePauseWorkout = () => {
     setIsActive(false);
+    triggerHapticMedium();
   };
 
   const handleResetWorkout = () => {
@@ -269,33 +263,35 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
     setActionState('idle');
     setCurrentStageIndex(0);
     setCurrentRep(1);
-    const firstStage = currentStages[0];
-    setTimeRemaining(firstStage.squeeze || 1);
-    setStageDuration(firstStage.squeeze || 1);
     setSessionSqueezes(0);
     setSessionReverseKegels(0);
     setSessionTotalSeconds(0);
+    const firstStage = currentStages[0];
+    if (firstStage) {
+      setTimeRemaining(firstStage.squeeze || 1);
+      setStageDuration(firstStage.squeeze || 1);
+    }
+    triggerHapticMedium();
   };
 
   const handleSkipStage = () => {
-    if (currentStageIndex < currentStages.length - 1) {
-      advanceToNextStage();
-    } else {
-      completeSession();
-    }
+    if (!isActive) return;
+    advanceToNextStage();
+    triggerHapticMedium();
   };
 
   const completeSession = () => {
     setIsActive(false);
     setActionState('idle');
-    if (settings.soundEnabled) audioEngine.playSoundPreset('preset_20');
     triggerHapticSuccess();
+    if (sfxEnabled) audioEngine.playCompletionSFX(settings.actionSounds);
 
     const sessionData = {
-      level: selectedLevel,
-      presetType: selectedPresetType,
+      level: selectedPresetType === 'custom' ? 'custom' : selectedLevel,
+      routineType: selectedPresetType,
       routineName: getCurrentRoutineName(),
-      duration: sessionTotalSeconds,
+      gender: selectedGender,
+      durationSeconds: sessionTotalSeconds,
       totalSqueezes: sessionSqueezes,
       totalReverseKegels: sessionReverseKegels
     };
@@ -310,53 +306,182 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
   };
 
   return (
-    <div className="flex flex-col h-full max-w-lg mx-auto px-4 py-1.5 justify-between">
-      {/* 1. TOP CAROUSEL: CHỌN CẤP ĐỘ (LEVEL 1-5) & BÀI TẬP LÂM SÀNG */}
-      <div className="space-y-1.5">
-        {/* Cấp độ Tabs (1 - 5) */}
-        <div className="flex items-center justify-between bg-slate-200/80 dark:bg-white/5 p-1 rounded-2xl border border-slate-300/60 dark:border-white/10">
-          {[1, 2, 3, 4, 5].map((lvl) => (
+    <div className="flex flex-col h-full max-w-lg mx-auto px-4 py-1 justify-between">
+      {/* 1. KHU VỰC ĐỒNG HỒ & BÀI TẬP CHÍNH (TRAINER CARD CHUẨN V1.2.41) */}
+      <div className="glass-panel rounded-3xl p-3.5 border border-slate-200 dark:border-white/10 flex flex-col items-center justify-between relative shadow-sm">
+        {/* Nút bật/tắt nhanh âm thanh (Âm báo & Nhạc nền) */}
+        <div className="w-full flex items-center justify-between pb-1">
+          <button
+            onClick={() => {
+              const next = !sfxEnabled;
+              setSfxEnabled(next);
+              if (next) audioEngine.playBeep(880, 0.1, 0.3);
+            }}
+            className={`flex items-center space-x-1.5 py-1 px-2.5 rounded-xl border text-[11px] font-bold transition-all ${
+              sfxEnabled 
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-neon shadow-sm'
+                : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 dark:text-gray-500'
+            }`}
+            title="Bật/Tắt âm thanh hiệu ứng"
+          >
+            {sfxEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+            <span>Âm báo</span>
+          </button>
+
+          <button
+            onClick={() => {
+              const next = !bgmActive;
+              setBgmActive(next);
+              if (next && isActive) audioEngine.startBGM();
+              else if (!next) audioEngine.stopBGM();
+            }}
+            className={`flex items-center space-x-1.5 py-1 px-2.5 rounded-xl border text-[11px] font-bold transition-all ${
+              bgmActive 
+                ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-600 dark:text-cyan-neon shadow-sm'
+                : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 dark:text-gray-500'
+            }`}
+            title="Bật/Tắt nhạc nền sóng biển thư giãn"
+          >
+            <Music size={14} />
+            <span>Nhạc nền</span>
+          </button>
+        </div>
+
+        {/* Quả Cầu Visualizer 3D Sinh Học (v1.2.41) */}
+        <div className="my-1">
+          <OrbVisualizer
+            actionState={actionState}
+            timeRemaining={timeRemaining}
+            currentRep={currentRep}
+            totalReps={currentStage?.reps || 0}
+            stageLabel={currentStage?.label || ''}
+            isActive={isActive}
+          />
+        </div>
+
+        {/* Lời khuyên bàng quang */}
+        {showBladderWarning && (
+          <div className="w-full bg-amber-500/10 border border-amber-500/25 rounded-xl p-2 mb-2 flex items-center space-x-2 text-[10px] text-amber-700 dark:text-amber-300">
+            <AlertTriangle size={13} className="shrink-0 text-amber-500" />
+            <span><strong>Lời khuyên:</strong> Hãy đi tiểu sạch trước khi tập để bảo vệ bàng quang tốt nhất.</span>
+          </div>
+        )}
+
+        {/* Cụm Nút Điều Khiển Chính (Đặt lại + Bắt đầu / Tạm dừng) */}
+        <div className="w-full flex items-center space-x-2.5 pt-0.5">
+          <button
+            onClick={handleResetWorkout}
+            disabled={!isActive && actionState === 'idle'}
+            className="w-12 h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white flex items-center justify-center transition-all active:scale-95 disabled:opacity-40 border border-slate-200 dark:border-white/10"
+            title="Đặt lại từ đầu"
+          >
+            <RotateCcw size={18} />
+          </button>
+
+          {!isActive ? (
             <button
-              key={lvl}
+              onClick={handleStartWorkout}
+              className="flex-1 h-12 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-neon to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm uppercase tracking-wider shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all"
+            >
+              <Play size={18} fill="currentColor" />
+              <span>{actionState === 'idle' ? 'BẮT ĐẦU TẬP' : 'TIẾP TỤC'}</span>
+            </button>
+          ) : (
+            <button
+              onClick={handlePauseWorkout}
+              className="flex-1 h-12 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-amber-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all"
+            >
+              <Pause size={18} fill="currentColor" />
+              <span>TẠM DỪNG</span>
+            </button>
+          )}
+
+          <button
+            onClick={handleSkipStage}
+            disabled={!isActive}
+            className="w-12 h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white flex items-center justify-center transition-all active:scale-95 disabled:opacity-40 border border-slate-200 dark:border-white/10"
+            title="Bỏ qua sang chặng tiếp theo"
+          >
+            <SkipForward size={18} />
+          </button>
+        </div>
+      </div>
+
+      {/* 2. KHU VỰC CẤU HÌNH BÀI TẬP (LEVEL & ROUTINE SELECTOR CHUẨN V1.2.41) */}
+      <div className="space-y-1.5 pt-1">
+        {/* Gender + Level Selector Bar */}
+        <div className="flex items-center space-x-1.5">
+          {/* Nút chọn Giới tính Nam/Nữ */}
+          <div className="flex bg-slate-200/80 dark:bg-white/5 p-0.5 rounded-xl border border-slate-300/60 dark:border-white/10 shrink-0">
+            <button
+              onClick={() => { if (!isActive) setSelectedGender('male'); }}
+              disabled={isActive}
+              className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                selectedGender === 'male'
+                  ? 'bg-blue-500 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-gray-400'
+              }`}
+            >
+              Nam
+            </button>
+            <button
+              onClick={() => { if (!isActive) setSelectedGender('female'); }}
+              disabled={isActive}
+              className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                selectedGender === 'female'
+                  ? 'bg-rose-500 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-gray-400'
+              }`}
+            >
+              Nữ
+            </button>
+          </div>
+
+          {/* Cấp độ Tabs (1 - 5 + AI) */}
+          <div className="flex-1 flex items-center justify-between bg-slate-200/80 dark:bg-white/5 p-0.5 rounded-xl border border-slate-300/60 dark:border-white/10">
+            {[1, 2, 3, 4, 5].map((lvl) => (
+              <button
+                key={lvl}
+                onClick={() => {
+                  if (!isActive) {
+                    setSelectedLevel(lvl);
+                    if (selectedPresetType === 'custom') setSelectedPresetType('goodMorning');
+                  }
+                }}
+                disabled={isActive}
+                className={`flex-1 py-1 rounded-lg text-[11px] font-black transition-all ${
+                  selectedLevel === lvl && selectedPresetType !== 'custom'
+                    ? 'bg-emerald-500 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-gray-400'
+                }`}
+              >
+                Cấp {lvl}
+              </button>
+            ))}
+            <button
               onClick={() => {
                 if (!isActive) {
-                  setSelectedLevel(lvl);
-                  if (selectedPresetType === 'custom') setSelectedPresetType('goodMorning');
+                  const plans = getCustomPlans();
+                  setCustomPlansList(plans);
+                  if (plans.length > 0) {
+                    setSelectedCustomPlan(plans[0]);
+                    setSelectedPresetType('custom');
+                  } else {
+                    onOpenAIPlan();
+                  }
                 }
               }}
               disabled={isActive}
-              className={`flex-1 py-1.5 rounded-xl text-xs font-black transition-all ${
-                selectedLevel === lvl && selectedPresetType !== 'custom'
-                  ? 'bg-emerald-500 text-white shadow-sm'
-                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-              } ${isActive ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`px-2 py-1 rounded-lg text-[11px] font-black transition-all flex items-center space-x-0.5 ${
+                selectedPresetType === 'custom'
+                  ? 'bg-cyan-500 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-gray-400'
+              }`}
             >
-              Cấp {lvl}
+              <Sparkles size={10} />
+              <span>AI</span>
             </button>
-          ))}
-          <button
-            onClick={() => {
-              if (!isActive) {
-                const plans = getCustomPlans();
-                setCustomPlansList(plans);
-                if (plans.length > 0) {
-                  setSelectedCustomPlan(plans[0]);
-                  setSelectedPresetType('custom');
-                } else {
-                  onOpenAIPlan();
-                }
-              }
-            }}
-            disabled={isActive}
-            className={`px-2.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center space-x-1 ${
-              selectedPresetType === 'custom'
-                ? 'bg-cyan-500 text-white shadow-sm'
-                : 'text-slate-600 dark:text-gray-400'
-            }`}
-          >
-            <Sparkles size={12} />
-            <span>AI</span>
-          </button>
+          </div>
         </div>
 
         {/* 3 Bài tập mẫu trong Cấp độ hiện tại */}
@@ -388,7 +513,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
             })}
           </div>
         ) : (
-          <div className="glass-panel p-2.5 rounded-2xl border border-cyan-500/30 flex items-center justify-between">
+          <div className="glass-panel p-2 rounded-2xl border border-cyan-500/30 flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Sparkles size={16} className="text-cyan-500" />
               <div>
@@ -408,75 +533,9 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
             </button>
           </div>
         )}
-      </div>
 
-      {/* 2. CẢNH BÁO ĐI TIỂU TRƯỚC KHI TẬP (NHỎ GỌN) */}
-      {showBladderWarning && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-2 flex items-center space-x-2 text-xs text-amber-700 dark:text-amber-300">
-          <AlertTriangle size={14} className="shrink-0 text-amber-500" />
-          <div className="text-[10px] leading-tight">
-            <strong>Lời khuyên:</strong> Hãy đi tiểu sạch trước khi tập để bảo vệ bàng quang.
-          </div>
-        </div>
-      )}
-
-      {/* 3. BỘ ĐỒNG HỒ HUD & QUẢ CẦU VISUALIZER TRUNG TÂM (ĐÃ XÓA THANH TIẾN TRÌNH QUÉT) */}
-      <div className="my-auto py-1 flex flex-col items-center justify-center">
-        <OrbVisualizer
-          actionState={actionState}
-          timeRemaining={timeRemaining}
-          currentRep={currentRep}
-          totalReps={currentStage?.reps || 0}
-          stageLabel={currentStage?.label || ''}
-          isActive={isActive}
-        />
-      </div>
-
-      {/* 4. NÚT ĐIỀU KHIỂN KHỔNG LỒ (HOÀN TOÀN KHÔNG BỊ BOTTOM NAV CHE LẸM) */}
-      <div className="space-y-2 pt-1 pb-1">
-        <div className="flex items-center space-x-3">
-          {/* Nút Reset */}
-          <button
-            onClick={handleResetWorkout}
-            disabled={!isActive && actionState === 'idle'}
-            className="w-13 h-13 sm:w-14 sm:h-14 p-3.5 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white flex items-center justify-center transition-all active:scale-95 disabled:opacity-40"
-            title="Đặt lại từ đầu"
-          >
-            <RotateCcw size={20} />
-          </button>
-
-          {/* Nút Chính Khổng Lồ */}
-          {!isActive ? (
-            <button
-              onClick={handleStartWorkout}
-              className="flex-1 h-13 sm:h-14 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-neon to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-oled dark:text-oled font-black text-sm sm:text-base uppercase tracking-wider shadow-lg shadow-emerald-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all"
-            >
-              <Play size={20} fill="currentColor" />
-              <span>{actionState === 'idle' ? 'BẮT ĐẦU TẬP' : 'TIẾP TỤC'}</span>
-            </button>
-          ) : (
-            <button
-              onClick={handlePauseWorkout}
-              className="flex-1 h-13 sm:h-14 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-black text-sm sm:text-base uppercase tracking-wider shadow-lg shadow-amber-500/30 flex items-center justify-center space-x-2 active:scale-95 transition-all"
-            >
-              <Pause size={20} fill="currentColor" />
-              <span>TẠM DỪNG</span>
-            </button>
-          )}
-
-          {/* Nút Bỏ qua chặng */}
-          <button
-            onClick={handleSkipStage}
-            disabled={!isActive}
-            className="w-13 h-13 sm:w-14 sm:h-14 p-3.5 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white flex items-center justify-center transition-all active:scale-95 disabled:opacity-40"
-            title="Bỏ qua sang chặng tiếp theo"
-          >
-            <SkipForward size={20} />
-          </button>
-        </div>
-
-        {/* Chỉ số nhanh buổi tập hiện tại */}
-        <div className="flex items-center justify-around py-1.5 px-3 bg-white/70 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 text-[10px] sm:text-[11px] text-slate-600 dark:text-gray-300 font-semibold">
+        {/* Chỉ số nhanh buổi tập */}
+        <div className="flex items-center justify-around py-1 px-3 bg-white/70 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 text-[10px] text-slate-600 dark:text-gray-300 font-semibold">
           <span>⚡ Đã siết: <strong className="text-emerald-600 dark:text-neon">{sessionSqueezes}</strong></span>
           <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-white/20" />
           <span>🌊 Ngược: <strong className="text-cyan-600 dark:text-cyan-neon">{sessionReverseKegels}</strong></span>
@@ -485,59 +544,61 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
         </div>
       </div>
 
-      {/* 5. CELEBRATION MODAL (HOÀN THÀNH BUỔI TẬP) */}
+      {/* 3. CELEBRATION MODAL (HOÀN THÀNH BUỔI TẬP) */}
       {showCelebration && completedSummary && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-          <div className="glass-panel w-full max-w-sm p-6 rounded-3xl space-y-4 border border-emerald-500/40 text-center">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-500 dark:text-neon flex items-center justify-center mx-auto shadow-neon animate-bounce">
-              <CheckCircle2 size={36} />
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+          <div className="glass-panel w-full max-w-sm rounded-3xl p-6 border border-emerald-500/40 text-center space-y-4 shadow-2xl">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-500 dark:text-neon mx-auto flex items-center justify-center text-3xl border border-emerald-500/40 shadow-neon animate-bounce">
+              🎉
             </div>
 
             <div>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white">XUẤT SẮC!</h3>
+              <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                XUẤT SẮC HOÀN THÀNH!
+              </h3>
               <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">
-                Bạn đã hoàn thành trọn vẹn bài tập: <br />
-                <strong className="text-emerald-600 dark:text-neon">{completedSummary.routineName}</strong>
+                {completedSummary.routineName}
               </p>
             </div>
 
-            {/* Chỉ số hoàn thành */}
-            <div className="grid grid-cols-3 gap-2 py-2">
-              <div className="p-2.5 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                <div className="text-xs text-slate-400">Lượt Siết</div>
-                <div className="text-lg font-black text-emerald-600 dark:text-neon">{completedSummary.totalSqueezes}</div>
+            <div className="grid grid-cols-3 gap-2 bg-slate-100 dark:bg-white/5 p-3 rounded-2xl border border-slate-200 dark:border-white/5 text-center">
+              <div>
+                <div className="text-[10px] text-slate-400">Lượt Siết</div>
+                <div className="text-base font-black text-emerald-600 dark:text-neon mt-0.5">
+                  {completedSummary.totalSqueezes}
+                </div>
               </div>
-              <div className="p-2.5 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                <div className="text-xs text-slate-400">Kegel Ngược</div>
-                <div className="text-lg font-black text-cyan-600 dark:text-cyan-neon">{completedSummary.totalReverseKegels}</div>
+              <div>
+                <div className="text-[10px] text-slate-400">Kegel Ngược</div>
+                <div className="text-base font-black text-cyan-600 dark:text-cyan-neon mt-0.5">
+                  {completedSummary.totalReverseKegels}
+                </div>
               </div>
-              <div className="p-2.5 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                <div className="text-xs text-slate-400">Thời Lượng</div>
-                <div className="text-lg font-black text-amber-500">{Math.round(completedSummary.duration / 60)}p</div>
+              <div>
+                <div className="text-[10px] text-slate-400">Thời Gian</div>
+                <div className="text-base font-black text-amber-500 mt-0.5">
+                  {Math.floor(completedSummary.durationSeconds / 60)}p {completedSummary.durationSeconds % 60}s
+                </div>
               </div>
             </div>
 
-            {/* Huy hiệu mới mở khóa nếu có */}
-            {completedSummary.newlyUnlocked?.length > 0 && (
-              <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/40 text-left space-y-1">
-                <div className="text-[10px] font-extrabold uppercase text-amber-600 dark:text-amber-400 flex items-center space-x-1">
-                  <Award size={12} />
-                  <span>MỞ KHÓA HUY HIỆU MỚI!</span>
-                </div>
-                {completedSummary.newlyUnlocked.map((b) => (
-                  <div key={b.id} className="text-xs font-bold text-slate-900 dark:text-white flex items-center space-x-1.5">
-                    <span>{b.icon}</span>
-                    <span>{b.name} - {b.desc}</span>
+            {completedSummary.newlyUnlocked && completedSummary.newlyUnlocked.length > 0 && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-2.5 text-left flex items-center space-x-2.5">
+                <Award size={22} className="text-amber-500 shrink-0" />
+                <div className="text-xs">
+                  <strong className="text-amber-500">Mở khóa huy hiệu mới:</strong>
+                  <div className="font-bold text-slate-900 dark:text-white line-clamp-1">
+                    {completedSummary.newlyUnlocked[0].icon} {completedSummary.newlyUnlocked[0].name}
                   </div>
-                ))}
+                </div>
               </div>
             )}
 
             <button
               onClick={() => setShowCelebration(false)}
-              className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-neon active:scale-95 transition-all"
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-sm uppercase tracking-wider shadow-lg active:scale-95 transition-all"
             >
-              TIẾP TỤC & ĐÓNG
+              Tiếp Tục Rèn Luyện
             </button>
           </div>
         </div>
