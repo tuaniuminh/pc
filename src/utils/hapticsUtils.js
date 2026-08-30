@@ -2,13 +2,26 @@ import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 
 /**
  * Taptic Engine Haptic Feedback Helper for iOS TrollStore & Web
+ * Tự động kiểm tra cài đặt bật/tắt rung của người dùng (hapticsEnabled)
  */
+
+export const isHapticsEnabled = () => {
+  try {
+    const raw = localStorage.getItem('pc_flex_settings');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.hapticsEnabled === false) return false;
+    }
+  } catch (e) {}
+  return true;
+};
 
 export const isHapticsSupported = () => {
   return typeof window !== 'undefined' && ('vibrate' in navigator || !!Haptics);
 };
 
 export const triggerHapticHeavy = async () => {
+  if (!isHapticsEnabled()) return;
   try {
     if (Haptics) {
       await Haptics.impact({ style: ImpactStyle.Heavy });
@@ -23,6 +36,7 @@ export const triggerHapticHeavy = async () => {
 };
 
 export const triggerHapticMedium = async () => {
+  if (!isHapticsEnabled()) return;
   try {
     if (Haptics) {
       await Haptics.impact({ style: ImpactStyle.Medium });
@@ -37,6 +51,7 @@ export const triggerHapticMedium = async () => {
 };
 
 export const triggerHapticLight = async () => {
+  if (!isHapticsEnabled()) return;
   try {
     if (Haptics) {
       await Haptics.impact({ style: ImpactStyle.Light });
@@ -51,6 +66,7 @@ export const triggerHapticLight = async () => {
 };
 
 export const triggerHapticSuccess = async () => {
+  if (!isHapticsEnabled()) return;
   try {
     if (Haptics) {
       await Haptics.notification({ type: NotificationType.Success });
@@ -65,6 +81,7 @@ export const triggerHapticSuccess = async () => {
 };
 
 export const triggerHapticSelection = async () => {
+  if (!isHapticsEnabled()) return;
   try {
     if (Haptics) {
       await Haptics.selectionChanged();
@@ -79,11 +96,13 @@ export const triggerHapticSelection = async () => {
 };
 
 export const triggerHapticHeartbeat = async () => {
+  if (!isHapticsEnabled()) return;
   try {
     if (Haptics) {
       await Haptics.impact({ style: ImpactStyle.Heavy });
       setTimeout(async () => {
         try {
+          if (!isHapticsEnabled()) return;
           await Haptics.impact({ style: ImpactStyle.Medium });
         } catch (e) {}
       }, 120);
@@ -104,6 +123,7 @@ export const attachGlobalButtonHaptics = () => {
   if (typeof window === 'undefined') return;
 
   const handleGlobalClick = (e) => {
+    if (!isHapticsEnabled()) return;
     const btn = e.target.closest('button, [role="button"], a, input[type="checkbox"], input[type="radio"]');
     if (btn) {
       triggerHapticLight();

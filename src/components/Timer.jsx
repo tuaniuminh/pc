@@ -313,8 +313,8 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
 
   return (
     <div className="p-4 sm:p-5 space-y-5 max-w-lg mx-auto">
-      {/* 1. KHU VỰC ĐỒNG HỒ & BÀI TẬP CHÍNH (TRAINER CARD CHUẨN ẢNH) */}
-      <div className="glass-panel rounded-[32px] p-5 border border-slate-200 dark:border-white/10 space-y-4 shadow-xl">
+      {/* 1. KHU VỰC ĐỒNG HỒ & BÀI TẬP CHÍNH (TRAINER CARD ĐỒNG BỘ SÁNG / TỐI) */}
+      <div className="glass-panel rounded-[32px] p-5 border border-slate-200 dark:border-white/10 space-y-4 shadow-md dark:shadow-xl transition-colors duration-300">
         {/* Nút bật/tắt nhanh âm thanh (Âm báo & Nhạc nền dạng Pill) */}
         <div className="flex items-center justify-center space-x-3">
           <button
@@ -325,8 +325,8 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
             }}
             className={`flex items-center space-x-2 py-2 px-5 rounded-full border text-xs font-bold transition-all active:scale-95 ${
               sfxEnabled 
-                ? 'bg-slate-100/90 dark:bg-white/10 border-slate-300 dark:border-white/15 text-slate-900 dark:text-white'
-                : 'bg-slate-100/40 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 dark:text-gray-500'
+                ? 'bg-slate-200/90 dark:bg-white/10 border-slate-300 dark:border-white/15 text-slate-900 dark:text-white shadow-xs'
+                : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 dark:text-gray-500'
             }`}
           >
             {sfxEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
@@ -342,8 +342,8 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
             }}
             className={`flex items-center space-x-2 py-2 px-5 rounded-full border text-xs font-bold transition-all active:scale-95 ${
               bgmActive 
-                ? 'bg-slate-100/90 dark:bg-white/10 border-slate-300 dark:border-white/15 text-slate-900 dark:text-white'
-                : 'bg-slate-100/40 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 dark:text-gray-500'
+                ? 'bg-slate-200/90 dark:bg-white/10 border-slate-300 dark:border-white/15 text-slate-900 dark:text-white shadow-xs'
+                : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 dark:text-gray-500'
             }`}
           >
             <Music size={15} />
@@ -351,7 +351,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
           </button>
         </div>
 
-        {/* Quả Cầu Visualizer 3D Sinh Học */}
+        {/* Quả Cầu Visualizer 3D Sinh Học (Sáng & Tối) */}
         <OrbVisualizer
           actionState={actionState}
           timeRemaining={timeRemaining}
@@ -363,7 +363,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
           isActive={isActive}
         />
 
-        {/* Chi tiết Lượt tập & Giai đoạn (Thanh Tiến Trình Toàn Bộ Bài Tập) */}
+        {/* Chi tiết Lượt tập & Thanh tiến trình logic cũ (Chặng đã hoàn thành sẽ tự động ẩn đi) */}
         <div className="space-y-2 pt-1">
           <div className="flex items-center justify-between text-sm font-extrabold text-slate-800 dark:text-gray-200">
             <span>Lượt tập:</span>
@@ -372,21 +372,30 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
             </span>
           </div>
 
-          {/* Thanh Tiến Trình Phân Đoạn Năng Động (Dynamic Segmented Progress Bar) */}
-          <div className="h-2 w-full bg-slate-200/80 dark:bg-white/10 rounded-full overflow-hidden flex gap-1 p-0.5">
+          {/* Thanh Tiến Trình Phân Đoạn (Chặng đã hoàn thành tự động trượt ẩn sang trái) */}
+          <div className="h-2 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden flex gap-1 p-0.5">
             {currentStages.map((st, idx) => {
               const isPast = idx < currentStageIndex;
               const isCurrent = idx === currentStageIndex;
-              const stagePercent = isPast 
-                ? 100 
-                : isCurrent 
+
+              if (isPast) {
+                // ĐÃ HOÀN THÀNH -> Ẩn hoàn toàn chặng này
+                return (
+                  <div
+                    key={idx}
+                    className="w-0 max-w-0 min-w-0 opacity-0 pointer-events-none -mr-1 scale-x-0 transition-all duration-500 overflow-hidden"
+                  />
+                );
+              }
+
+              const stagePercent = isCurrent 
                 ? Math.min(100, Math.round(((actionState === 'idle' ? 0 : currentRep) / (st.reps || 1)) * 100))
                 : 0;
 
               return (
                 <div 
                   key={idx} 
-                  className="h-full flex-1 bg-slate-300/60 dark:bg-white/5 rounded-full overflow-hidden relative"
+                  className="h-full flex-1 bg-slate-300/70 dark:bg-white/5 rounded-full overflow-hidden relative transition-all duration-500"
                 >
                   <div 
                     className="h-full bg-gradient-to-r from-cyan-400 to-teal-400 transition-all duration-500 rounded-full"
@@ -397,24 +406,31 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
             })}
           </div>
 
-          {/* Nhãn Giai Đoạn Chi Tiết Phía Dưới */}
-          <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-gray-500 font-semibold pt-0.5">
-            {currentStages.map((st, idx) => (
-              <span 
-                key={idx}
-                className={idx === currentStageIndex ? 'text-cyan-500 dark:text-cyan-400 font-bold' : ''}
-              >
-                {st.label || (st.type === 'reverse' ? `Kegel ngược ${st.squeeze}s` : st.type === 'breathing' ? 'Thở bụng' : `Siết ${st.squeeze}s`)}
-              </span>
-            ))}
+          {/* Nhãn Giai Đoạn Chi Tiết (Chỉ hiển thị các chặng chưa và đang tập để không bị dồn chữ) */}
+          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-gray-400 font-semibold pt-0.5">
+            {currentStages.map((st, idx) => {
+              if (idx < currentStageIndex) return null; // Ẩn nhãn của chặng đã qua
+
+              const isCurrent = idx === currentStageIndex;
+              return (
+                <span 
+                  key={idx}
+                  className={`flex-1 text-center transition-all duration-300 line-clamp-1 px-1 ${
+                    isCurrent ? 'text-cyan-600 dark:text-cyan-400 font-extrabold scale-105' : 'text-slate-400 dark:text-gray-500'
+                  }`}
+                >
+                  {st.label || (st.type === 'reverse' ? `Kegel ngược ${st.squeeze}s` : st.type === 'breathing' ? 'Thở bụng' : `Siết ${st.squeeze}s`)}
+                </span>
+              );
+            })}
           </div>
         </div>
 
-        {/* Lời khuyên bàng quang (Hộp Lưu ý màu đỏ/hổ phách chuẩn ảnh) */}
-        <div className="bg-red-950/20 dark:bg-red-950/30 border border-red-500/30 rounded-2xl p-3.5 flex items-start space-x-3 text-xs text-red-200 dark:text-red-300">
+        {/* Lời khuyên bàng quang (Hộp Lưu ý màu sắc rõ nét trên cả nền sáng và tối) */}
+        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-500/30 rounded-2xl p-3.5 flex items-start space-x-3 text-xs text-red-900 dark:text-red-200">
           <span className="text-lg shrink-0 mt-0.5">🚽</span>
           <div className="text-[11px] leading-relaxed">
-            <strong className="text-red-400">Lưu ý:</strong> Nên đi tiểu sạch bàng quang trước khi tập để bảo vệ sức khỏe và đạt hiệu quả tốt nhất.
+            <strong className="text-red-700 dark:text-red-400">Lưu ý:</strong> Nên đi tiểu sạch bàng quang trước khi tập để bảo vệ sức khỏe và đạt hiệu quả tốt nhất.
           </div>
         </div>
 
@@ -432,7 +448,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
           {!isActive ? (
             <button
               onClick={handleStartWorkout}
-              className="w-1/2 py-3.5 rounded-2xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-black text-sm flex items-center justify-center space-x-2 shadow-lg shadow-cyan-500/30 active:scale-95 transition-all"
+              className="w-1/2 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 font-black text-sm flex items-center justify-center space-x-2 shadow-lg shadow-cyan-500/25 active:scale-95 transition-all"
             >
               <Play size={16} fill="currentColor" />
               <span>{actionState === 'idle' ? 'Bắt đầu' : 'Tiếp tục'}</span>
@@ -449,8 +465,8 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
         </div>
       </div>
 
-      {/* 2. KHU VỰC CẤU HÌNH BÀI TẬP (WORKOUT CONFIGURATION CARD CHUẨN ẢNH) */}
-      <div className="glass-panel rounded-[32px] p-5 border border-slate-200 dark:border-white/10 space-y-4 shadow-xl">
+      {/* 2. KHU VỰC CẤU HÌNH BÀI TẬP (WORKOUT CONFIGURATION CARD CHUẨN SÁNG & TỐI) */}
+      <div className="glass-panel rounded-[32px] p-5 border border-slate-200 dark:border-white/10 space-y-4 shadow-md dark:shadow-xl transition-colors duration-300">
         <div>
           <h3 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
             Cấu Hình Bài Tập
@@ -461,7 +477,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
         </div>
 
         {/* Gender Selection Group */}
-        <div className="grid grid-cols-2 gap-2.5 p-1 bg-slate-100 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/5">
+        <div className="grid grid-cols-2 gap-2.5 p-1 bg-slate-200/70 dark:bg-white/5 rounded-2xl border border-slate-300/50 dark:border-white/5">
           <button
             onClick={() => { if (!isActive) setSelectedGender('male'); }}
             disabled={isActive}
@@ -488,7 +504,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
 
         {/* Level Selector Bar */}
         <div className="flex items-center space-x-3 pt-1">
-          <span className="text-sm font-bold text-slate-600 dark:text-gray-400 shrink-0">Cấp độ:</span>
+          <span className="text-sm font-bold text-slate-700 dark:text-gray-400 shrink-0">Cấp độ:</span>
           <div className="flex-1 flex items-center justify-between space-x-1.5">
             {[1, 2, 3, 4, 5].map((lvl) => {
               const isSelected = selectedLevel === lvl && selectedPresetType !== 'custom';
@@ -505,7 +521,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
                   className={`flex-1 py-2 rounded-xl text-xs font-black transition-all ${
                     isSelected
                       ? 'bg-cyan-400 text-slate-950 shadow-sm'
-                      : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/5'
+                      : 'bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/5'
                   }`}
                 >
                   {lvl}
@@ -522,18 +538,18 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
             onClick={() => { if (!isActive) setSelectedPresetType('goodMorning'); }}
             className={`p-4 rounded-2xl border text-left cursor-pointer transition-all flex items-center space-x-3.5 ${
               selectedPresetType === 'goodMorning'
-                ? 'bg-slate-100/90 dark:bg-white/10 border-amber-500 ring-1 ring-amber-500/40 shadow-sm'
-                : 'bg-slate-100/40 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-amber-500/40'
+                ? 'bg-amber-50/80 dark:bg-white/10 border-amber-500 ring-2 ring-amber-500/40 shadow-sm'
+                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-amber-500/40'
             }`}
           >
             <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-2xl shrink-0">
               🌅
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-black text-amber-500 dark:text-amber-400">
+              <div className="text-sm font-black text-amber-600 dark:text-amber-400">
                 Chào Buổi Sáng
               </div>
-              <div className="text-xs text-slate-500 dark:text-gray-400 mt-0.5 line-clamp-2">
+              <div className="text-xs text-slate-600 dark:text-gray-400 mt-0.5 line-clamp-2">
                 20 lượt siết 1s - thả 2s | 5 lượt Kegel ngược giãn chậu
               </div>
             </div>
@@ -544,18 +560,18 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
             onClick={() => { if (!isActive) setSelectedPresetType('powerCombo'); }}
             className={`p-4 rounded-2xl border text-left cursor-pointer transition-all flex items-center space-x-3.5 ${
               selectedPresetType === 'powerCombo'
-                ? 'bg-slate-100/90 dark:bg-white/10 border-emerald-500 ring-1 ring-emerald-500/40 shadow-sm'
-                : 'bg-slate-100/40 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-emerald-500/40'
+                ? 'bg-emerald-50/80 dark:bg-white/10 border-emerald-500 ring-2 ring-emerald-500/40 shadow-sm'
+                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-emerald-500/40'
             }`}
           >
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-xl font-black text-emerald-400 shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-xl font-black text-emerald-500 dark:text-emerald-400 shrink-0">
               ★
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-black text-emerald-500 dark:text-neon">
+              <div className="text-sm font-black text-emerald-600 dark:text-neon">
                 Combo Sức Mạnh
               </div>
-              <div className="text-xs text-slate-500 dark:text-gray-400 mt-0.5 line-clamp-2">
+              <div className="text-xs text-slate-600 dark:text-gray-400 mt-0.5 line-clamp-2">
                 Siết nhanh 20 lượt 1s | Giữ 24 lượt 3s | Giữ 10 lượt 5s + Cooldown
               </div>
             </div>
@@ -566,18 +582,18 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
             onClick={() => { if (!isActive) setSelectedPresetType('nightRecovery'); }}
             className={`p-4 rounded-2xl border text-left cursor-pointer transition-all flex items-center space-x-3.5 ${
               selectedPresetType === 'nightRecovery'
-                ? 'bg-slate-100/90 dark:bg-white/10 border-violet-500 ring-1 ring-violet-500/40 shadow-sm'
-                : 'bg-slate-100/40 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-violet-500/40'
+                ? 'bg-violet-50/80 dark:bg-white/10 border-violet-500 ring-2 ring-violet-500/40 shadow-sm'
+                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-violet-500/40'
             }`}
           >
             <div className="w-12 h-12 rounded-2xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-xl shrink-0">
               🌙
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-black text-violet-500 dark:text-violet-400">
+              <div className="text-sm font-black text-violet-600 dark:text-violet-400">
                 Phục Hồi Ban Đêm
               </div>
-              <div className="text-xs text-slate-500 dark:text-gray-400 mt-0.5 line-clamp-2">
+              <div className="text-xs text-slate-600 dark:text-gray-400 mt-0.5 line-clamp-2">
                 15 lượt siết nhanh | 10 lượt Kegel ngược | 5 lượt hít thở sâu
               </div>
             </div>
@@ -599,7 +615,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
             }}
             className={`p-4 rounded-2xl border border-dashed border-slate-300 dark:border-white/20 text-left cursor-pointer transition-all flex items-center space-x-3.5 hover:border-cyan-500/50 ${
               selectedPresetType === 'custom'
-                ? 'bg-cyan-500/10 border-cyan-500 ring-1 ring-cyan-500/40'
+                ? 'bg-cyan-500/10 border-cyan-500 ring-2 ring-cyan-500/40'
                 : 'bg-transparent'
             }`}
           >
