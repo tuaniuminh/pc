@@ -1,0 +1,394 @@
+import React, { useState } from 'react';
+import { 
+  Key, 
+  Eye, 
+  EyeOff, 
+  CheckCircle2, 
+  AlertCircle, 
+  Sparkles, 
+  Volume2, 
+  ExternalLink,
+  Play,
+  Vibrate,
+  User,
+  Download,
+  Upload,
+  Music,
+  ShieldCheck
+} from 'lucide-react';
+import { testGeminiApiKey } from '../services/geminiService';
+import { audioEngine, SOUND_PRESETS_METADATA } from '../utils/audioEngine';
+import { exportBackupJSON, importBackupJSON } from '../services/storageService';
+import { triggerHapticMedium } from '../utils/hapticsUtils';
+
+const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
+  const [showKey, setShowKey] = useState(false);
+  const [testingKey, setTestingKey] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+  const [backupMessage, setBackupMessage] = useState(null);
+
+  const handleKeyChange = (val) => {
+    onUpdateSettings({ ...settings, apiKey: val });
+    setTestResult(null);
+  };
+
+  const handleTestKey = async () => {
+    if (!settings.apiKey || !settings.apiKey.trim()) {
+      setTestResult({
+        success: false,
+        message: "Vui lòng nhập API Key trước khi kiểm tra."
+      });
+      return;
+    }
+
+    setTestingKey(true);
+    setTestResult(null);
+
+    try {
+      const res = await testGeminiApiKey(settings.apiKey);
+      setTestResult({
+        success: true,
+        message: `Kết nối thành công! Đang kết nối mô hình: ${res.activeModel || 'Google Gemini 3.7 Flash'}. Hệ thống sẵn sàng phân tích cho bạn.`
+      });
+    } catch (err) {
+      setTestResult({
+        success: false,
+        message: err.message || "Lỗi kiểm tra API Key. Vui lòng kiểm tra lại tính chính xác của Key."
+      });
+    } finally {
+      setTestingKey(false);
+    }
+  };
+
+  const handleFileImport = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const content = evt.target?.result;
+      if (typeof content === 'string') {
+        const res = importBackupJSON(content);
+        if (res.success) {
+          setBackupMessage({ success: true, text: "Khôi phục dữ liệu thành công! Vui lòng tải lại ứng dụng." });
+          setTimeout(() => window.location.reload(), 1500);
+        } else {
+          setBackupMessage({ success: false, text: "Lỗi tệp sao lưu: " + res.error });
+        }
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  return (
+    <div className="p-4 sm:p-6 space-y-6 pb-28 max-w-lg mx-auto">
+      {/* Title */}
+      <div>
+        <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          Cài Đặt Hệ Thống
+        </h2>
+        <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
+          Tùy chỉnh âm thanh, rung phản hồi Haptic, Gemini AI và sao lưu dữ liệu
+        </p>
+      </div>
+
+      {/* SECTION 1: CẤU HÌNH GOOGLE GEMINI API KEY */}
+      <div className="glass-panel p-5 rounded-3xl space-y-4 border border-cyan-300/40 dark:border-cyan-500/20">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 rounded-xl bg-cyan-100 dark:bg-cyan-500/15 text-cyan-600 dark:text-cyan-neon flex items-center justify-center">
+            <Key size={16} />
+          </div>
+          <div>
+            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Google Gemini API Key</h3>
+            <p className="text-[11px] text-slate-500 dark:text-gray-400">Kết nối trực tiếp trí tuệ nhân tạo Gemini 3.7 Flash</p>
+          </div>
+        </div>
+
+        {/* Input Key */}
+        <div className="relative">
+          <input
+            type={showKey ? "text" : "password"}
+            value={settings.apiKey || ''}
+            onChange={(e) => handleKeyChange(e.target.value)}
+            placeholder="Dán mã API Key (AIzaSy...)"
+            className="w-full bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-2xl p-3.5 pr-11 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:border-cyan-500 transition-all placeholder:text-slate-400"
+          />
+          <button
+            type="button"
+            onClick={() => setShowKey(!showKey)}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-400 hover:text-slate-700 dark:hover:text-white p-1"
+          >
+            {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        </div>
+
+        {/* Test Result Message */}
+        {testResult && (
+          <div className={`p-3.5 rounded-2xl text-xs flex items-start space-x-2 border transition-all ${
+            testResult.success 
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300' 
+              : 'bg-red-50 dark:bg-red-500/10 border-red-300 dark:border-red-500/30 text-red-700 dark:text-red-400'
+          }`}>
+            {testResult.success ? (
+              <CheckCircle2 size={16} className="shrink-0 mt-0.5" />
+            ) : (
+              <AlertCircle size={16} className="shrink-0 mt-0.5" />
+            )}
+            <div className="flex-1">
+              <div className="font-bold">{testResult.success ? "Kết Nối Thành Công!" : "Kết Nối Thất Bại"}</div>
+              <div className="text-[11px] mt-0.5 opacity-90">{testResult.message}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Test Key & Get Free Key Buttons */}
+        <div className="flex flex-col sm:flex-row gap-2 pt-1">
+          <button
+            type="button"
+            onClick={handleTestKey}
+            disabled={testingKey}
+            className="flex-1 py-3 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition-all active:scale-95 disabled:opacity-50"
+          >
+            {testingKey ? (
+              <div className="w-4 h-4 border-2 border-slate-600 dark:border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Sparkles size={14} className="text-cyan-500" />
+            )}
+            <span>{testingKey ? "Đang Kiểm Tra..." : "Kiểm Tra Kết Nối API"}</span>
+          </button>
+
+          <a
+            href="https://aistudio.google.com/app/apikey"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="py-3 px-4 rounded-xl bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-300 dark:bg-cyan-500/10 dark:hover:bg-cyan-500/20 dark:text-cyan-neon dark:border-cyan-500/30 font-bold text-xs flex items-center justify-center space-x-1.5 transition-all active:scale-95"
+          >
+            <span>Lấy Key Miễn Phí</span>
+            <ExternalLink size={12} />
+          </a>
+        </div>
+      </div>
+
+      {/* SECTION 2: CẤU HÌNH ÂM THANH & PRESETS */}
+      <div className="glass-panel p-5 rounded-3xl space-y-4 border border-emerald-300/40 dark:border-emerald-500/20">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <Volume2 size={16} />
+            </div>
+            <div>
+              <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Âm Thanh Tần Số (50 Presets)</h3>
+              <p className="text-[11px] text-slate-500 dark:text-gray-400">Bộ tổng hợp Web Audio API chất lượng phòng thu</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Master Sound Toggle */}
+        <div className="flex items-center justify-between pt-1">
+          <div>
+            <div className="text-xs font-bold text-slate-900 dark:text-white">Bật Âm Thanh Nhịp Siết / Thả</div>
+            <div className="text-[11px] text-slate-500 dark:text-gray-400">Phát âm thanh khi chuyển nhịp co thắt</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onUpdateSettings({ ...settings, soundEnabled: !settings.soundEnabled })}
+            className={`w-12 h-7 rounded-full p-1 transition-all ${
+              settings.soundEnabled ? 'bg-emerald-500 shadow-sm' : 'bg-slate-300 dark:bg-white/20'
+            }`}
+          >
+            <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform ${
+              settings.soundEnabled ? 'translate-x-5' : 'translate-x-0'
+            }`} />
+          </button>
+        </div>
+
+        {/* BGM Sóng Biển Toggle */}
+        <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-white/5">
+          <div>
+            <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center space-x-1.5">
+              <span>🌊 Sóng Biển Thư Giãn (BGM)</span>
+            </div>
+            <div className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Âm thanh sóng biển trắng giúp thư giãn sâu khi tập</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onUpdateSettings({ ...settings, bgmEnabled: !settings.bgmEnabled })}
+            className={`w-12 h-7 rounded-full p-1 transition-all ${
+              settings.bgmEnabled ? 'bg-cyan-500 shadow-sm' : 'bg-slate-300 dark:bg-white/20'
+            }`}
+          >
+            <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform ${
+              settings.bgmEnabled ? 'translate-x-5' : 'translate-x-0'
+            }`} />
+          </button>
+        </div>
+
+        {/* Bộ chọn Sound Preset */}
+        <div className="pt-3 border-t border-slate-200 dark:border-white/5 space-y-2">
+          <div className="text-xs font-bold text-slate-900 dark:text-white">Chọn Tần Số Âm Thanh Siết Cơ:</div>
+          <div className="grid grid-cols-2 gap-2">
+            {SOUND_PRESETS_METADATA.slice(0, 6).map((preset) => {
+              const isSelected = (settings.soundPreset || 'preset_14') === preset.id;
+              return (
+                <div
+                  key={preset.id}
+                  onClick={() => {
+                    onUpdateSettings({ ...settings, soundPreset: preset.id });
+                    audioEngine.playSoundPreset(preset.id);
+                  }}
+                  className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all flex items-center justify-between ${
+                    isSelected
+                      ? 'bg-emerald-500/15 border-emerald-500 ring-1 ring-emerald-500/30'
+                      : 'bg-slate-100/70 dark:bg-white/5 border-slate-200 dark:border-white/10'
+                  }`}
+                >
+                  <div className="min-w-0 flex-1 pr-1">
+                    <div className="text-[11px] font-bold text-slate-900 dark:text-white truncate">
+                      {preset.name}
+                    </div>
+                    <span className="text-[9px] text-slate-500 dark:text-gray-400">{preset.tag}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      audioEngine.playSoundPreset(preset.id);
+                    }}
+                    className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-neon flex items-center justify-center"
+                  >
+                    <Play size={10} fill="currentColor" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 3: PHẢN HỒI RUNG HAPTICS TAPTIC ENGINE */}
+      <div className="glass-panel p-5 rounded-3xl space-y-4 border border-violet-300/40 dark:border-violet-500/20">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-500/15 text-violet-600 dark:text-violet-400 flex items-center justify-center">
+            <Vibrate size={16} />
+          </div>
+          <div>
+            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Rung Taptic Engine (iOS)</h3>
+            <p className="text-[11px] text-slate-500 dark:text-gray-400">Cảm giác rung vật lý khi chạm và siết cơ</p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <div>
+            <div className="text-xs font-bold text-slate-900 dark:text-white">Bật Rung Haptic Taptic Engine</div>
+            <div className="text-[11px] text-slate-500 dark:text-gray-400">Rung nhịp đập khi co siết cơ sàn chậu</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const newVal = !settings.hapticsEnabled;
+              onUpdateSettings({ ...settings, hapticsEnabled: newVal });
+              if (newVal) triggerHapticMedium();
+            }}
+            className={`w-12 h-7 rounded-full p-1 transition-all ${
+              settings.hapticsEnabled !== false ? 'bg-violet-500 shadow-sm' : 'bg-slate-300 dark:bg-white/20'
+            }`}
+          >
+            <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform ${
+              settings.hapticsEnabled !== false ? 'translate-x-5' : 'translate-x-0'
+            }`} />
+          </button>
+        </div>
+      </div>
+
+      {/* SECTION 4: HỒ SƠ NGƯỜI DÙNG (GIỚI TÍNH & NĂM SINH) */}
+      <div className="glass-panel p-5 rounded-3xl space-y-4 border border-amber-300/40 dark:border-amber-500/20">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+            <User size={16} />
+          </div>
+          <div>
+            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Hồ Sơ Sức Khỏe Sinh Học</h3>
+            <p className="text-[11px] text-slate-500 dark:text-gray-400">Cấu hình giới tính để AI tối ưu hóa bài tập sàn chậu</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 pt-1">
+          <button
+            type="button"
+            onClick={() => onUpdateSettings({ ...settings, gender: 'male' })}
+            className={`p-3 rounded-2xl border text-center font-bold text-xs transition-all ${
+              settings.gender !== 'female'
+                ? 'bg-amber-500/15 border-amber-500 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500/30'
+                : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500'
+            }`}
+          >
+            👨 Nam Giới (PC Muscle)
+          </button>
+          <button
+            type="button"
+            onClick={() => onUpdateSettings({ ...settings, gender: 'female' })}
+            className={`p-3 rounded-2xl border text-center font-bold text-xs transition-all ${
+              settings.gender === 'female'
+                ? 'bg-pink-500/15 border-pink-500 text-pink-700 dark:text-pink-300 ring-1 ring-pink-500/30'
+                : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500'
+            }`}
+          >
+            👩 Nữ Giới (Pelvic Floor)
+          </button>
+        </div>
+
+        <div className="pt-2">
+          <label className="text-[11px] font-bold text-slate-700 dark:text-gray-300">
+            Năm sinh của bạn:
+          </label>
+          <input
+            type="number"
+            value={settings.birthYear || 1995}
+            onChange={(e) => onUpdateSettings({ ...settings, birthYear: parseInt(e.target.value) || 1995 })}
+            min={1940}
+            max={2015}
+            className="w-full mt-1 bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-2xl p-3 text-xs text-slate-900 dark:text-white font-mono focus:outline-none"
+          />
+        </div>
+      </div>
+
+      {/* SECTION 5: SAO LƯU & KHÔI PHỤC DỮ LIỆU (JSON) */}
+      <div className="glass-panel p-5 rounded-3xl space-y-4 border border-slate-300 dark:border-white/10">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-gray-300 flex items-center justify-center">
+            <Download size={16} />
+          </div>
+          <div>
+            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Sao Lưu & Khôi Phục Dữ Liệu</h3>
+            <p className="text-[11px] text-slate-500 dark:text-gray-400">Xuất/nhập toàn bộ lịch sử, streak và giáo án AI bằng JSON</p>
+          </div>
+        </div>
+
+        {backupMessage && (
+          <div className={`p-3 rounded-2xl text-xs ${backupMessage.success ? 'bg-emerald-500/15 text-emerald-600' : 'bg-red-500/15 text-red-500'}`}>
+            {backupMessage.text}
+          </div>
+        )}
+
+        <div className="flex gap-2 pt-1">
+          <button
+            type="button"
+            onClick={exportBackupJSON}
+            className="flex-1 py-3 rounded-2xl bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-white font-bold text-xs flex items-center justify-center space-x-1.5 active:scale-95 transition-all"
+          >
+            <Download size={14} />
+            <span>Xuất Dữ Liệu</span>
+          </button>
+
+          <label className="flex-1 py-3 rounded-2xl bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-white font-bold text-xs flex items-center justify-center space-x-1.5 active:scale-95 transition-all cursor-pointer">
+            <Upload size={14} />
+            <span>Nhập File JSON</span>
+            <input type="file" accept=".json" onChange={handleFileImport} className="hidden" />
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Settings;

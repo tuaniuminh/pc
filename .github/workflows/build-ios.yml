@@ -1,64 +1,82 @@
-name: Build Native iOS App (TrollStore IPA)
+name: Build iOS IPA for TrollStore
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
-  build-ipa:
-    name: Build & Package TrollStore IPA
+  build:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout Codebase
-        uses: actions/checkout@v4
+      - name: Checkout mã nguồn
+        uses: actions/checkout@main
 
-      - name: Select Xcode
-        run: sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
-
-      - name: Build Native SwiftUI App (.app)
+      - name: Kiểm tra môi trường Node.js
         run: |
-          xcodebuild -project ios/PCFlex.xcodeproj \
-                     -scheme PCFlex \
-                     -configuration Release \
-                     -destination 'generic/platform=iOS' \
-                     -derivedDataPath build \
-                     CODE_SIGN_IDENTITY="" \
-                     CODE_SIGNING_REQUIRED=NO \
-                     CODE_SIGNING_ALLOWED=NO \
-                     clean build
+          node -v
+          npm -v
 
-      - name: Prepare Payload, App Icons & Manual Ad-Hoc Codesign
+      - name: Cài đặt Dependencies
+        run: npm install
+
+      - name: Build Web (Vite)
+        run: npm run build
+
+      - name: Khởi tạo & Đồng bộ Capacitor
         run: |
+          npx cap add ios || true
+          npx cap sync ios
+
+      - name: Kích hoạt hỗ trợ màn hình 120Hz ProMotion trên iPhone / iPad
+        run: |
+          echo "Bật cờ CADisableMinimumFrameDurationOnPhone để mở khóa 120Hz ProMotion"
+          /usr/libexec/PlistBuddy -c "Add :CADisableMinimumFrameDurationOnPhone bool true" ios/App/App/Info.plist || /usr/libexec/PlistBuddy -c "Set :CADisableMinimumFrameDurationOnPhone true" ios/App/App/Info.plist || true
+
+      - name: Tạo Icon tự động từ Logo
+        run: npm run generate-icons || true
+
+      - name: Đọc và đồng bộ Version từ package.json
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Cập nhật MARKETING_VERSION = $VERSION vào Xcode project"
+          sed -i '' "s/MARKETING_VERSION = .*/MARKETING_VERSION = $VERSION;/g" ios/App/App.xcodeproj/project.pbxproj
+
+      - name: Build mã nguồn iOS bằng Xcode (Không ký)
+        working-directory: ios/App
+        run: |
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_IDENTITY=""
+
+      - name: Ký mã giả (Ad-Hoc) với Entitlements cho TrollStore
+        run: |
+          codesign --force --sign - --deep --entitlements ios-build-entitlements.plist ios/App/build/Build/Products/Release-iphoneos/App.app
+
+      - name: Đóng gói thành file IPA chuẩn
+        run: |
+          echo "Đang đóng gói IPA phiên bản: v${{ env.APP_VERSION }}"
           mkdir -p Payload
-          cp -r build/Build/Products/Release-iphoneos/PCFlex.app Payload/
+          cp -r ios/App/build/Build/Products/Release-iphoneos/App.app Payload/
           
-          # Copy PWA Web Assets into App Bundle for WKWebView Container
-          cp index.html Payload/PCFlex.app/
-          cp app.js Payload/PCFlex.app/
-          cp styles.css Payload/PCFlex.app/
-          cp logo.png Payload/PCFlex.app/
-          cp manifest.json Payload/PCFlex.app/
-          cp sw.js Payload/PCFlex.app/
-          cp icon-192.png Payload/PCFlex.app/
-          cp icon-512.png Payload/PCFlex.app/
+          # Đặt tên file IPA chuẩn (Ví dụ: PCFlex-v1.3.0.ipa)
+          IPA_NAME="PCFlex-v${{ env.APP_VERSION }}.ipa"
+          zip -r "$IPA_NAME" Payload
+          rm -rf Payload
           
-          # Copy App Icons into Bundle for SpringBoard
-          cp logo.png Payload/PCFlex.app/AppIcon.png
-          cp logo.png Payload/PCFlex.app/AppIcon60x60@2x.png
-          cp logo.png Payload/PCFlex.app/AppIcon60x60@3x.png
-          
-          # Force Ad-Hoc Sign with get-task-allow = false Entitlements
-          codesign --force --sign - --deep --entitlements ios/ios-build-entitlements.plist Payload/PCFlex.app
-          
-          # Compress Payload to PCFlex_v1.2.32.ipa
-          zip -r PCFlex_v1.2.32.ipa Payload
+          echo "IPA_NAME=$IPA_NAME" >> $GITHUB_ENV
 
-      - name: Upload TrollStore IPA Artifact
-        uses: actions/upload-artifact@v4
+      - name: Tải file IPA lên GitHub Artifacts
+        uses: actions/upload-artifact@main
         with:
-          name: PCFlex_v1.2.32
-          path: PCFlex_v1.2.32.ipa
+          name: PCFlex-v${{ env.APP_VERSION }}
+          path: ${{ env.IPA_NAME }}
+          retention-days: 14
