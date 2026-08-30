@@ -363,28 +363,49 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
           isActive={isActive}
         />
 
-        {/* Chi tiết Lượt tập & Giai đoạn */}
-        <div className="space-y-1.5 pt-1">
+        {/* Chi tiết Lượt tập & Giai đoạn (Thanh Tiến Trình Toàn Bộ Bài Tập) */}
+        <div className="space-y-2 pt-1">
           <div className="flex items-center justify-between text-sm font-extrabold text-slate-800 dark:text-gray-200">
             <span>Lượt tập:</span>
-            <span className="font-mono text-base">{currentCompletedReps} / {totalRoutineReps}</span>
+            <span className="font-mono text-base text-cyan-600 dark:text-cyan-400 font-black">
+              {currentCompletedReps} / {totalRoutineReps}
+            </span>
           </div>
 
-          {/* Thanh phân đoạn mờ */}
-          <div className="h-1.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden flex">
+          {/* Thanh Tiến Trình Phân Đoạn Năng Động (Dynamic Segmented Progress Bar) */}
+          <div className="h-2 w-full bg-slate-200/80 dark:bg-white/10 rounded-full overflow-hidden flex gap-1 p-0.5">
+            {currentStages.map((st, idx) => {
+              const isPast = idx < currentStageIndex;
+              const isCurrent = idx === currentStageIndex;
+              const stagePercent = isPast 
+                ? 100 
+                : isCurrent 
+                ? Math.min(100, Math.round(((actionState === 'idle' ? 0 : currentRep) / (st.reps || 1)) * 100))
+                : 0;
+
+              return (
+                <div 
+                  key={idx} 
+                  className="h-full flex-1 bg-slate-300/60 dark:bg-white/5 rounded-full overflow-hidden relative"
+                >
+                  <div 
+                    className="h-full bg-gradient-to-r from-cyan-400 to-teal-400 transition-all duration-500 rounded-full"
+                    style={{ width: `${stagePercent}%` }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Nhãn Giai Đoạn Chi Tiết Phía Dưới */}
+          <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-gray-500 font-semibold pt-0.5">
             {currentStages.map((st, idx) => (
-              <div 
-                key={idx} 
-                className={`h-full flex-1 border-r border-slate-900/10 dark:border-black/30 ${
-                  idx < currentStageIndex ? 'bg-cyan-400' : idx === currentStageIndex ? 'bg-cyan-400/60' : 'bg-transparent'
-                }`} 
-              />
-            ))}
-          </div>
-
-          <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-gray-500 font-medium pt-0.5">
-            {currentStages.slice(0, 3).map((st, idx) => (
-              <span key={idx}>{st.label || (st.type === 'reverse' ? `Kegel ngược ${st.squeeze}s` : `Siết ${st.squeeze}s`)}</span>
+              <span 
+                key={idx}
+                className={idx === currentStageIndex ? 'text-cyan-500 dark:text-cyan-400 font-bold' : ''}
+              >
+                {st.label || (st.type === 'reverse' ? `Kegel ngược ${st.squeeze}s` : st.type === 'breathing' ? 'Thở bụng' : `Siết ${st.squeeze}s`)}
+              </span>
             ))}
           </div>
         </div>
