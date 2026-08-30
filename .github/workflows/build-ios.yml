@@ -26,7 +26,8 @@ jobs:
 
       - name: Khởi tạo & Đồng bộ Capacitor
         run: |
-          npx cap add ios || true
+          rm -rf ios || true
+          npx cap add ios
           npx cap sync ios
 
       - name: Kích hoạt hỗ trợ màn hình 120Hz ProMotion trên iPhone / iPad

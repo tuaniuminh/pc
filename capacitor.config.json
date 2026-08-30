@@ -1,6 +1,5 @@
 {
   "appId": "com.pcflex.app",
   "appName": "PC Flex",
-  "webDir": "dist",
-  "bundledWebRuntime": false
+  "webDir": "dist"
 }
