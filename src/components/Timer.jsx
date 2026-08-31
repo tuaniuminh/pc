@@ -28,11 +28,18 @@ import {
   Music
 } from 'lucide-react';
 
+const getAutoPresetByTime = () => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return 'goodMorning'; // 05:00 - 11:59: Chào Buổi Sáng
+  if (hour >= 12 && hour < 18) return 'powerCombo';  // 12:00 - 17:59: Combo Sức Mạnh
+  return 'nightRecovery';                            // 18:00 - 04:59: Phục Hồi Ban Đêm
+};
+
 const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) => {
   // Trạng thái bài tập
   const [selectedGender, setSelectedGender] = useState(userProfile.gender || 'male');
   const [selectedLevel, setSelectedLevel] = useState(1);
-  const [selectedPresetType, setSelectedPresetType] = useState('nightRecovery'); // 'goodMorning' | 'powerCombo' | 'nightRecovery' | 'custom'
+  const [selectedPresetType, setSelectedPresetType] = useState(getAutoPresetByTime); // Tự động chọn theo buổi sáng/trưa/tối
   const [customPlansList, setCustomPlansList] = useState(getCustomPlans());
   const [selectedCustomPlan, setSelectedCustomPlan] = useState(null);
 
@@ -638,77 +645,89 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
 
         {/* Danh Sách Các Bài Tập Trong Cấp Độ Hiện Tại */}
         <div className="space-y-3 pt-2">
-          {/* Card 1: Chào Buổi Sáng */}
-          <div
-            onClick={() => { if (!isActive && actionState === 'idle' && sessionTotalSeconds === 0) setSelectedPresetType('goodMorning'); }}
-            className={`p-4 rounded-2xl border text-left transition-all flex items-center space-x-3.5 ${
-              selectedPresetType === 'goodMorning'
-                ? 'bg-amber-50/80 dark:bg-white/10 border-amber-500 ring-2 ring-amber-500/40 shadow-sm'
-                : (isActive || actionState !== 'idle' || sessionTotalSeconds > 0)
-                ? 'bg-white/50 dark:bg-white/5 border-slate-200 dark:border-white/5 opacity-40 cursor-not-allowed'
-                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-amber-500/40 cursor-pointer'
-            }`}
-          >
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-2xl shrink-0">
-              🌅
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-black text-amber-600 dark:text-amber-400">
-                Chào Buổi Sáng
-              </div>
-              <div className="text-xs text-slate-600 dark:text-gray-400 mt-0.5 line-clamp-2">
-                20 lượt siết 1s - thả 2s | 5 lượt Kegel ngược giãn chậu
-              </div>
-            </div>
-          </div>
+          {/* Lấy dữ liệu của cấp độ và giới tính hiện tại */}
+          {(() => {
+            const lvlData = CLINICAL_LEVELS[selectedLevel]?.[selectedGender] || CLINICAL_LEVELS[1].male;
+            const gm = lvlData.goodMorning;
+            const pc = lvlData.powerCombo;
+            const nr = lvlData.nightRecovery;
 
-          {/* Card 2: Combo Sức Mạnh */}
-          <div
-            onClick={() => { if (!isActive && actionState === 'idle' && sessionTotalSeconds === 0) setSelectedPresetType('powerCombo'); }}
-            className={`p-4 rounded-2xl border text-left transition-all flex items-center space-x-3.5 ${
-              selectedPresetType === 'powerCombo'
-                ? 'bg-emerald-50/80 dark:bg-white/10 border-emerald-500 ring-2 ring-emerald-500/40 shadow-sm'
-                : (isActive || actionState !== 'idle' || sessionTotalSeconds > 0)
-                ? 'bg-white/50 dark:bg-white/5 border-slate-200 dark:border-white/5 opacity-40 cursor-not-allowed'
-                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-emerald-500/40 cursor-pointer'
-            }`}
-          >
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-xl font-black text-emerald-500 dark:text-emerald-400 shrink-0">
-              ★
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-black text-emerald-600 dark:text-neon">
-                Combo Sức Mạnh
-              </div>
-              <div className="text-xs text-slate-600 dark:text-gray-400 mt-0.5 line-clamp-2">
-                Siết nhanh 20 lượt 1s | Giữ 24 lượt 3s | Giữ 10 lượt 5s + Cooldown
-              </div>
-            </div>
-          </div>
+            return (
+              <>
+                {/* Card 1: Chào Buổi Sáng */}
+                <div
+                  onClick={() => { if (!isActive && actionState === 'idle' && sessionTotalSeconds === 0) setSelectedPresetType('goodMorning'); }}
+                  className={`p-4 rounded-2xl border text-left transition-all flex items-center space-x-3.5 ${
+                    selectedPresetType === 'goodMorning'
+                      ? 'bg-amber-50/80 dark:bg-white/10 border-amber-500 ring-2 ring-amber-500/40 shadow-sm'
+                      : (isActive || actionState !== 'idle' || sessionTotalSeconds > 0)
+                      ? 'bg-white/50 dark:bg-white/5 border-slate-200 dark:border-white/5 opacity-40 cursor-not-allowed'
+                      : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-amber-500/40 cursor-pointer'
+                  }`}
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-2xl shrink-0">
+                    {gm?.icon || '🌅'}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-black text-amber-600 dark:text-amber-400">
+                      {gm?.name || 'Chào Buổi Sáng'}
+                    </div>
+                    <div className="text-xs text-slate-600 dark:text-gray-400 mt-0.5 line-clamp-2">
+                      {gm?.meta || 'Siết nhẹ khởi động ngày mới'}
+                    </div>
+                  </div>
+                </div>
 
-          {/* Card 3: Phục Hồi Ban Đêm */}
-          <div
-            onClick={() => { if (!isActive && actionState === 'idle' && sessionTotalSeconds === 0) setSelectedPresetType('nightRecovery'); }}
-            className={`p-4 rounded-2xl border text-left transition-all flex items-center space-x-3.5 ${
-              selectedPresetType === 'nightRecovery'
-                ? 'bg-violet-50/80 dark:bg-white/10 border-violet-500 ring-2 ring-violet-500/40 shadow-sm'
-                : (isActive || actionState !== 'idle' || sessionTotalSeconds > 0)
-                ? 'bg-white/50 dark:bg-white/5 border-slate-200 dark:border-white/5 opacity-40 cursor-not-allowed'
-                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-violet-500/40 cursor-pointer'
-            }`}
-          >
-            <div className="w-12 h-12 rounded-2xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-xl shrink-0">
-              🌙
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-black text-violet-600 dark:text-violet-400">
-                Phục Hồi Ban Đêm
-              </div>
-              <div className="text-xs text-slate-600 dark:text-gray-400 mt-0.5 line-clamp-2">
-                15 lượt siết nhanh | 10 lượt Kegel ngược | 5 lượt hít thở sâu
-              </div>
-            </div>
-          </div>
+                {/* Card 2: Combo Sức Mạnh */}
+                <div
+                  onClick={() => { if (!isActive && actionState === 'idle' && sessionTotalSeconds === 0) setSelectedPresetType('powerCombo'); }}
+                  className={`p-4 rounded-2xl border text-left transition-all flex items-center space-x-3.5 ${
+                    selectedPresetType === 'powerCombo'
+                      ? 'bg-emerald-50/80 dark:bg-white/10 border-emerald-500 ring-2 ring-emerald-500/40 shadow-sm'
+                      : (isActive || actionState !== 'idle' || sessionTotalSeconds > 0)
+                      ? 'bg-white/50 dark:bg-white/5 border-slate-200 dark:border-white/5 opacity-40 cursor-not-allowed'
+                      : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-emerald-500/40 cursor-pointer'
+                  }`}
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-xl font-black text-emerald-500 dark:text-emerald-400 shrink-0">
+                    {pc?.icon || '⚡'}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-black text-emerald-600 dark:text-neon">
+                      {pc?.name || 'Combo Sức Mạnh'}
+                    </div>
+                    <div className="text-xs text-slate-600 dark:text-gray-400 mt-0.5 line-clamp-2">
+                      {pc?.meta || 'Tăng cường sức bền và kiểm soát'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 3: Phục Hồi Ban Đêm */}
+                <div
+                  onClick={() => { if (!isActive && actionState === 'idle' && sessionTotalSeconds === 0) setSelectedPresetType('nightRecovery'); }}
+                  className={`p-4 rounded-2xl border text-left transition-all flex items-center space-x-3.5 ${
+                    selectedPresetType === 'nightRecovery'
+                      ? 'bg-violet-50/80 dark:bg-white/10 border-violet-500 ring-2 ring-violet-500/40 shadow-sm'
+                      : (isActive || actionState !== 'idle' || sessionTotalSeconds > 0)
+                      ? 'bg-white/50 dark:bg-white/5 border-slate-200 dark:border-white/5 opacity-40 cursor-not-allowed'
+                      : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-violet-500/40 cursor-pointer'
+                  }`}
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-xl shrink-0">
+                    {nr?.icon || '🌙'}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-black text-violet-600 dark:text-violet-400">
+                      {nr?.name || 'Phục Hồi Ban Đêm'}
+                    </div>
+                    <div className="text-xs text-slate-600 dark:text-gray-400 mt-0.5 line-clamp-2">
+                      {nr?.meta || 'Thư giãn sàn chậu và phục hồi'}
+                    </div>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
 
           {/* Card 4: Thiết Kế Bài Tập Mới (Dashed Border) */}
           <div

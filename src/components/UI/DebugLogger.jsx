@@ -4,7 +4,7 @@ import { liveActivityService } from '../../services/liveActivityService';
 import { audioEngine, SOUND_ACTIONS, SOUND_PRESETS } from '../../utils/audioEngine';
 import { Capacitor } from '@capacitor/core';
 
-const APP_VERSION = 'v1.8.8';
+const APP_VERSION = 'v1.8.9';
 const LOG_STORAGE_KEY = 'pcflex_debug_logs_v2';
 
 const getStoredLogs = () => {
@@ -277,9 +277,12 @@ const DebugLogger = () => {
         <Bug className="w-5 h-5 animate-pulse" />
       </button>
 
-      {/* Modal Console Logs Toàn Màn Hình */}
+      {/* Modal Console Logs Toàn Màn Hình với Safe Area Inset chống tràn Notch & Dynamic Island */}
       {isOpen && (
-        <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex flex-col p-4 text-xs font-mono select-text">
+        <div 
+          className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-xl flex flex-col px-4 pb-6 text-xs font-mono select-text"
+          style={{ paddingTop: 'max(env(safe-area-inset-top, 48px), 3.25rem)' }}
+        >
           {/* Header */}
           <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
             <div className="flex items-center gap-2">
