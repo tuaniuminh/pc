@@ -331,7 +331,9 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
       currentRep: 1,
       stageLabel: currentStages[0]?.label || 'Siết cơ PC',
       squeezeTime: currentStages[0]?.squeeze || 1,
-      relaxTime: currentStages[0]?.relax || 2
+      relaxTime: currentStages[0]?.relax || 2,
+      hapticsEnabled: settings?.hapticsEnabled !== false,
+      sfxEnabled: !!sfxEnabled
     });
   };
 

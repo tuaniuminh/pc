@@ -27,6 +27,8 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
     private var stageLabel: String = "Siết cơ PC"
     private var squeezeTime: Int = 1
     private var relaxTime: Int = 2
+    private var hapticsEnabled: Bool = true
+    private var sfxEnabled: Bool = true
 
     #if canImport(ActivityKit)
     @available(iOS 16.1, *)
@@ -107,7 +109,9 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         if timeRemaining > 1 {
             timeRemaining -= 1
             if timeRemaining <= 3 && stageDuration >= 5 {
-                AudioServicesPlaySystemSound(1057)
+                if sfxEnabled {
+                    AudioServicesPlaySystemSound(1057)
+                }
             }
         } else {
             // Chuyển pha
@@ -116,7 +120,11 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
                 timeRemaining = max(1, relaxTime)
                 stageDuration = timeRemaining
                 stageLabel = "Thả lỏng"
-                AudioServicesPlaySystemSound(1054) // Soft tick
+                
+                // TUYỆT ĐỐI KHÔNG RUNG KHI THẢ LỎNG (Chỉ phát âm thanh nếu sfxEnabled)
+                if sfxEnabled {
+                    AudioServicesPlaySystemSound(1103) // Tink sound thuần âm thanh
+                }
             } else {
                 if currentRep < totalReps {
                     currentRep += 1
@@ -124,10 +132,32 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
                     timeRemaining = max(1, squeezeTime)
                     stageDuration = timeRemaining
                     stageLabel = "Siết cơ PC"
-                    AudioServicesPlaySystemSound(1057) // Taptic pop
+
+                    // Phát âm thanh nếu sfxEnabled
+                    if sfxEnabled {
+                        AudioServicesPlaySystemSound(1057)
+                    }
+
+                    // Chỉ rung phản hồi khi người dùng BẬT rung trong cài đặt
+                    if hapticsEnabled {
+                        DispatchQueue.main.async {
+                            let generator = UIImpactFeedbackGenerator(style: .medium)
+                            generator.prepare()
+                            generator.impactOccurred()
+                        }
+                    }
                 } else {
                     // Hoàn thành toàn bộ bài tập
-                    AudioServicesPlaySystemSound(1025)
+                    if sfxEnabled {
+                        AudioServicesPlaySystemSound(1025)
+                    }
+                    if hapticsEnabled {
+                        DispatchQueue.main.async {
+                            let generator = UINotificationFeedbackGenerator()
+                            generator.prepare()
+                            generator.notificationOccurred(.success)
+                        }
+                    }
                     stopNativeEngine()
                     notifyListeners("workoutCompleted", data: ["success": true])
                     return
@@ -187,6 +217,8 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         stageLabel = call.getString("stageLabel") ?? "Siết cơ PC"
         squeezeTime = call.getInt("squeezeTime") ?? max(1, timeRemaining)
         relaxTime = call.getInt("relaxTime") ?? 2
+        hapticsEnabled = call.getBool("hapticsEnabled") ?? true
+        sfxEnabled = call.getBool("sfxEnabled") ?? true
 
         let targetDate = Date().addingTimeInterval(Double(max(1, timeRemaining)))
 
@@ -222,8 +254,17 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
             // Bắt đầu Native Workout Engine độc lập
             startNativeEngine()
 
-            // Âm thanh rung native mở đầu
-            AudioServicesPlaySystemSound(1057)
+            // Âm thanh mở đầu
+            if sfxEnabled {
+                AudioServicesPlaySystemSound(1057)
+            }
+            if hapticsEnabled {
+                DispatchQueue.main.async {
+                    let generator = UIImpactFeedbackGenerator(style: .medium)
+                    generator.prepare()
+                    generator.impactOccurred()
+                }
+            }
 
             call.resolve([
                 "activityId": activity.id
@@ -241,6 +282,8 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         if let newTime = call.getInt("timeRemaining") { timeRemaining = newTime }
         if let newRep = call.getInt("currentRep") { currentRep = newRep }
         if let newLabel = call.getString("stageLabel") { stageLabel = newLabel }
+        if let newHaptics = call.getBool("hapticsEnabled") { hapticsEnabled = newHaptics }
+        if let newSfx = call.getBool("sfxEnabled") { sfxEnabled = newSfx }
         updateLiveActivityNative()
         call.resolve()
     }

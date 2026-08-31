@@ -44,9 +44,11 @@ class LiveActivityService {
     currentRep = 1,
     stageLabel = 'Siết cơ PC',
     squeezeTime = 1,
-    relaxTime = 2
+    relaxTime = 2,
+    hapticsEnabled = true,
+    sfxEnabled = true
   }) {
-    addAppLog('info', `[LiveActivity] Yêu cầu khởi động: ${routineName} (${actionState} ${timeRemaining}s, Rep ${currentRep}/${totalReps})`);
+    addAppLog('info', `[LiveActivity] Yêu cầu khởi động: ${routineName} (${actionState} ${timeRemaining}s, Rep ${currentRep}/${totalReps}, Rung: ${hapticsEnabled}, Âm thanh: ${sfxEnabled})`);
 
     if (!this.isSupported()) {
       addAppLog('warn', `[LiveActivity] Bỏ qua vì nền tảng hiện tại là: ${Capacitor.getPlatform()} (Cần chạy trên iOS native)`);
@@ -64,7 +66,9 @@ class LiveActivityService {
           currentRep,
           stageLabel,
           squeezeTime,
-          relaxTime
+          relaxTime,
+          hapticsEnabled,
+          sfxEnabled
         });
         this.isActive = true;
         this.currentActivityId = result?.activityId || 'active';
