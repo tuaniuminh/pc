@@ -162,6 +162,21 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [isActive]);
 
+  const syncLiveActivity = (customState, customTime, customRep, customStage) => {
+    const state = customState || actionState;
+    const time = customTime !== undefined ? customTime : timeRemaining;
+    const rep = customRep !== undefined ? customRep : currentRep;
+    const stg = customStage || currentStages[currentStageIndex];
+
+    liveActivityService.updateLiveActivity({
+      actionState: state,
+      timeRemaining: Math.max(1, time),
+      currentRep: rep,
+      totalReps: totalRoutineReps,
+      stageLabel: stg?.label || (state === 'squeezing' ? 'Siết cơ PC' : state === 'relaxing' ? 'Thả lỏng' : state === 'reverse' ? 'Kegel ngược' : 'Nghỉ chuyển')
+    });
+  };
+
   // Main Engine Interval Loop
   useEffect(() => {
     let timer = null;
@@ -179,13 +194,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
             }
 
             // Cập nhật Live Activities & Dynamic Island trên màn hình khóa
-            liveActivityService.updateLiveActivity({
-              actionState,
-              timeRemaining: prev - 1,
-              currentRep,
-              totalReps: totalRoutineReps,
-              stageLabel: currentStage?.label || (actionState === 'squeezing' ? 'Siết cơ PC' : actionState === 'relaxing' ? 'Thả lỏng' : 'Kegel ngược')
-            });
+            syncLiveActivity(actionState, prev - 1, currentRep, currentStages[currentStageIndex]);
 
             return prev - 1;
           } else {
@@ -221,6 +230,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
         setActionState('relaxing');
         setTimeRemaining(stage.relax);
         setStageDuration(stage.relax);
+        syncLiveActivity('relaxing', stage.relax, currentRep, stage);
         if (sfxEnabled) audioEngine.playRelaxSFX(settings.actionSounds);
         triggerHapticMedium();
       } else {
@@ -236,8 +246,9 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     if (!stage) return;
 
     if (currentRep < stage.reps) {
-      setCurrentRep(r => r + 1);
-      startSqueezePhase(stage);
+      const nextRep = currentRep + 1;
+      setCurrentRep(nextRep);
+      startSqueezePhase(stage, nextRep);
     } else {
       advanceToNextStage();
     }
@@ -254,36 +265,30 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
         setActionState('transition');
         setTimeRemaining(nextStage.relax || 10);
         setStageDuration(nextStage.relax || 10);
+        syncLiveActivity('transition', nextStage.relax || 10, 1, nextStage);
         if (sfxEnabled) audioEngine.playTransitionRestSFX(settings.actionSounds);
         triggerHapticHeavy();
       } else {
-        startSqueezePhase(nextStage);
+        startSqueezePhase(nextStage, 1);
       }
     } else {
       completeSession();
     }
   };
 
-  const startSqueezePhase = (stage) => {
-    if (stage.type === 'reverse') {
-      setActionState('reverse');
-      setTimeRemaining(stage.squeeze);
-      setStageDuration(stage.squeeze);
-      if (sfxEnabled) audioEngine.playReverseKegelSFX(settings.actionSounds);
-      triggerHapticHeavy();
-    } else if (stage.type === 'breathing') {
-      setActionState('breathing');
-      setTimeRemaining(stage.squeeze);
-      setStageDuration(stage.squeeze);
-      if (sfxEnabled) audioEngine.playSoundPreset('preset_45');
-      triggerHapticMedium();
-    } else {
-      setActionState('squeezing');
-      setTimeRemaining(stage.squeeze);
-      setStageDuration(stage.squeeze);
-      if (sfxEnabled) audioEngine.playSqueezeSFX(settings.actionSounds);
-      triggerHapticHeavy();
+  const startSqueezePhase = (stage, targetRep = currentRep) => {
+    const nextState = stage.type === 'reverse' ? 'reverse' : stage.type === 'breathing' ? 'breathing' : 'squeezing';
+    setActionState(nextState);
+    setTimeRemaining(stage.squeeze);
+    setStageDuration(stage.squeeze);
+    syncLiveActivity(nextState, stage.squeeze, targetRep, stage);
+
+    if (sfxEnabled) {
+      if (stage.type === 'reverse') audioEngine.playReverseKegelSFX(settings.actionSounds);
+      else if (stage.type === 'breathing') audioEngine.playSoundPreset('preset_45');
+      else audioEngine.playSqueezeSFX(settings.actionSounds);
     }
+    triggerHapticHeavy();
   };
 
   const handleStartWorkout = () => {

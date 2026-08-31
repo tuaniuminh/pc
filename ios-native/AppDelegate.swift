@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import AVFoundation
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -7,6 +8,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Cấu hình AVAudioSession để phát âm thanh nền liên tục khi ẩn app hoặc khóa màn hình
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers, .duckOthers])
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            print("Lỗi cấu hình AVAudioSession:", error)
+        }
         return true
     }
 
@@ -16,7 +24,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillEnterForeground(_ application: UIApplication) {}
 
-    func applicationDidBecomeActive(_ application: UIApplication) {}
+    func applicationDidBecomeActive(_ application: UIApplication) {
+        try? AVAudioSession.sharedInstance().setActive(true)
+    }
 
     func applicationWillTerminate(_ application: UIApplication) {}
 

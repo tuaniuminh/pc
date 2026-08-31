@@ -56,6 +56,13 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         )
 
         do {
+            // Dừng bất kỳ activity cũ nào trước khi tạo mới
+            for oldAct in Activity<PCFlexActivityAttributes>.activities {
+                Task {
+                    await oldAct.end(dismissalPolicy: .immediate)
+                }
+            }
+
             let activity = try Activity<PCFlexActivityAttributes>.request(
                 attributes: attributes,
                 contentState: initialContentState,
@@ -75,7 +82,13 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc public func updateActivity(_ call: CAPPluginCall) {
         #if canImport(ActivityKit)
-        guard #available(iOS 16.1, *), let activity = self.currentActivity else {
+        guard #available(iOS 16.1, *) else {
+            call.resolve()
+            return
+        }
+
+        let activity = self.currentActivity ?? Activity<PCFlexActivityAttributes>.activities.first
+        guard let liveAct = activity else {
             call.resolve()
             return
         }
@@ -97,7 +110,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         )
 
         Task {
-            await activity.update(using: updatedContentState)
+            await liveAct.update(using: updatedContentState)
             call.resolve()
         }
         #else
@@ -107,13 +120,15 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc public func stopActivity(_ call: CAPPluginCall) {
         #if canImport(ActivityKit)
-        guard #available(iOS 16.1, *), let activity = self.currentActivity else {
+        guard #available(iOS 16.1, *) else {
             call.resolve()
             return
         }
 
         Task {
-            await activity.end(dismissalPolicy: .immediate)
+            for act in Activity<PCFlexActivityAttributes>.activities {
+                await act.end(dismissalPolicy: .immediate)
+            }
             self.currentActivity = nil
             call.resolve()
         }
