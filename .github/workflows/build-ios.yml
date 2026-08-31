@@ -45,19 +45,19 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" ios/App/App/Info.plist || true
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" ios/App/App/Info.plist || true
 
-          echo "Tích hợp và đăng ký mã nguồn Swift vào Xcode project"
+          echo "Tích hợp và đăng ký mã nguồn Native (Swift & Obj-C) vào Xcode project"
           ruby -r xcodeproj -e "
             project = Xcodeproj::Project.open('ios/App/App.xcodeproj')
             target = project.targets.first
             group = project.main_group.find_subpath('App', true)
-            Dir.glob('ios-native/*.swift').each do |file|
+            Dir.glob('ios-native/*.*').each do |file|
               dest = \"ios/App/App/#{File.basename(file)}\"
               FileUtils.cp(file, dest)
               file_ref = group.find_file_by_path(File.basename(file)) || group.new_file(File.basename(file))
               target.add_file_references([file_ref]) unless target.source_build_phase.files_references.include?(file_ref)
             end
             project.save
-          " || cp ios-native/*.swift ios/App/App/
+          " || cp ios-native/*.* ios/App/App/
 
       - name: Tạo Icon tự động từ Logo
         run: npm run generate-icons || true

@@ -41,7 +41,7 @@ public struct PCFlexLiveActivityWidget: Widget {
                             .multilineTextAlignment(.trailing)
                         Text("Hiệp \(context.state.currentRep)/\(context.state.totalReps)")
                             .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.cyan)
+                            .foregroundColor(Color(red: 0.0, green: 0.8, blue: 0.9))
                     }
                     .padding(.trailing, 6)
                 }
@@ -135,6 +135,7 @@ struct LockScreenLiveActivityView: View {
 }
 
 // MARK: - Helpers
+@available(iOS 16.1, *)
 func actionIcon(for state: String) -> String {
     switch state {
     case "squeezing": return "⚡"
@@ -146,6 +147,7 @@ func actionIcon(for state: String) -> String {
     }
 }
 
+@available(iOS 16.1, *)
 func actionTitle(for state: String) -> String {
     switch state {
     case "squeezing": return "SIẾT CƠ PC"
@@ -157,6 +159,7 @@ func actionTitle(for state: String) -> String {
     }
 }
 
+@available(iOS 16.1, *)
 func actionShortTitle(for state: String) -> String {
     switch state {
     case "squeezing": return "Siết"
@@ -168,6 +171,7 @@ func actionShortTitle(for state: String) -> String {
     }
 }
 
+@available(iOS 16.1, *)
 func actionColor(for state: String) -> Color {
     switch state {
     case "squeezing": return Color(red: 0.06, green: 0.95, blue: 0.55) // Emerald
@@ -175,7 +179,7 @@ func actionColor(for state: String) -> Color {
     case "reverse": return Color(red: 0.55, green: 0.36, blue: 0.96) // Violet
     case "transition": return Color(red: 0.96, green: 0.62, blue: 0.04) // Amber
     case "breathing": return Color(red: 0.06, green: 0.95, blue: 0.55)
-    default: return Color.cyan
+    default: return Color(red: 0.0, green: 0.8, blue: 0.9)
     }
 }
 #endif

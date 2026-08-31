@@ -3,17 +3,15 @@ import Capacitor
 import ActivityKit
 
 @objc(LiveActivityPlugin)
-public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
-    public let identifier = "LiveActivityPlugin"
-    public let jsName = "LiveActivityPlugin"
-    public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "startActivity", returnType: CAPPluginMethodReturnPromise),
-        CAPPluginMethod(name: "updateActivity", returnType: CAPPluginMethodReturnPromise),
-        CAPPluginMethod(name: "stopActivity", returnType: CAPPluginMethodReturnPromise)
-    ]
+public class LiveActivityPlugin: CAPPlugin {
+    private var _currentActivity: Any?
 
     #if canImport(ActivityKit)
-    private var currentActivity: Activity<PCFlexActivityAttributes>?
+    @available(iOS 16.1, *)
+    private var currentActivity: Activity<PCFlexActivityAttributes>? {
+        get { return _currentActivity as? Activity<PCFlexActivityAttributes> }
+        set { _currentActivity = newValue }
+    }
     #endif
 
     @objc func startActivity(_ call: CAPPluginCall) {
