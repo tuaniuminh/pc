@@ -401,21 +401,28 @@ class AudioSynthesizer {
   startBackgroundAudioKeeper() {
     if (typeof window === 'undefined') return;
     try {
-      if (!this.bgAudioElement) {
-        this.bgAudioElement = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
-        this.bgAudioElement.loop = true;
-        this.bgAudioElement.setAttribute('playsinline', 'true');
-        this.bgAudioElement.setAttribute('webkit-playsinline', 'true');
+      this.init();
+      if (!this.bgOscillator && this.audioCtx) {
+        // Tạo một bộ dao động siêu âm vô thanh (inaudible carrier) giữ tiến trình Web Audio không bị iOS WebKit đóng băng
+        this.bgOscillator = this.audioCtx.createOscillator();
+        this.bgGainNodeKeeper = this.audioCtx.createGain();
+        this.bgOscillator.frequency.setValueAtTime(20, this.audioCtx.currentTime); // 20Hz (dưới ngưỡng nghe của người)
+        this.bgGainNodeKeeper.gain.setValueAtTime(0.001, this.audioCtx.currentTime);
+        this.bgOscillator.connect(this.bgGainNodeKeeper);
+        this.bgGainNodeKeeper.connect(this.audioCtx.destination);
+        this.bgOscillator.start();
       }
-      this.bgAudioElement.play().catch(() => {});
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Silent audio keeper error:', e);
+    }
   }
 
   stopBackgroundAudioKeeper() {
-    if (this.bgAudioElement) {
+    if (this.bgOscillator) {
       try {
-        this.bgAudioElement.pause();
-        this.bgAudioElement.currentTime = 0;
+        this.bgOscillator.stop();
+        this.bgOscillator.disconnect();
+        this.bgOscillator = null;
       } catch (e) {}
     }
   }
