@@ -30,9 +30,11 @@ jobs:
           npx cap add ios
           npx cap sync ios
 
-      - name: Kích hoạt hỗ trợ màn hình 120Hz ProMotion trên iPhone / iPad
+      - name: Kích hoạt LaunchScreen & 120Hz ProMotion trên iPhone 14 Pro Max
         run: |
-          echo "Bật cờ CADisableMinimumFrameDurationOnPhone để mở khóa 120Hz ProMotion"
+          echo "Kích hoạt UILaunchStoryboardName để hiển thị đúng độ phân giải gốc của iPhone 14 Pro Max"
+          /usr/libexec/PlistBuddy -c "Add :UILaunchStoryboardName string LaunchScreen" ios/App/App/Info.plist || /usr/libexec/PlistBuddy -c "Set :UILaunchStoryboardName LaunchScreen" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :UILaunchScreen dict" ios/App/App/Info.plist || true
           /usr/libexec/PlistBuddy -c "Add :CADisableMinimumFrameDurationOnPhone bool true" ios/App/App/Info.plist || /usr/libexec/PlistBuddy -c "Set :CADisableMinimumFrameDurationOnPhone true" ios/App/App/Info.plist || true
 
       - name: Kích hoạt Live Activities, Dynamic Island & Background Audio (iOS 16.1+)
@@ -77,7 +79,7 @@ jobs:
               widget_target.add_file_references([file_ref]) unless widget_target.source_build_phase.files_references.include?(file_ref)
             end
 
-            # 5. Nhúng Widget Extension vào App chính (Embed App Extensions)
+            # Nhúng Widget Extension vào App chính
             main_target.add_dependency(widget_target)
             embed_phase = main_target.copy_files_build_phases.find { |p| p.dst_subfolder_spec == 13 } || main_target.new_copy_files_build_phase('Embed App Extensions')
             embed_phase.dst_subfolder_spec = 13
@@ -97,9 +99,21 @@ jobs:
           echo "Cập nhật MARKETING_VERSION = $VERSION vào Xcode project"
           sed -i '' "s/MARKETING_VERSION = .*/MARKETING_VERSION = $VERSION;/g" ios/App/App.xcodeproj/project.pbxproj
 
-      - name: Build mã nguồn iOS bằng Xcode (Không ký)
+      - name: Build mã nguồn iOS & Widget Extension bằng Xcode (Không ký)
         working-directory: ios/App
         run: |
+          # 1. Build Widget Extension Target
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme PCFlexWidget \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_IDENTITY="" || true
+
+          # 2. Build Main App Target
           xcodebuild \
             -workspace App.xcworkspace \
             -scheme App \
@@ -110,8 +124,15 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_IDENTITY=""
 
-          echo "Kiểm tra cấu trúc PlugIns sau khi build:"
-          ls -la build/Build/Products/Release-iphoneos/App.app/PlugIns || echo "Không tìm thấy thư mục PlugIns!"
+          # 3. Đảm bảo thư mục PlugIns chứa PCFlexWidget.appex
+          mkdir -p build/Build/Products/Release-iphoneos/App.app/PlugIns
+          if [ -d "build/Build/Products/Release-iphoneos/PCFlexWidget.appex" ]; then
+            cp -r build/Build/Products/Release-iphoneos/PCFlexWidget.appex build/Build/Products/Release-iphoneos/App.app/PlugIns/
+            echo "Đã sao chép thành công PCFlexWidget.appex vào App.app/PlugIns/"
+          fi
+
+          echo "Danh sách tệp trong PlugIns:"
+          ls -la build/Build/Products/Release-iphoneos/App.app/PlugIns || true
 
       - name: Ký mã giả (Ad-Hoc) với Entitlements cho TrollStore
         run: |
