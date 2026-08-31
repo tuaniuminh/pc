@@ -1,9 +1,13 @@
-import { Capacitor } from '@capacitor/core';
+import { registerPlugin, Capacitor } from '@capacitor/core';
+import { addAppLog } from '../components/UI/DebugLogger';
 
 /**
  * Service quản lý Live Activities & Dynamic Island trên iOS (ActivityKit)
  * Cho phép hiển thị nhịp tập Kegel theo thời gian thực trên Màn hình khóa và Dynamic Island
  */
+
+// Đăng ký Plugin chính thức với Capacitor Bridge
+const LiveActivityPlugin = registerPlugin('LiveActivityPlugin');
 
 class LiveActivityService {
   constructor() {
@@ -23,11 +27,16 @@ class LiveActivityService {
     currentRep = 1,
     stageLabel = 'Siết cơ PC'
   }) {
-    if (!this.isSupported()) return;
+    addAppLog('info', `[LiveActivity] Yêu cầu khởi động: ${routineName} (${actionState} ${timeRemaining}s, Rep ${currentRep}/${totalReps})`);
+
+    if (!this.isSupported()) {
+      addAppLog('warn', `[LiveActivity] Bỏ qua vì nền tảng hiện tại là: ${Capacitor.getPlatform()} (Cần chạy trên iOS native)`);
+      return;
+    }
 
     try {
-      const { LiveActivityPlugin } = Capacitor.Plugins;
       if (LiveActivityPlugin && LiveActivityPlugin.startActivity) {
+        addAppLog('info', `[LiveActivity] Đang gọi Native LiveActivityPlugin.startActivity...`);
         const result = await LiveActivityPlugin.startActivity({
           routineName,
           totalReps,
@@ -38,9 +47,12 @@ class LiveActivityService {
         });
         this.isActive = true;
         this.currentActivityId = result?.activityId || 'active';
+        addAppLog('success', `[LiveActivity] Kích hoạt thành công! Activity ID: ${this.currentActivityId}`);
+      } else {
+        addAppLog('error', `[LiveActivity] Không tìm thấy plugin LiveActivityPlugin trên Bridge`);
       }
     } catch (error) {
-      console.warn('[LiveActivity] Không thể khởi chạy Live Activity:', error);
+      addAppLog('error', `[LiveActivity] Lỗi khi tạo Live Activity: ${error?.message || error}`);
     }
   }
 
@@ -54,7 +66,6 @@ class LiveActivityService {
     if (!this.isSupported() || !this.isActive) return;
 
     try {
-      const { LiveActivityPlugin } = Capacitor.Plugins;
       if (LiveActivityPlugin && LiveActivityPlugin.updateActivity) {
         await LiveActivityPlugin.updateActivity({
           activityId: this.currentActivityId,
@@ -66,7 +77,7 @@ class LiveActivityService {
         });
       }
     } catch (error) {
-      // Bỏ qua lỗi cập nhật nhẹ
+      // Bỏ qua lỗi cập nhật nhẹ để tránh flood log
     }
   }
 
@@ -74,14 +85,14 @@ class LiveActivityService {
     if (!this.isSupported() || !this.isActive) return;
 
     try {
-      const { LiveActivityPlugin } = Capacitor.Plugins;
+      addAppLog('info', `[LiveActivity] Dừng Live Activity ID: ${this.currentActivityId}`);
       if (LiveActivityPlugin && LiveActivityPlugin.stopActivity) {
         await LiveActivityPlugin.stopActivity({
           activityId: this.currentActivityId
         });
       }
     } catch (error) {
-      console.warn('[LiveActivity] Lỗi kết thúc Live Activity:', error);
+      addAppLog('warn', `[LiveActivity] Lỗi khi dừng Live Activity: ${error?.message || error}`);
     } finally {
       this.isActive = false;
       this.currentActivityId = null;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import OrbVisualizer from './UI/OrbVisualizer';
 import { audioEngine } from '../utils/audioEngine';
 import { liveActivityService } from '../services/liveActivityService';
+import { addAppLog } from './UI/DebugLogger';
 import { 
   triggerHapticHeavy, 
   triggerHapticMedium, 
@@ -286,7 +287,9 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
   };
 
   const handleStartWorkout = () => {
+    addAppLog('info', `[Workout] Bắt đầu: ${currentRoutine.name} (${totalRoutineReps} hiệp)`);
     audioEngine.resumeContext();
+    audioEngine.startBackgroundAudioKeeper();
     setIsActive(true);
 
     if (actionState === 'idle') {
@@ -307,7 +310,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     liveActivityService.startLiveActivity({
       routineName: currentRoutine.name,
       totalReps: totalRoutineReps,
-      actionState: 'squeezing',
+      actionState: currentStages[0]?.type === 'reverse' ? 'reverse' : 'squeezing',
       timeRemaining: currentStages[0]?.squeeze || 1,
       currentRep: 1,
       stageLabel: currentStages[0]?.label || 'Siết cơ PC'
@@ -315,13 +318,17 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
   };
 
   const handlePauseWorkout = () => {
+    addAppLog('info', `[Workout] Tạm dừng bài tập`);
     setIsActive(false);
+    audioEngine.stopBackgroundAudioKeeper();
     triggerHapticMedium();
     liveActivityService.stopLiveActivity();
   };
 
   const handleResetWorkout = () => {
+    addAppLog('info', `[Workout] Đặt lại bài tập`);
     setIsActive(false);
+    audioEngine.stopBackgroundAudioKeeper();
     setActionState('idle');
     setCurrentStageIndex(0);
     setCurrentRep(1);
@@ -338,7 +345,9 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
   };
 
   const completeSession = () => {
+    addAppLog('success', `[Workout] Hoàn thành bài tập!`);
     setIsActive(false);
+    audioEngine.stopBackgroundAudioKeeper();
     setActionState('idle');
     triggerHapticSuccess();
     if (sfxEnabled) audioEngine.playCompletionSFX(settings.actionSounds);

@@ -397,6 +397,28 @@ class AudioSynthesizer {
       this.isBGMPlaying = false;
     }
   }
+
+  startBackgroundAudioKeeper() {
+    if (typeof window === 'undefined') return;
+    try {
+      if (!this.bgAudioElement) {
+        this.bgAudioElement = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+        this.bgAudioElement.loop = true;
+        this.bgAudioElement.setAttribute('playsinline', 'true');
+        this.bgAudioElement.setAttribute('webkit-playsinline', 'true');
+      }
+      this.bgAudioElement.play().catch(() => {});
+    } catch (e) {}
+  }
+
+  stopBackgroundAudioKeeper() {
+    if (this.bgAudioElement) {
+      try {
+        this.bgAudioElement.pause();
+        this.bgAudioElement.currentTime = 0;
+      } catch (e) {}
+    }
+  }
 }
 
 export const audioEngine = new AudioSynthesizer();

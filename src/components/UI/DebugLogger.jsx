@@ -1,10 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Bug, X, Copy, Trash2, CheckCircle2, AlertTriangle, Info, Play } from 'lucide-react';
+import { Bug, X, Copy, Trash2, CheckCircle2, Play, RefreshCw } from 'lucide-react';
 import { liveActivityService } from '../../services/liveActivityService';
 import { Capacitor } from '@capacitor/core';
 
-// Bộ đệm lưu trữ logs trong bộ nhớ
-const logStore = [];
+const LOG_STORAGE_KEY = 'pcflex_debug_logs_v1';
+
+const getStoredLogs = () => {
+  try {
+    const raw = localStorage.getItem(LOG_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+};
+
+const saveLogs = (logs) => {
+  try {
+    localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logs.slice(0, 100)));
+  } catch (e) {}
+};
+
+let logStore = getStoredLogs();
 let listeners = [];
 
 export const addAppLog = (type, message, data = null) => {
@@ -16,11 +32,12 @@ export const addAppLog = (type, message, data = null) => {
     data: data ? (typeof data === 'object' ? JSON.stringify(data) : String(data)) : null
   };
   logStore.unshift(entry);
-  if (logStore.length > 80) logStore.pop();
+  if (logStore.length > 100) logStore.pop();
+  saveLogs(logStore);
   listeners.forEach(fn => fn([...logStore]));
 };
 
-// Ghi đè console để tự động bắt log
+// Tự động bắt tất cả console log
 if (typeof window !== 'undefined') {
   const originalLog = console.log;
   const originalWarn = console.warn;
@@ -29,9 +46,7 @@ if (typeof window !== 'undefined') {
   console.log = (...args) => {
     originalLog(...args);
     const msg = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
-    if (msg.includes('[LiveActivity]') || msg.includes('[Audio]') || msg.includes('[Workout]')) {
-      addAppLog('info', msg);
-    }
+    addAppLog('info', msg);
   };
 
   console.warn = (...args) => {
@@ -45,6 +60,11 @@ if (typeof window !== 'undefined') {
     const msg = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
     addAppLog('error', msg);
   };
+
+  // Bắt sự kiện ẩn/hiện ứng dụng
+  document.addEventListener('visibilitychange', () => {
+    addAppLog('info', `[AppState] Visibility change: document.hidden = ${document.hidden}`);
+  });
 }
 
 const DebugLogger = () => {
@@ -57,7 +77,6 @@ const DebugLogger = () => {
     const listener = (newLogs) => setLogs(newLogs);
     listeners.push(listener);
 
-    // Thu thập thông tin thiết bị và ActivityKit
     setDeviceDetails({
       platform: Capacitor.getPlatform(),
       isNative: Capacitor.isNativePlatform(),
@@ -67,7 +86,7 @@ const DebugLogger = () => {
       liveActivityPluginAvailable: !!(Capacitor.Plugins?.LiveActivityPlugin)
     });
 
-    addAppLog('info', 'Khởi tạo Debug Logger cho iOS 16.6+');
+    addAppLog('info', `[AppInit] Thiết bị: ${Capacitor.getPlatform()}, Màn hình: ${window.innerWidth}x${window.innerHeight}`);
 
     return () => {
       listeners = listeners.filter(fn => fn !== listener);
@@ -82,12 +101,13 @@ const DebugLogger = () => {
   };
 
   const handleClear = () => {
-    logStore.length = 0;
+    logStore = [];
+    saveLogs([]);
     setLogs([]);
   };
 
   const handleTestLiveActivity = async () => {
-    addAppLog('info', 'Đang gửi yêu cầu test Live Activity...');
+    addAppLog('info', 'Đang thử nghiệm gọi startLiveActivity...');
     try {
       await liveActivityService.startLiveActivity({
         routineName: 'Test Live Activity',
@@ -97,9 +117,8 @@ const DebugLogger = () => {
         currentRep: 1,
         stageLabel: 'Test Đảo Thích Ứng'
       });
-      addAppLog('success', 'Đã gọi LiveActivityService.start thành công!');
     } catch (e) {
-      addAppLog('error', 'Lỗi gọi Live Activity:', e);
+      addAppLog('error', `Lỗi khi test Live Activity: ${e?.message || e}`);
     }
   };
 
@@ -108,21 +127,21 @@ const DebugLogger = () => {
       {/* Nút Bọ Log Nổi Trên Màn Hình (Góc Dưới Phải) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-24 right-4 z-50 w-10 h-10 rounded-full bg-slate-900/90 dark:bg-white/15 text-emerald-400 border border-emerald-500/40 shadow-xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-all"
-        title="Xem Nhật Ký Lỗi & Live Activities"
+        className="fixed bottom-24 right-4 z-50 w-11 h-11 rounded-full bg-slate-900/90 dark:bg-black/90 text-emerald-400 border border-emerald-500/50 shadow-2xl flex items-center justify-center backdrop-blur-md active:scale-95 transition-all"
+        title="Xem Nhật Ký Lỗi & Chẩn Đoán"
       >
-        <Bug size={18} />
+        <Bug size={20} />
       </button>
 
       {/* Modal Nhật Ký Chẩn Đoán Lỗi */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-          <div className="glass-panel w-full max-w-md h-[80vh] rounded-3xl p-5 border border-emerald-500/40 flex flex-col space-y-3 shadow-2xl bg-slate-950 text-white font-mono text-xs">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+          <div className="glass-panel w-full max-w-md h-[82vh] rounded-3xl p-5 border border-emerald-500/40 flex flex-col space-y-3 shadow-2xl bg-slate-950 text-white font-mono text-xs">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div className="flex items-center space-x-2">
                 <Bug size={18} className="text-emerald-400" />
-                <span className="font-bold text-sm text-emerald-400">Chẩn Đoán iOS & Live Activity</span>
+                <span className="font-bold text-sm text-emerald-400">Chẩn Đoán Logs iOS</span>
               </div>
               <button onClick={() => setIsOpen(false)} className="p-1 rounded-lg hover:bg-white/10 text-gray-400">
                 <X size={18} />
@@ -131,9 +150,9 @@ const DebugLogger = () => {
 
             {/* Thông Tin Thiết Bị */}
             <div className="p-2.5 bg-white/5 rounded-xl border border-white/10 space-y-1 text-[10px] text-gray-300">
-              <div><strong>Nền tảng:</strong> {deviceDetails.platform} ({deviceDetails.isNative ? 'Native iOS IPA' : 'Web Browser'})</div>
-              <div><strong>LiveActivity Plugin:</strong> {deviceDetails.liveActivityPluginAvailable ? '✅ Đã tìm thấy' : '⚠️ Chưa nhận diện'}</div>
-              <div><strong>Kích thước màn hình:</strong> {deviceDetails.screenWidth} x {deviceDetails.screenHeight}</div>
+              <div><strong>Nền tảng:</strong> {deviceDetails.platform} ({deviceDetails.isNative ? 'Native iOS IPA' : 'Web View'})</div>
+              <div><strong>LiveActivity Plugin:</strong> {deviceDetails.liveActivityPluginAvailable ? '✅ Đã tìm thấy' : '⚠️ Đang tìm trên Native Bridge'}</div>
+              <div><strong>Kích thước:</strong> {deviceDetails.screenWidth} x {deviceDetails.screenHeight}</div>
             </div>
 
             {/* Action Buttons */}
@@ -151,21 +170,22 @@ const DebugLogger = () => {
                 className="py-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-gray-200 font-bold flex items-center space-x-1 active:scale-95 transition-all"
               >
                 {copied ? <CheckCircle2 size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                <span>{copied ? 'Đã sao chép' : 'Copy'}</span>
+                <span>{copied ? 'Đã copy' : 'Copy'}</span>
               </button>
 
               <button
                 onClick={handleClear}
                 className="py-2 px-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold flex items-center space-x-1 active:scale-95 transition-all"
+                title="Xóa logs"
               >
                 <Trash2 size={13} />
               </button>
             </div>
 
             {/* Log Stream Body */}
-            <div className="flex-1 overflow-y-auto space-y-1.5 p-2 bg-black/50 rounded-xl border border-white/5 font-mono text-[11px]">
+            <div className="flex-1 overflow-y-auto space-y-1.5 p-2 bg-black/60 rounded-xl border border-white/5 font-mono text-[10.5px]">
               {logs.length === 0 ? (
-                <div className="text-gray-500 text-center py-8">Chưa có nhật ký nào. Hãy bấm "Test Live Activity" hoặc bắt đầu tập để ghi log.</div>
+                <div className="text-gray-500 text-center py-8">Chưa có nhật ký nào. Hãy bắt đầu tập để xem logs.</div>
               ) : (
                 logs.map((l) => (
                   <div 
@@ -183,7 +203,7 @@ const DebugLogger = () => {
                       <span className="uppercase font-bold">{l.type}</span>
                     </div>
                     <div className="mt-0.5 break-words">{l.message}</div>
-                    {l.data && <div className="text-[10px] text-gray-400 mt-0.5 break-all">{l.data}</div>}
+                    {l.data && <div className="text-[9.5px] text-gray-400 mt-0.5 break-all font-mono">{l.data}</div>}
                   </div>
                 ))
               )}
