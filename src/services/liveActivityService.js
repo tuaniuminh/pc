@@ -46,9 +46,10 @@ class LiveActivityService {
     squeezeTime = 1,
     relaxTime = 2,
     hapticsEnabled = true,
-    sfxEnabled = true
+    sfxEnabled = true,
+    volume = 0.8
   }) {
-    addAppLog('info', `[LiveActivity] Yêu cầu khởi động: ${routineName} (${actionState} ${timeRemaining}s, Rep ${currentRep}/${totalReps}, Rung: ${hapticsEnabled}, Âm thanh: ${sfxEnabled})`);
+    addAppLog('info', `[LiveActivity] Yêu cầu khởi động: ${routineName} (${actionState} ${timeRemaining}s, Rep ${currentRep}/${totalReps}, Rung: ${hapticsEnabled}, Âm lượng: ${Math.round(volume * 100)}%)`);
 
     if (!this.isSupported()) {
       addAppLog('warn', `[LiveActivity] Bỏ qua vì nền tảng hiện tại là: ${Capacitor.getPlatform()} (Cần chạy trên iOS native)`);
@@ -68,7 +69,8 @@ class LiveActivityService {
           squeezeTime,
           relaxTime,
           hapticsEnabled,
-          sfxEnabled
+          sfxEnabled,
+          volume
         });
         this.isActive = true;
         this.currentActivityId = result?.activityId || 'active';

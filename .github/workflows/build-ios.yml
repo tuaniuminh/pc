@@ -49,6 +49,12 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" ios/App/App/Info.plist || true
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" ios/App/App/Info.plist || true
 
+          echo "Đăng ký URL Scheme pcflex để mở app từ Dynamic Island"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string pcflex" ios/App/App/Info.plist || true
+
           echo "Đồng bộ AppDelegate.swift tùy chỉnh với AVAudioSession và xử lý dọn dẹp Live Activities"
           cp ios-native/AppDelegate.swift ios/App/App/AppDelegate.swift || true
 

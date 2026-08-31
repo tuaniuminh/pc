@@ -333,7 +333,8 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
       squeezeTime: currentStages[0]?.squeeze || 1,
       relaxTime: currentStages[0]?.relax || 2,
       hapticsEnabled: settings?.hapticsEnabled !== false,
-      sfxEnabled: !!sfxEnabled
+      sfxEnabled: !!sfxEnabled,
+      volume: (settings?.volume !== undefined ? settings.volume : 80) / 100
     });
   };
 
