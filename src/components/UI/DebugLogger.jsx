@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Bug, X, Copy, Trash2, CheckCircle2, Play, RefreshCw, Cpu, Activity, Volume2, ShieldCheck, Tag, AlertTriangle, SearchCode } from 'lucide-react';
+import { Bug, X, Copy, Trash2, CheckCircle2, Play, RefreshCw, Cpu, Activity, Volume2, ShieldCheck, Tag, SearchCode, Music, Clock, Zap } from 'lucide-react';
 import { liveActivityService } from '../../services/liveActivityService';
-import { audioEngine } from '../../utils/audioEngine';
+import { audioEngine, SOUND_ACTIONS, SOUND_PRESETS } from '../../utils/audioEngine';
 import { Capacitor } from '@capacitor/core';
 
-const APP_VERSION = 'v1.8.6';
+const APP_VERSION = 'v1.8.7';
 const LOG_STORAGE_KEY = 'pcflex_debug_logs_v2';
 
 const getStoredLogs = () => {
@@ -18,7 +18,7 @@ const getStoredLogs = () => {
 
 const saveLogs = (logs) => {
   try {
-    localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logs.slice(0, 200)));
+    localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logs.slice(0, 250)));
   } catch (e) {}
 };
 
@@ -36,7 +36,7 @@ export const addAppLog = (type, message, data = null) => {
     data: data ? (typeof data === 'object' ? JSON.stringify(data) : String(data)) : null
   };
   logStore.unshift(entry);
-  if (logStore.length > 200) logStore.pop();
+  if (logStore.length > 250) logStore.pop();
   saveLogs(logStore);
   listeners.forEach(fn => fn([...logStore]));
 };
@@ -96,6 +96,7 @@ const DebugLogger = () => {
   const [diagInfo, setDiagInfo] = useState({});
   const [nativeDiag, setNativeDiag] = useState(null);
   const [scanning, setScanning] = useState(false);
+  const [soundSettings, setSoundSettings] = useState({});
 
   const refreshDiagnostics = async () => {
     const plugins = Capacitor?.Plugins ? Object.keys(Capacitor.Plugins) : [];
@@ -107,6 +108,7 @@ const DebugLogger = () => {
       const raw = localStorage.getItem('pcflex_settings_v3') || localStorage.getItem('pc_flex_settings');
       if (raw) settings = JSON.parse(raw);
     } catch (e) {}
+    setSoundSettings(settings);
 
     const info = {
       appVersion: APP_VERSION,
@@ -122,6 +124,9 @@ const DebugLogger = () => {
       sampleRate: audioCtx ? audioCtx.sampleRate : 0,
       volumeSetting: `${settings.volume !== undefined ? settings.volume : 80}%`,
       hapticsSetting: settings.hapticsEnabled !== false ? 'BẬT' : 'TẮT',
+      squeezePreset: settings.actionSounds?.squeeze || 'preset_14',
+      relaxPreset: settings.actionSounds?.relax || 'preset_5',
+      reversePreset: settings.actionSounds?.reverse || 'preset_1',
       userAgent: navigator.userAgent
     };
     setDiagInfo(info);
@@ -140,7 +145,7 @@ const DebugLogger = () => {
     listeners.push(listener);
 
     refreshDiagnostics();
-    addAppLog('info', `[AppInit] Khởi tạo Thuật Toán Chẩn Đoán Toàn Diện cho iOS 16.6+ (${APP_VERSION})`);
+    addAppLog('info', `[AppInit] Khởi tạo Con Bọ Siêu Chẩn Đoán v3.0 cho iOS 16.6+ (${APP_VERSION})`);
 
     return () => {
       listeners = listeners.filter(fn => fn !== listener);
@@ -149,7 +154,7 @@ const DebugLogger = () => {
 
   const handleRunFullDiagnosticScan = async () => {
     setScanning(true);
-    addAppLog('info', '================ BẮT ĐẦU QUÉT CHẨN ĐOÁN TOÀN DIỆN ================');
+    addAppLog('info', '================ BẮT ĐẦU QUÉT CHẨN ĐOÁN TOÀN DIỆN v3.0 ================');
     
     // 1. Kiểm tra Bridge & Plugins
     const plugins = Capacitor?.Plugins ? Object.keys(Capacitor.Plugins) : [];
@@ -181,17 +186,18 @@ const DebugLogger = () => {
       addAppLog('error', `[Scan 2/5] Lỗi truy vấn Native: ${e.message || String(e)}`);
     }
 
-    // 3. Kiểm tra Audio Engine
+    // 3. Kiểm tra Audio Engine & Âm thanh Preset
     const audioCtx = audioEngine?.audioCtx;
     addAppLog('info', `[Scan 3/5] Audio Engine State: ${audioCtx ? audioCtx.state : 'uninitialized'} (${audioCtx?.sampleRate || 0}Hz)`);
+    addAppLog('info', `[Scan 3/5] Sound Presets Đang Dùng: Siết: ${diagInfo.squeezePreset}, Thả: ${diagInfo.relaxPreset}, Ngược: ${diagInfo.reversePreset}, Âm lượng: ${diagInfo.volumeSetting}`);
 
     // 4. Kiểm tra Màn hình & Dynamic Island Hardware
     const dpr = window.devicePixelRatio || 1;
     const isDynIslandPhone = (window.screen.height >= 844 || window.screen.width >= 390) && dpr >= 3;
     addAppLog('info', `[Scan 4/5] Phần cứng Màn hình: ${window.screen.width}x${window.screen.height} (DPR: ${dpr}) -> ${isDynIslandPhone ? 'Hỗ trợ Dynamic Island' : 'Màn hình tiêu chuẩn'}`);
 
-    // 5. Thử nghiệm kích hoạt Live Activity 5 giây
-    addAppLog('info', `[Scan 5/5] Đang kích hoạt thử nghiệm Live Activity 5s...`);
+    // 5. Thử nghiệm kích hoạt Live Activity 5 giây với targetDate đếm lùi
+    addAppLog('info', `[Scan 5/5] Đang kích hoạt thử nghiệm Live Activity 5s với targetDate đếm lùi...`);
     try {
       const startRes = await liveActivityService.startLiveActivity({
         routineName: 'Chẩn Đoán Đảo Động',
@@ -199,7 +205,7 @@ const DebugLogger = () => {
         actionState: 'squeezing',
         timeRemaining: 5,
         currentRep: 1,
-        stageLabel: 'Kiểm tra Dynamic Island',
+        stageLabel: 'Kiểm tra Dynamic Island đếm lùi',
         volume: 0.8,
         hapticsEnabled: false,
         sfxEnabled: true
@@ -209,8 +215,22 @@ const DebugLogger = () => {
       addAppLog('error', `[Scan 5/5] Lỗi khởi động Live Activity: ${e.message || String(e)}`);
     }
 
-    addAppLog('info', '================ HOÀN THÀNH QUÉT CHẨN ĐOÁN ================');
+    addAppLog('info', '================ HOÀN THÀNH QUÉT CHẨN ĐOÁN v3.0 ================');
     setScanning(false);
+  };
+
+  const handleTestAudioPreset = (actionKey) => {
+    audioEngine.resumeContext();
+    if (actionKey === 'squeeze') {
+      audioEngine.playSqueezeSFX(soundSettings.actionSounds);
+      addAppLog('info', `[AudioTest] Phát âm thanh Siết (${diagInfo.squeezePreset}) ở âm lượng ${diagInfo.volumeSetting}`);
+    } else if (actionKey === 'relax') {
+      audioEngine.playRelaxSFX(soundSettings.actionSounds);
+      addAppLog('info', `[AudioTest] Phát âm thanh Thả lỏng (${diagInfo.relaxPreset}) ở âm lượng ${diagInfo.volumeSetting}`);
+    } else if (actionKey === 'reverse') {
+      audioEngine.playReverseKegelSFX(soundSettings.actionSounds);
+      addAppLog('info', `[AudioTest] Phát âm thanh Kegel ngược (${diagInfo.reversePreset}) ở âm lượng ${diagInfo.volumeSetting}`);
+    }
   };
 
   const handleCopyLogs = () => {
@@ -225,6 +245,7 @@ const DebugLogger = () => {
       `PlugIns List: ${nativeDiag?.plugInsList?.join(', ') || 'none'}`,
       `Active Activities in SpringBoard: ${nativeDiag?.activeActivitiesCount ?? 0}`,
       `Audio Context State: ${diagInfo.audioState} (${diagInfo.sampleRate}Hz)`,
+      `User Sound Presets: Siết=${diagInfo.squeezePreset} | Thả=${diagInfo.relaxPreset} | Ngược=${diagInfo.reversePreset}`,
       `User Settings: Âm lượng: ${diagInfo.volumeSetting} | Rung: ${diagInfo.hapticsSetting}`,
       `Registered Plugins (${diagInfo.pluginsCount}): ${diagInfo.registeredPlugins}`,
       `UserAgent: ${diagInfo.userAgent}`,
@@ -265,12 +286,12 @@ const DebugLogger = () => {
               <Bug className="w-5 h-5 text-emerald-400" />
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-sm text-white">Thuật Toán Chẩn Đoán Toàn Diện</h3>
+                  <h3 className="font-bold text-sm text-white">Thuật Toán Chẩn Đoán Sâu v3.0</h3>
                   <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/40">
                     {APP_VERSION}
                   </span>
                 </div>
-                <p className="text-[10px] text-zinc-400">iOS 16.6+ • Dynamic Island & WidgetKit Inspector</p>
+                <p className="text-[10px] text-zinc-400">iOS 16.6+ • Dynamic Island & Sound Preset Monitor</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -322,6 +343,33 @@ const DebugLogger = () => {
               </div>
             </div>
 
+            {/* Thanh kiểm tra âm thanh trực tiếp (Audio Preset Tester) */}
+            <div className="p-2 rounded bg-black/50 border border-zinc-800 space-y-1">
+              <div className="text-[10px] text-zinc-400 flex items-center gap-1 font-bold">
+                <Music className="w-3 h-3 text-pink-400" /> Thử Nghiệm Âm Thanh Preset Cài Đặt:
+              </div>
+              <div className="flex gap-1.5 pt-1">
+                <button
+                  onClick={() => handleTestAudioPreset('squeeze')}
+                  className="flex-1 py-1 px-1.5 rounded bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold active:scale-95"
+                >
+                  ⚡ Thử Âm Siết
+                </button>
+                <button
+                  onClick={() => handleTestAudioPreset('relax')}
+                  className="flex-1 py-1 px-1.5 rounded bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-[10px] font-bold active:scale-95"
+                >
+                  ❄️ Thử Âm Thả
+                </button>
+                <button
+                  onClick={() => handleTestAudioPreset('reverse')}
+                  className="flex-1 py-1 px-1.5 rounded bg-purple-500/20 border border-purple-500/30 text-purple-300 text-[10px] font-bold active:scale-95"
+                >
+                  🌊 Thử Âm Ngược
+                </button>
+              </div>
+            </div>
+
             {/* Thuật toán quét chuyên sâu Button */}
             <div className="flex gap-2 pt-1">
               <button
@@ -330,7 +378,7 @@ const DebugLogger = () => {
                 className="flex-1 py-1.5 px-2 rounded bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold hover:bg-cyan-500/30 flex items-center justify-center gap-1.5 text-[11px] transition-all"
               >
                 <SearchCode className={`w-3.5 h-3.5 ${scanning ? 'animate-spin' : ''}`} />
-                {scanning ? 'Đang chạy thuật toán quét 5 bước...' : '🔍 Chạy Thuật Toán Quét Sâu Toàn Bộ'}
+                {scanning ? 'Đang chạy thuật toán quét 5 bước...' : '🔍 Quét Sâu Toàn Bộ Hệ Thống v3.0'}
               </button>
               <button
                 onClick={refreshDiagnostics}
