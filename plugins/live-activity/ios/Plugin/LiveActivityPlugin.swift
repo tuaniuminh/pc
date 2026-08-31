@@ -38,10 +38,31 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
 
     public override func load() {
         super.load()
+        NotificationCenter.default.addObserver(self, selector: #selector(handleAppDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleAppWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
 
     deinit {
+        NotificationCenter.default.removeObserver(self)
         stopNativeEngine()
+    }
+
+    @objc private func handleAppDidEnterBackground() {
+        if nativeTimer != nil {
+            if backgroundTaskId != .invalid {
+                UIApplication.shared.endBackgroundTask(backgroundTaskId)
+            }
+            backgroundTaskId = UIApplication.shared.beginBackgroundTask(withName: "PCFlexWorkoutEngineBackground") { [weak self] in
+                self?.stopNativeEngine()
+            }
+        }
+    }
+
+    @objc private func handleAppWillEnterForeground() {
+        if backgroundTaskId != .invalid {
+            UIApplication.shared.endBackgroundTask(backgroundTaskId)
+            backgroundTaskId = .invalid
+        }
     }
 
     private func startNativeEngine() {

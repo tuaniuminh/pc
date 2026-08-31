@@ -13,6 +13,7 @@ public struct PCFlexLiveActivityWidget: Widget {
             LockScreenLiveActivityView(context: context)
                 .activityBackgroundTint(Color.black.opacity(0.88))
                 .activitySystemActionForegroundColor(Color.white)
+                .widgetURL(URL(string: "pcflex://workout"))
         } dynamicIsland: { context in
             DynamicIsland {
                 // Expanded Dynamic Island (Khi nhấn giữ trên đảo thích ứng)
@@ -59,24 +60,21 @@ public struct PCFlexLiveActivityWidget: Widget {
                     .padding(.top, 4)
                 }
             } compactLeading: {
-                // Compact Leading (Icon & Nhãn ngắn bên trái đảo)
-                HStack(spacing: 2) {
-                    Text(actionIcon(for: context.state.actionState))
-                        .font(.system(size: 11))
-                    Text(actionShortTitle(for: context.state.actionState))
-                        .font(.system(size: 10, weight: .black))
-                        .foregroundColor(actionColor(for: context.state.actionState))
-                }
+                // Compact Leading (Chỉ icon siêu gọn ~14pt để không chiếm chỗ)
+                Text(actionIcon(for: context.state.actionState))
+                    .font(.system(size: 13))
             } compactTrailing: {
-                // Compact Trailing (Đồng hồ đếm giây an toàn bên phải đảo)
-                CountdownTextView(targetDate: context.state.targetDate, seconds: context.state.timeRemaining, fontSize: 11)
+                // Compact Trailing (Số giây đếm ngược siêu nổi bật bên phải đảo)
+                Text("\(max(1, context.state.timeRemaining))s")
+                    .font(.system(size: 12, weight: .black, design: .monospaced))
                     .foregroundColor(actionColor(for: context.state.actionState))
-                    .frame(minWidth: 26, alignment: .trailing)
+                    .frame(minWidth: 24, alignment: .trailing)
             } minimal: {
                 // Minimal (Chế độ đảo nhỏ nhất)
                 Text(actionIcon(for: context.state.actionState))
-                    .font(.system(size: 11))
+                    .font(.system(size: 12))
             }
+            .widgetURL(URL(string: "pcflex://workout"))
         }
     }
 }
