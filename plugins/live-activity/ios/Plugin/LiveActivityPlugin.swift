@@ -28,6 +28,18 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         super.load()
     }
 
+    deinit {
+        #if canImport(ActivityKit)
+        if #available(iOS 16.1, *) {
+            for act in Activity<PCFlexActivityAttributes>.activities {
+                Task {
+                    await act.end(dismissalPolicy: .immediate)
+                }
+            }
+        }
+        #endif
+    }
+
     @objc public func startActivity(_ call: CAPPluginCall) {
         #if canImport(ActivityKit)
         guard #available(iOS 16.1, *) else {
