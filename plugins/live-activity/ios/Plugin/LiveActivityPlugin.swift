@@ -120,10 +120,19 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
                 timeRemaining = max(1, relaxTime)
                 stageDuration = timeRemaining
                 stageLabel = "Thả lỏng"
-                
-                // TUYỆT ĐỐI KHÔNG RUNG KHI THẢ LỎNG (Chỉ phát âm thanh nếu sfxEnabled)
+
+                // Phát âm thanh nếu sfxEnabled
                 if sfxEnabled {
-                    AudioServicesPlaySystemSound(1103) // Tink sound thuần âm thanh
+                    AudioServicesPlaySystemSound(1103)
+                }
+
+                // Rung nhẹ khi Thả lỏng NẾU người dùng BẬT rung trong Cài đặt
+                if hapticsEnabled {
+                    DispatchQueue.main.async {
+                        let generator = UIImpactFeedbackGenerator(style: .light)
+                        generator.prepare()
+                        generator.impactOccurred()
+                    }
                 }
             } else {
                 if currentRep < totalReps {
@@ -138,7 +147,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
                         AudioServicesPlaySystemSound(1057)
                     }
 
-                    // Chỉ rung phản hồi khi người dùng BẬT rung trong cài đặt
+                    // Rung vừa khi Siết NẾU người dùng BẬT rung trong Cài đặt
                     if hapticsEnabled {
                         DispatchQueue.main.async {
                             let generator = UIImpactFeedbackGenerator(style: .medium)
