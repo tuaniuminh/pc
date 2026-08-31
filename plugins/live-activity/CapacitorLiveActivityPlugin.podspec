@@ -7,7 +7,7 @@ Pod::Spec.new do |s|
   s.author = 'PC Flex'
   s.source = { :git => '' }
   s.source_files = 'ios/Plugin/**/*.{swift,h,m}'
-  s.ios.deployment_target = '16.1'
+  s.ios.deployment_target = '13.0'
   s.dependency 'Capacitor'
   s.swift_version = '5.1'
 end
