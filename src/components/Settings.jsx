@@ -15,7 +15,8 @@ import {
   Upload,
   Music,
   Check,
-  Headphones
+  Headphones,
+  Smartphone
 } from 'lucide-react';
 import { testGeminiApiKey } from '../services/geminiService';
 import { 
@@ -363,7 +364,41 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
         </div>
       </div>
 
-      {/* SECTION 4: HỒ SƠ NGƯỜI DÙNG (GIỚI TÍNH & NĂM SINH) */}
+      {/* SECTION 4: DYNAMIC ISLAND & LIVE ACTIVITIES (iOS 16.1+) */}
+      <div className="glass-panel p-5 rounded-3xl space-y-4 border border-cyan-300/40 dark:border-cyan-500/20">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 rounded-xl bg-cyan-100 dark:bg-cyan-500/15 text-cyan-600 dark:text-cyan-neon flex items-center justify-center">
+            <Smartphone size={16} />
+          </div>
+          <div>
+            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Dynamic Island & Live Activities</h3>
+            <p className="text-[11px] text-slate-500 dark:text-gray-400">Hiển thị nhịp tập Kegel trên màn hình khóa & Đảo thích ứng (iOS 16.1+)</p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <div>
+            <div className="text-xs font-bold text-slate-900 dark:text-white">Kích Hoạt Live Activities</div>
+            <div className="text-[11px] text-slate-500 dark:text-gray-400">Hiển thị nhịp siết/thả khi khóa máy hoặc chuyển app</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const newVal = settings.liveActivitiesEnabled === false ? true : false;
+              onUpdateSettings({ ...settings, liveActivitiesEnabled: newVal });
+            }}
+            className={`w-12 h-7 rounded-full p-1 transition-all ${
+              settings.liveActivitiesEnabled !== false ? 'bg-cyan-500 shadow-sm' : 'bg-slate-300 dark:bg-white/20'
+            }`}
+          >
+            <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform ${
+              settings.liveActivitiesEnabled !== false ? 'translate-x-5' : 'translate-x-0'
+            }`} />
+          </button>
+        </div>
+      </div>
+
+      {/* SECTION 5: HỒ SƠ NGƯỜI DÙNG (GIỚI TÍNH & NĂM SINH) */}
       <div className="glass-panel p-5 rounded-3xl space-y-4 border border-amber-300/40 dark:border-amber-500/20">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import OrbVisualizer from './UI/OrbVisualizer';
 import { audioEngine } from '../utils/audioEngine';
+import { liveActivityService } from '../services/liveActivityService';
 import { 
   triggerHapticHeavy, 
   triggerHapticMedium, 
@@ -154,6 +155,16 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
               audioEngine.playBeep(800, 0.08, 0.2);
               triggerHapticHeartbeat();
             }
+
+            // Cập nhật Live Activities & Dynamic Island trên màn hình khóa
+            liveActivityService.updateLiveActivity({
+              actionState,
+              timeRemaining: prev - 1,
+              currentRep,
+              totalReps: totalRoutineReps,
+              stageLabel: currentStage?.label || (actionState === 'squeezing' ? 'Siết cơ PC' : actionState === 'relaxing' ? 'Thả lỏng' : 'Kegel ngược')
+            });
+
             return prev - 1;
           } else {
             // Hết giây của phase hiện tại -> Chuyển đổi trạng thái kế tiếp
@@ -270,11 +281,22 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
         }
       }
     }
+
+    // Kích hoạt Live Activities & Dynamic Island trên màn hình khóa
+    liveActivityService.startLiveActivity({
+      routineName: currentRoutine.name,
+      totalReps: totalRoutineReps,
+      actionState: 'squeezing',
+      timeRemaining: currentStages[0]?.squeeze || 1,
+      currentRep: 1,
+      stageLabel: currentStages[0]?.label || 'Siết cơ PC'
+    });
   };
 
   const handlePauseWorkout = () => {
     setIsActive(false);
     triggerHapticMedium();
+    liveActivityService.stopLiveActivity();
   };
 
   const handleResetWorkout = () => {
@@ -291,6 +313,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
       setStageDuration(firstStage.squeeze || 1);
     }
     triggerHapticMedium();
+    liveActivityService.stopLiveActivity();
   };
 
   const completeSession = () => {
@@ -298,6 +321,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     setActionState('idle');
     triggerHapticSuccess();
     if (sfxEnabled) audioEngine.playCompletionSFX(settings.actionSounds);
+    liveActivityService.stopLiveActivity();
 
     const sessionData = {
       level: selectedPresetType === 'custom' ? 'custom' : selectedLevel,
