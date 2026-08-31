@@ -5,6 +5,9 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   build:
     runs-on: macos-latest
@@ -13,13 +16,19 @@ jobs:
       - name: Checkout mã nguồn
         uses: actions/checkout@v4
 
+      - name: Thiết lập môi trường Node.js LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
       - name: Kiểm tra môi trường Node.js
         run: |
           node -v
           npm -v
 
       - name: Cài đặt Dependencies
-        run: npm install
+        run: npm ci || npm install
 
       - name: Build Web (Vite)
         run: npm run build
