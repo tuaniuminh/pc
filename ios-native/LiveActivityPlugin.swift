@@ -23,17 +23,13 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
             return
         }
 
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
-            call.reject("Live Activities chưa được cấp quyền trong Cài đặt iOS")
-            return
-        }
-
         let routineName = call.getString("routineName") ?? "PC Flex"
         let totalRoutineReps = call.getInt("totalReps") ?? 25
         let actionState = call.getString("actionState") ?? "squeezing"
         let timeRemaining = call.getInt("timeRemaining") ?? 5
         let currentRep = call.getInt("currentRep") ?? 1
         let stageLabel = call.getString("stageLabel") ?? "Siết cơ PC"
+        let targetDate = Date().addingTimeInterval(Double(max(1, timeRemaining)))
 
         let attributes = PCFlexActivityAttributes(
             routineName: routineName,
@@ -45,7 +41,8 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
             timeRemaining: timeRemaining,
             currentRep: currentRep,
             totalReps: totalRoutineReps,
-            stageLabel: stageLabel
+            stageLabel: stageLabel,
+            targetDate: targetDate
         )
 
         do {
@@ -78,13 +75,15 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         let currentRep = call.getInt("currentRep") ?? 1
         let totalReps = call.getInt("totalReps") ?? 25
         let stageLabel = call.getString("stageLabel") ?? "Siết cơ PC"
+        let targetDate = Date().addingTimeInterval(Double(max(1, timeRemaining)))
 
         let updatedContentState = PCFlexActivityAttributes.ContentState(
             actionState: actionState,
             timeRemaining: timeRemaining,
             currentRep: currentRep,
             totalReps: totalReps,
-            stageLabel: stageLabel
+            stageLabel: stageLabel,
+            targetDate: targetDate
         )
 
         Task {

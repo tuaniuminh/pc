@@ -90,14 +90,6 @@ function App() {
   };
 
   const handleTabClick = (tabKey) => {
-    // Khóa chuyển tab nếu buổi tập đang chạy
-    if (isWorkoutActive && tabKey !== 'timer') {
-      setLockToast("Đang trong buổi tập! Vui lòng Tạm dừng trước khi chuyển tab.");
-      setTimeout(() => {
-        setLockToast(null);
-      }, 2500);
-      return;
-    }
     setActiveTab(tabKey);
   };
 
@@ -145,17 +137,7 @@ function App() {
         </div>
       </main>
 
-      {/* Thông Báo Khóa Tab Khi Đang Tập (Floating Lock Toast) */}
-      {lockToast && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 max-w-xs w-full px-4 animate-fade-in">
-          <div className="glass-panel p-3 rounded-2xl border border-amber-500/50 bg-amber-500/15 backdrop-blur-xl text-amber-900 dark:text-amber-200 text-xs font-bold flex items-center space-x-2.5 shadow-xl">
-            <AlertCircle size={18} className="text-amber-500 shrink-0" />
-            <span className="leading-tight">{lockToast}</span>
-          </div>
-        </div>
-      )}
-
-      {/* 3. Bottom Navigation Bar Cố Định Ở Đáy (Tự động khóa các tab khác khi đang tập) */}
+      {/* 3. Bottom Navigation Bar Cố Định Ở Đáy */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-oled/95 backdrop-blur-2xl border-t border-slate-200 dark:border-white/5 safe-bottom-padding px-6 pt-2 transition-colors duration-300">
         <div className="flex items-center justify-around max-w-md mx-auto">
           {/* Tab 1: Tập Luyện (Xanh Lá Neon / Emerald) */}
@@ -179,60 +161,39 @@ function App() {
           {/* Tab 2: Thành Tích (Vàng Hổ Phách / Amber Gold) */}
           <button
             onClick={() => handleTabClick('history')}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 relative ${
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 ${
               activeTab === 'history'
                 ? 'text-amber-600 dark:text-amber-400 scale-105 font-black'
-                : isWorkoutActive 
-                ? 'text-slate-300 dark:text-gray-700 opacity-40 cursor-not-allowed'
                 : 'text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300'
             }`}
           >
-            <div className="relative">
-              <HistoryIcon size={24} />
-              {isWorkoutActive && (
-                <Lock size={10} className="absolute -top-1 -right-1 text-amber-500" />
-              )}
-            </div>
+            <HistoryIcon size={24} />
             <span className="text-[10px] tracking-tight mt-1 font-bold">Thành Tích</span>
           </button>
 
           {/* Tab 3: Trợ Lý AI (Xanh Cyan / Electric Blue) */}
           <button
             onClick={() => handleTabClick('plans')}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 relative ${
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 ${
               activeTab === 'plans'
                 ? 'text-cyan-600 dark:text-cyan-neon scale-105 font-black'
-                : isWorkoutActive 
-                ? 'text-slate-300 dark:text-gray-700 opacity-40 cursor-not-allowed'
                 : 'text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300'
             }`}
           >
-            <div className="relative">
-              <Sparkles size={24} />
-              {isWorkoutActive && (
-                <Lock size={10} className="absolute -top-1 -right-1 text-cyan-500" />
-              )}
-            </div>
+            <Sparkles size={24} />
             <span className="text-[10px] tracking-tight mt-1 font-bold">Trợ Lý AI</span>
           </button>
 
           {/* Tab 4: Cài Đặt (Tím Điện Tử / Electric Purple) */}
           <button
             onClick={() => handleTabClick('settings')}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 relative ${
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 ${
               activeTab === 'settings'
                 ? 'text-violet-600 dark:text-violet-400 scale-105 font-black'
-                : isWorkoutActive 
-                ? 'text-slate-300 dark:text-gray-700 opacity-40 cursor-not-allowed'
                 : 'text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300'
             }`}
           >
-            <div className="relative">
-              <SettingsIcon size={24} />
-              {isWorkoutActive && (
-                <Lock size={10} className="absolute -top-1 -right-1 text-violet-500" />
-              )}
-            </div>
+            <SettingsIcon size={24} />
             <span className="text-[10px] tracking-tight mt-1 font-bold">Cài Đặt</span>
           </button>
         </div>

@@ -9,13 +9,15 @@ public struct PCFlexActivityAttributes: ActivityAttributes {
         public var currentRep: Int
         public var totalReps: Int
         public var stageLabel: String
+        public var targetDate: Date
         
-        public init(actionState: String, timeRemaining: Int, currentRep: Int, totalReps: Int, stageLabel: String) {
+        public init(actionState: String, timeRemaining: Int, currentRep: Int, totalReps: Int, stageLabel: String, targetDate: Date = Date()) {
             self.actionState = actionState
             self.timeRemaining = timeRemaining
             self.currentRep = currentRep
             self.totalReps = totalReps
             self.stageLabel = stageLabel
+            self.targetDate = targetDate
         }
     }
 

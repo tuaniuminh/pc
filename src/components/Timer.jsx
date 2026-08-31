@@ -140,6 +140,27 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     };
   }, [isActive, bgmActive]);
 
+  // Lắng nghe khi người dùng ẩn / mở lại app để bắt kịp tiến trình mà không bị đứng bài tập
+  useEffect(() => {
+    let backgroundTime = 0;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        backgroundTime = Date.now();
+      } else {
+        if (isActive && backgroundTime > 0) {
+          const elapsedSec = Math.floor((Date.now() - backgroundTime) / 1000);
+          if (elapsedSec > 0) {
+            setSessionTotalSeconds(s => s + elapsedSec);
+          }
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isActive]);
+
   // Main Engine Interval Loop
   useEffect(() => {
     let timer = null;

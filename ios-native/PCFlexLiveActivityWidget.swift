@@ -11,11 +11,11 @@ public struct PCFlexLiveActivityWidget: Widget {
         ActivityConfiguration(for: PCFlexActivityAttributes.self) { context in
             // Giao diện Màn hình khóa (Lock Screen Live Activity Banner)
             LockScreenLiveActivityView(context: context)
-                .activityBackgroundTint(Color.black.opacity(0.85))
+                .activityBackgroundTint(Color.black.opacity(0.88))
                 .activitySystemActionForegroundColor(Color.white)
         } dynamicIsland: { context in
             DynamicIsland {
-                // Expanded Dynamic Island (Khi nhấn giữ trên đảo)
+                // Expanded Dynamic Island (Khi nhấn giữ trên đảo thích ứng)
                 DynamicIslandExpandedRegion(.leading) {
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 4) {
@@ -26,8 +26,8 @@ public struct PCFlexLiveActivityWidget: Widget {
                                 .foregroundColor(actionColor(for: context.state.actionState))
                         }
                         Text(context.state.stageLabel)
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.gray)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.8))
                             .lineLimit(1)
                     }
                     .padding(.leading, 6)
@@ -35,9 +35,10 @@ public struct PCFlexLiveActivityWidget: Widget {
 
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text(String(format: "%02d", context.state.timeRemaining))
-                            .font(.system(size: 28, weight: .heavy, design: .monospaced))
+                        Text(timerInterval: Date()...context.state.targetDate, countsDown: true)
+                            .font(.system(size: 26, weight: .black, design: .monospaced))
                             .foregroundColor(.white)
+                            .multilineTextAlignment(.trailing)
                         Text("Hiệp \(context.state.currentRep)/\(context.state.totalReps)")
                             .font(.system(size: 10, weight: .bold))
                             .foregroundColor(.cyan)
@@ -51,9 +52,9 @@ public struct PCFlexLiveActivityWidget: Widget {
                             .font(.system(size: 11, weight: .bold))
                             .foregroundColor(.white.opacity(0.8))
                         Spacer()
-                        ProgressView(value: Double(context.state.currentRep), total: Double(context.state.totalReps))
+                        ProgressView(value: Double(context.state.currentRep), total: Double(max(1, context.state.totalReps)))
                             .progressViewStyle(LinearProgressViewStyle(tint: actionColor(for: context.state.actionState)))
-                            .frame(width: 120)
+                            .frame(width: 130)
                     }
                     .padding(.horizontal, 8)
                     .padding(.top, 4)
@@ -68,10 +69,11 @@ public struct PCFlexLiveActivityWidget: Widget {
                         .foregroundColor(actionColor(for: context.state.actionState))
                 }
             } compactTrailing: {
-                // Compact Trailing (Đếm giây bên phải đảo)
-                Text(String(format: "%02ds", context.state.timeRemaining))
+                // Compact Trailing (Đếm ngược tự động bên phải đảo)
+                Text(timerInterval: Date()...context.state.targetDate, countsDown: true)
                     .font(.system(size: 11, weight: .black, design: .monospaced))
                     .foregroundColor(.white)
+                    .frame(width: 28, alignment: .trailing)
             } minimal: {
                 // Minimal (Chế độ đảo nhỏ nhất)
                 Text(actionIcon(for: context.state.actionState))
@@ -87,9 +89,9 @@ struct LockScreenLiveActivityView: View {
     let context: ActivityViewContext<PCFlexActivityAttributes>
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 14) {
             // Cột bên trái: Trạng thái & Tên bài
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text(actionIcon(for: context.state.actionState))
                         .font(.system(size: 16))
@@ -100,7 +102,7 @@ struct LockScreenLiveActivityView: View {
 
                 Text(context.state.stageLabel)
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(.white.opacity(0.85))
                     .lineLimit(1)
 
                 Text("\(context.attributes.routineName) • Hiệp \(context.state.currentRep)/\(context.state.totalReps)")
@@ -110,10 +112,10 @@ struct LockScreenLiveActivityView: View {
 
             Spacer()
 
-            // Cột bên phải: Đồng hồ đếm giây lớn
+            // Cột bên phải: Đồng hồ đếm giây Live Activity tự động của Apple
             VStack(alignment: .trailing, spacing: 2) {
-                Text(String(format: "%02d", context.state.timeRemaining))
-                    .font(.system(size: 38, weight: .black, design: .monospaced))
+                Text(timerInterval: Date()...context.state.targetDate, countsDown: true)
+                    .font(.system(size: 34, weight: .black, design: .monospaced))
                     .foregroundColor(.white)
                 Text("GIÂY")
                     .font(.system(size: 9, weight: .black))
