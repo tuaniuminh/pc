@@ -15,6 +15,18 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
     ]
 
     private var _currentActivity: Any?
+    private var nativeTimer: Timer?
+    private var backgroundTaskId: UIBackgroundTaskIdentifier = .invalid
+
+    private var currentRoutineName: String = "PC Flex"
+    private var totalReps: Int = 25
+    private var currentRep: Int = 1
+    private var actionState: String = "squeezing"
+    private var timeRemaining: Int = 5
+    private var stageDuration: Int = 5
+    private var stageLabel: String = "Siết cơ PC"
+    private var squeezeTime: Int = 1
+    private var relaxTime: Int = 2
 
     #if canImport(ActivityKit)
     @available(iOS 16.1, *)
@@ -29,6 +41,35 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     deinit {
+        stopNativeEngine()
+    }
+
+    private func startNativeEngine() {
+        stopNativeEngine()
+
+        backgroundTaskId = UIApplication.shared.beginBackgroundTask(withName: "PCFlexWorkoutEngine") { [weak self] in
+            self?.stopNativeEngine()
+        }
+
+        DispatchQueue.main.async {
+            self.nativeTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+                self?.handleNativeTick()
+            }
+            if let timer = self.nativeTimer {
+                RunLoop.main.add(timer, forMode: .common)
+            }
+        }
+    }
+
+    private func stopNativeEngine() {
+        nativeTimer?.invalidate()
+        nativeTimer = nil
+
+        if backgroundTaskId != .invalid {
+            UIApplication.shared.endBackgroundTask(backgroundTaskId)
+            backgroundTaskId = .invalid
+        }
+
         #if canImport(ActivityKit)
         if #available(iOS 16.1, *) {
             for act in Activity<PCFlexActivityAttributes>.activities {
@@ -36,6 +77,75 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
                     await act.end(dismissalPolicy: .immediate)
                 }
             }
+            self.currentActivity = nil
+        }
+        #endif
+    }
+
+    private func handleNativeTick() {
+        if timeRemaining > 1 {
+            timeRemaining -= 1
+            if timeRemaining <= 3 && stageDuration >= 5 {
+                AudioServicesPlaySystemSound(1057)
+            }
+        } else {
+            // Chuyển pha
+            if actionState == "squeezing" || actionState == "reverse" {
+                actionState = "relaxing"
+                timeRemaining = max(1, relaxTime)
+                stageDuration = timeRemaining
+                stageLabel = "Thả lỏng"
+                AudioServicesPlaySystemSound(1054) // Soft tick
+            } else {
+                if currentRep < totalReps {
+                    currentRep += 1
+                    actionState = "squeezing"
+                    timeRemaining = max(1, squeezeTime)
+                    stageDuration = timeRemaining
+                    stageLabel = "Siết cơ PC"
+                    AudioServicesPlaySystemSound(1057) // Taptic pop
+                } else {
+                    // Hoàn thành toàn bộ bài tập
+                    AudioServicesPlaySystemSound(1025)
+                    stopNativeEngine()
+                    notifyListeners("workoutCompleted", data: ["success": true])
+                    return
+                }
+            }
+        }
+
+        // Cập nhật Live Activity trên Dynamic Island & Màn hình khóa
+        updateLiveActivityNative()
+
+        // Bắn sự kiện đồng bộ ngược về Javascript UI
+        notifyListeners("workoutTick", data: [
+            "actionState": actionState,
+            "timeRemaining": timeRemaining,
+            "currentRep": currentRep,
+            "totalReps": totalReps,
+            "stageLabel": stageLabel
+        ])
+    }
+
+    private func updateLiveActivityNative() {
+        #if canImport(ActivityKit)
+        guard #available(iOS 16.1, *) else { return }
+
+        let activity = self.currentActivity ?? Activity<PCFlexActivityAttributes>.activities.first
+        guard let liveAct = activity else { return }
+
+        let targetDate = Date().addingTimeInterval(Double(max(1, timeRemaining)))
+        let contentState = PCFlexActivityAttributes.ContentState(
+            actionState: actionState,
+            timeRemaining: timeRemaining,
+            currentRep: currentRep,
+            totalReps: totalReps,
+            stageLabel: stageLabel,
+            targetDate: targetDate
+        )
+
+        Task {
+            await liveAct.update(using: contentState)
         }
         #endif
     }
@@ -47,30 +157,34 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
             return
         }
 
-        let routineName = call.getString("routineName") ?? "PC Flex"
-        let totalRoutineReps = call.getInt("totalReps") ?? 25
-        let actionState = call.getString("actionState") ?? "squeezing"
-        let timeRemaining = call.getInt("timeRemaining") ?? 5
-        let currentRep = call.getInt("currentRep") ?? 1
-        let stageLabel = call.getString("stageLabel") ?? "Siết cơ PC"
+        currentRoutineName = call.getString("routineName") ?? "PC Flex"
+        totalReps = call.getInt("totalReps") ?? 25
+        actionState = call.getString("actionState") ?? "squeezing"
+        timeRemaining = call.getInt("timeRemaining") ?? 5
+        stageDuration = timeRemaining
+        currentRep = call.getInt("currentRep") ?? 1
+        stageLabel = call.getString("stageLabel") ?? "Siết cơ PC"
+        squeezeTime = call.getInt("squeezeTime") ?? max(1, timeRemaining)
+        relaxTime = call.getInt("relaxTime") ?? 2
+
         let targetDate = Date().addingTimeInterval(Double(max(1, timeRemaining)))
 
         let attributes = PCFlexActivityAttributes(
-            routineName: routineName,
-            totalRoutineReps: totalRoutineReps
+            routineName: currentRoutineName,
+            totalRoutineReps: totalReps
         )
 
         let initialContentState = PCFlexActivityAttributes.ContentState(
             actionState: actionState,
             timeRemaining: timeRemaining,
             currentRep: currentRep,
-            totalReps: totalRoutineReps,
+            totalReps: totalReps,
             stageLabel: stageLabel,
             targetDate: targetDate
         )
 
         do {
-            // Dọn dẹp các activity cũ trước khi tạo mới
+            // Dọn dẹp activity cũ
             for oldAct in Activity<PCFlexActivityAttributes>.activities {
                 Task {
                     await oldAct.end(dismissalPolicy: .immediate)
@@ -83,6 +197,9 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
                 pushType: nil
             )
             self.currentActivity = activity
+
+            // Bắt đầu Native Workout Engine độc lập
+            startNativeEngine()
 
             // Âm thanh rung native mở đầu
             AudioServicesPlaySystemSound(1057)
@@ -99,68 +216,16 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc public func updateActivity(_ call: CAPPluginCall) {
-        #if canImport(ActivityKit)
-        guard #available(iOS 16.1, *) else {
-            call.resolve()
-            return
-        }
-
-        let activity = self.currentActivity ?? Activity<PCFlexActivityAttributes>.activities.first
-        guard let liveAct = activity else {
-            call.resolve()
-            return
-        }
-
-        let actionState = call.getString("actionState") ?? "squeezing"
-        let timeRemaining = call.getInt("timeRemaining") ?? 5
-        let currentRep = call.getInt("currentRep") ?? 1
-        let totalReps = call.getInt("totalReps") ?? 25
-        let stageLabel = call.getString("stageLabel") ?? "Siết cơ PC"
-        let targetDate = Date().addingTimeInterval(Double(max(1, timeRemaining)))
-
-        let updatedContentState = PCFlexActivityAttributes.ContentState(
-            actionState: actionState,
-            timeRemaining: timeRemaining,
-            currentRep: currentRep,
-            totalReps: totalReps,
-            stageLabel: stageLabel,
-            targetDate: targetDate
-        )
-
-        // Phát âm thanh Native trực tiếp từ hệ thống iOS
-        if actionState == "squeezing" {
-            AudioServicesPlaySystemSound(1057)
-        } else if actionState == "relaxing" {
-            AudioServicesPlaySystemSound(1054)
-        } else if actionState == "reverse" {
-            AudioServicesPlaySystemSound(1104)
-        }
-
-        Task {
-            await liveAct.update(using: updatedContentState)
-            call.resolve()
-        }
-        #else
+        if let newAction = call.getString("actionState") { actionState = newAction }
+        if let newTime = call.getInt("timeRemaining") { timeRemaining = newTime }
+        if let newRep = call.getInt("currentRep") { currentRep = newRep }
+        if let newLabel = call.getString("stageLabel") { stageLabel = newLabel }
+        updateLiveActivityNative()
         call.resolve()
-        #endif
     }
 
     @objc public func stopActivity(_ call: CAPPluginCall) {
-        #if canImport(ActivityKit)
-        guard #available(iOS 16.1, *) else {
-            call.resolve()
-            return
-        }
-
-        Task {
-            for act in Activity<PCFlexActivityAttributes>.activities {
-                await act.end(dismissalPolicy: .immediate)
-            }
-            self.currentActivity = nil
-            call.resolve()
-        }
-        #else
+        stopNativeEngine()
         call.resolve()
-        #endif
     }
 }

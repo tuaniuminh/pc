@@ -291,6 +291,17 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     triggerHapticHeavy();
   };
 
+  useEffect(() => {
+    const unsubscribe = liveActivityService.onWorkoutTick((data) => {
+      if (data) {
+        if (data.actionState) setActionState(data.actionState);
+        if (data.timeRemaining !== undefined) setTimeRemaining(data.timeRemaining);
+        if (data.currentRep !== undefined) setCurrentRep(data.currentRep);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   const handleStartWorkout = () => {
     addAppLog('info', `[Workout] Bắt đầu: ${currentRoutine.name} (${totalRoutineReps} hiệp)`);
     audioEngine.resumeContext();
@@ -318,7 +329,9 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
       actionState: currentStages[0]?.type === 'reverse' ? 'reverse' : 'squeezing',
       timeRemaining: currentStages[0]?.squeeze || 1,
       currentRep: 1,
-      stageLabel: currentStages[0]?.label || 'Siết cơ PC'
+      stageLabel: currentStages[0]?.label || 'Siết cơ PC',
+      squeezeTime: currentStages[0]?.squeeze || 1,
+      relaxTime: currentStages[0]?.relax || 2
     });
   };
 

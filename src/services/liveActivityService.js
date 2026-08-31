@@ -3,20 +3,37 @@ import { addAppLog } from '../components/UI/DebugLogger';
 
 /**
  * Service quản lý Live Activities & Dynamic Island trên iOS (ActivityKit)
- * Cho phép hiển thị nhịp tập Kegel theo thời gian thực trên Màn hình khóa và Dynamic Island
+ * Tích hợp Native Workout Engine chạy độc lập ở tầng Swift của iOS
  */
 
-// Đăng ký Plugin chính thức với Capacitor Bridge
 const LiveActivityPlugin = registerPlugin('LiveActivityPlugin');
 
 class LiveActivityService {
   constructor() {
     this.isActive = false;
     this.currentActivityId = null;
+    this.tickListeners = [];
+
+    if (this.isSupported() && LiveActivityPlugin) {
+      LiveActivityPlugin.addListener?.('workoutTick', (data) => {
+        this.tickListeners.forEach(fn => fn(data));
+      });
+      LiveActivityPlugin.addListener?.('workoutCompleted', () => {
+        this.isActive = false;
+        this.currentActivityId = null;
+      });
+    }
   }
 
   isSupported() {
     return Capacitor.getPlatform() === 'ios';
+  }
+
+  onWorkoutTick(callback) {
+    this.tickListeners.push(callback);
+    return () => {
+      this.tickListeners = this.tickListeners.filter(fn => fn !== callback);
+    };
   }
 
   async startLiveActivity({
@@ -25,7 +42,9 @@ class LiveActivityService {
     actionState = 'squeezing',
     timeRemaining = 5,
     currentRep = 1,
-    stageLabel = 'Siết cơ PC'
+    stageLabel = 'Siết cơ PC',
+    squeezeTime = 1,
+    relaxTime = 2
   }) {
     addAppLog('info', `[LiveActivity] Yêu cầu khởi động: ${routineName} (${actionState} ${timeRemaining}s, Rep ${currentRep}/${totalReps})`);
 
@@ -43,7 +62,9 @@ class LiveActivityService {
           actionState,
           timeRemaining,
           currentRep,
-          stageLabel
+          stageLabel,
+          squeezeTime,
+          relaxTime
         });
         this.isActive = true;
         this.currentActivityId = result?.activityId || 'active';
@@ -76,9 +97,7 @@ class LiveActivityService {
           stageLabel
         });
       }
-    } catch (error) {
-      // Bỏ qua lỗi cập nhật nhẹ để tránh flood log
-    }
+    } catch (error) {}
   }
 
   async stopLiveActivity() {
