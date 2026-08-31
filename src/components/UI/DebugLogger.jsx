@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Bug, X, Copy, Trash2, CheckCircle2, Play, RefreshCw, Cpu, Activity, Volume2, ShieldCheck, Tag, SearchCode, Music, Clock, Zap } from 'lucide-react';
+import { Bug, X, Copy, Trash2, CheckCircle2, Play, RefreshCw, Cpu, Activity, Volume2, ShieldCheck, Tag, SearchCode, Music, Clock, Zap, AlertOctagon } from 'lucide-react';
 import { liveActivityService } from '../../services/liveActivityService';
 import { audioEngine, SOUND_ACTIONS, SOUND_PRESETS } from '../../utils/audioEngine';
 import { Capacitor } from '@capacitor/core';
 
-const APP_VERSION = 'v1.9.1';
+const APP_VERSION = 'v1.9.2';
 const LOG_STORAGE_KEY = 'pcflex_debug_logs_v2';
 
 const getStoredLogs = () => {
@@ -18,7 +18,7 @@ const getStoredLogs = () => {
 
 const saveLogs = (logs) => {
   try {
-    localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logs.slice(0, 250)));
+    localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logs.slice(0, 300)));
   } catch (e) {}
 };
 
@@ -36,12 +36,12 @@ export const addAppLog = (type, message, data = null) => {
     data: data ? (typeof data === 'object' ? JSON.stringify(data) : String(data)) : null
   };
   logStore.unshift(entry);
-  if (logStore.length > 250) logStore.pop();
+  if (logStore.length > 300) logStore.pop();
   saveLogs(logStore);
   listeners.forEach(fn => fn([...logStore]));
 };
 
-// Tự động bắt tất cả console log & sự kiện background
+// Tự động bắt tất cả console log & theo dõi đóng băng WebKit trong nền
 if (typeof window !== 'undefined') {
   const originalLog = console.log;
   const originalWarn = console.warn;
@@ -68,23 +68,35 @@ if (typeof window !== 'undefined') {
   let bgStartTime = 0;
   let bgInterval = null;
   let bgTicks = 0;
+  let lastPulseTime = 0;
 
   document.addEventListener('visibilitychange', () => {
     const isHidden = document.hidden;
     if (isHidden) {
       bgStartTime = Date.now();
+      lastPulseTime = Date.now();
       bgTicks = 0;
-      addAppLog('warn', `[AppState] Ẩn app (document.hidden = true) - Bắt đầu đo nhịp nền`);
+      addAppLog('warn', `[AppState] Ẩn app (document.hidden = true) - Bắt đầu đo nhịp nền & phát hiện đóng băng`);
       bgInterval = setInterval(() => {
         bgTicks++;
+        const now = Date.now();
+        const delta = now - lastPulseTime;
+        lastPulseTime = now;
+
+        // Nếu khoảng cách giữa 2 nhịp vượt quá 2.5s -> WebKit vừa bị đóng băng (Suspended)
+        if (delta > 2500) {
+          addAppLog('error', `[EngineFreeze] Phát hiện WebKit bị iOS đóng băng ${(delta / 1000).toFixed(1)}s trong nền!`);
+        }
+
         if (bgTicks % 3 === 0) {
-          addAppLog('info', `[BackgroundPulse] Tiến trình nền vẫn đang chạy: ${bgTicks}s`);
+          addAppLog('info', `[BackgroundPulse] Tiến trình nền: ${bgTicks}s (Độ lệch nhịp: ${(delta / 1000).toFixed(2)}s)`);
         }
       }, 1000);
     } else {
       if (bgInterval) clearInterval(bgInterval);
       const elapsed = bgStartTime > 0 ? ((Date.now() - bgStartTime) / 1000).toFixed(1) : 0;
-      addAppLog('success', `[AppState] Mở lại app (document.hidden = false) - Thời gian ẩn: ${elapsed}s (Số nhịp nền: ${bgTicks})`);
+      const missedTicks = Math.max(0, Math.round(elapsed - bgTicks));
+      addAppLog('success', `[AppState] Mở lại app (document.hidden = false) - Thời gian ẩn: ${elapsed}s (Số nhịp ghi nhận: ${bgTicks}, Nhịp bị mất do iOS ngủ: ${missedTicks})`);
     }
   });
 }
@@ -145,7 +157,7 @@ const DebugLogger = () => {
     listeners.push(listener);
 
     refreshDiagnostics();
-    addAppLog('info', `[AppInit] Khởi tạo Con Bọ Siêu Chẩn Đoán v3.0 cho iOS 16.6+ (${APP_VERSION})`);
+    addAppLog('info', `[AppInit] Khởi tạo Con Bọ Siêu Chẩn Đoán v4.0 cho iOS 16.6+ (${APP_VERSION})`);
 
     return () => {
       listeners = listeners.filter(fn => fn !== listener);
@@ -154,7 +166,7 @@ const DebugLogger = () => {
 
   const handleRunFullDiagnosticScan = async () => {
     setScanning(true);
-    addAppLog('info', '================ BẮT ĐẦU QUÉT CHẨN ĐOÁN TOÀN DIỆN v3.0 ================');
+    addAppLog('info', '================ BẮT ĐẦU QUÉT CHẨN ĐOÁN TOÀN DIỆN v4.0 ================');
     
     // 1. Kiểm tra Bridge & Plugins
     const plugins = Capacitor?.Plugins ? Object.keys(Capacitor.Plugins) : [];
@@ -165,7 +177,7 @@ const DebugLogger = () => {
       const nat = await liveActivityService.getNativeDiagnostics();
       setNativeDiag(nat);
       if (nat.areActivitiesEnabled === false) {
-        addAppLog('error', `[Scan 2/5] LỖI NGUY CƠ CAO: Live Activities đang bị TẮT trong Cài đặt iOS của máy! (Settings -> PC Flex -> Live Activities -> BẬT)`);
+        addAppLog('error', `[Scan 2/5] LỖI: Live Activities đang bị TẮT trong Cài đặt iOS của máy! (Settings -> PC Flex -> Live Activities -> BẬT)`);
       } else {
         addAppLog('success', `[Scan 2/5] Quyền Live Activities trên iOS: ĐƯỢC PHÉP (areActivitiesEnabled = true)`);
       }
@@ -196,8 +208,8 @@ const DebugLogger = () => {
     const isDynIslandPhone = (window.screen.height >= 844 || window.screen.width >= 390) && dpr >= 3;
     addAppLog('info', `[Scan 4/5] Phần cứng Màn hình: ${window.screen.width}x${window.screen.height} (DPR: ${dpr}) -> ${isDynIslandPhone ? 'Hỗ trợ Dynamic Island' : 'Màn hình tiêu chuẩn'}`);
 
-    // 5. Thử nghiệm kích hoạt Live Activity 5 giây với targetDate đếm lùi
-    addAppLog('info', `[Scan 5/5] Đang kích hoạt thử nghiệm Live Activity 5s với targetDate đếm lùi...`);
+    // 5. Thử nghiệm kích hoạt Live Activity 5 giây
+    addAppLog('info', `[Scan 5/5] Đang kích hoạt thử nghiệm Live Activity 5s theo phong cách Apple Clock Timer...`);
     try {
       const startRes = await liveActivityService.startLiveActivity({
         routineName: 'Chẩn Đoán Đảo Động',
@@ -205,7 +217,7 @@ const DebugLogger = () => {
         actionState: 'squeezing',
         timeRemaining: 5,
         currentRep: 1,
-        stageLabel: 'Kiểm tra Dynamic Island đếm lùi',
+        stageLabel: 'Kiểm tra Dynamic Island Apple Clock Timer',
         volume: 0.8,
         hapticsEnabled: false,
         sfxEnabled: true
@@ -215,7 +227,7 @@ const DebugLogger = () => {
       addAppLog('error', `[Scan 5/5] Lỗi khởi động Live Activity: ${e.message || String(e)}`);
     }
 
-    addAppLog('info', '================ HOÀN THÀNH QUÉT CHẨN ĐOÁN v3.0 ================');
+    addAppLog('info', '================ HOÀN THÀNH QUÉT CHẨN ĐOÁN v4.0 ================');
     setScanning(false);
   };
 
@@ -289,12 +301,12 @@ const DebugLogger = () => {
               <Bug className="w-5 h-5 text-emerald-400" />
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-sm text-white">Thuật Toán Chẩn Đoán Sâu v3.0</h3>
+                  <h3 className="font-bold text-sm text-white">Thuật Toán Chẩn Đoán Sâu v4.0</h3>
                   <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/40">
                     {APP_VERSION}
                   </span>
                 </div>
-                <p className="text-[10px] text-zinc-400">iOS 16.6+ • Dynamic Island & Sound Preset Monitor</p>
+                <p className="text-[10px] text-zinc-400">iOS 16.6+ • Freeze Detector & Native Background Engine</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -381,7 +393,7 @@ const DebugLogger = () => {
                 className="flex-1 py-1.5 px-2 rounded bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold hover:bg-cyan-500/30 flex items-center justify-center gap-1.5 text-[11px] transition-all"
               >
                 <SearchCode className={`w-3.5 h-3.5 ${scanning ? 'animate-spin' : ''}`} />
-                {scanning ? 'Đang chạy thuật toán quét 5 bước...' : '🔍 Quét Sâu Toàn Bộ Hệ Thống v3.0'}
+                {scanning ? 'Đang chạy thuật toán quét 5 bước...' : '🔍 Quét Sâu Toàn Bộ Hệ Thống v4.0'}
               </button>
               <button
                 onClick={refreshDiagnostics}
