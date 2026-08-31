@@ -291,16 +291,6 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     triggerHapticHeavy();
   };
 
-  useEffect(() => {
-    const unsubscribe = liveActivityService.onWorkoutTick((data) => {
-      if (data) {
-        if (data.actionState) setActionState(data.actionState);
-        if (data.timeRemaining !== undefined) setTimeRemaining(data.timeRemaining);
-        if (data.currentRep !== undefined) setCurrentRep(data.currentRep);
-      }
-    });
-    return () => unsubscribe();
-  }, []);
 
   const handleStartWorkout = () => {
     addAppLog('info', `[Workout] Bắt đầu: ${currentRoutine.name} (${totalRoutineReps} hiệp)`);
