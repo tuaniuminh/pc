@@ -11,7 +11,8 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "startActivity", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "updateActivity", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "stopActivity", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "stopActivity", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getDiagnosticInfo", returnType: CAPPluginReturnPromise)
     ]
 
     private var _currentActivity: Any?
@@ -44,10 +45,64 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         #endif
     }
 
+    @objc public func getDiagnosticInfo(_ call: CAPPluginCall) {
+        var diagnostic: [String: Any] = [:]
+        diagnostic["bundleId"] = Bundle.main.bundleIdentifier ?? "unknown"
+        diagnostic["appVersion"] = Bundle.main.infoDictionary?["CFBundleShortVersionString"] ?? "unknown"
+        diagnostic["bundlePath"] = Bundle.main.bundlePath
+
+        let pluginsPath = Bundle.main.bundlePath + "/PlugIns"
+        let fileManager = FileManager.default
+        let hasPlugIns = fileManager.fileExists(atPath: pluginsPath)
+        diagnostic["hasPlugInsFolder"] = hasPlugIns
+
+        if hasPlugIns {
+            let plugIns = (try? fileManager.contentsOfDirectory(atPath: pluginsPath)) ?? []
+            diagnostic["plugInsList"] = plugIns
+            diagnostic["hasWidgetExtension"] = plugIns.contains(where: { $0.contains("Widget") || $0.contains("appex") })
+        } else {
+            diagnostic["plugInsList"] = []
+            diagnostic["hasWidgetExtension"] = false
+        }
+
+        #if canImport(ActivityKit)
+        if #available(iOS 16.1, *) {
+            let authInfo = ActivityAuthorizationInfo()
+            diagnostic["areActivitiesEnabled"] = authInfo.areActivitiesEnabled
+            
+            let allActivities = Activity<PCFlexActivityAttributes>.activities
+            diagnostic["activeActivitiesCount"] = allActivities.count
+            diagnostic["activeActivities"] = allActivities.map { act in
+                return [
+                    "id": act.id,
+                    "state": String(describing: act.activityState),
+                    "actionState": act.contentState.actionState,
+                    "timeRemaining": act.contentState.timeRemaining,
+                    "currentRep": act.contentState.currentRep
+                ]
+            }
+        } else {
+            diagnostic["areActivitiesEnabled"] = false
+            diagnostic["activityKitSupported"] = false
+        }
+        #else
+        diagnostic["areActivitiesEnabled"] = false
+        diagnostic["activityKitSupported"] = false
+        #endif
+
+        call.resolve(diagnostic)
+    }
+
     @objc public func startActivity(_ call: CAPPluginCall) {
         #if canImport(ActivityKit)
         guard #available(iOS 16.1, *) else {
             call.reject("Live Activities yêu cầu iOS 16.1 trở lên")
+            return
+        }
+
+        let authInfo = ActivityAuthorizationInfo()
+        if !authInfo.areActivitiesEnabled {
+            call.reject("Live Activities chưa được bật trong Cài đặt iOS của máy (Settings -> PC Flex -> Live Activities)")
             return
         }
 

@@ -29,6 +29,18 @@ class LiveActivityService {
     return Capacitor.getPlatform() === 'ios';
   }
 
+  async getNativeDiagnostics() {
+    if (!this.isSupported()) return { isSupported: false, platform: Capacitor.getPlatform() };
+    try {
+      if (LiveActivityPlugin && LiveActivityPlugin.getDiagnosticInfo) {
+        return await LiveActivityPlugin.getDiagnosticInfo();
+      }
+    } catch (e) {
+      return { error: e.message || String(e) };
+    }
+    return { status: 'Plugin method not available' };
+  }
+
   onWorkoutTick(callback) {
     this.tickListeners.push(callback);
     return () => {
