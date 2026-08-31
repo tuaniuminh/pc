@@ -26,7 +26,7 @@ import {
   Music
 } from 'lucide-react';
 
-const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
+const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) => {
   // Trạng thái bài tập
   const [selectedGender, setSelectedGender] = useState(userProfile.gender || 'male');
   const [selectedLevel, setSelectedLevel] = useState(1);
@@ -36,6 +36,13 @@ const Timer = ({ settings, userProfile, onOpenAIPlan }) => {
 
   // Trạng thái đếm nhịp
   const [isActive, setIsActive] = useState(false);
+
+  // Đồng bộ trạng thái bài tập đang chạy với ứng dụng để khóa chuyển Tab
+  useEffect(() => {
+    if (onWorkoutActiveChange) {
+      onWorkoutActiveChange(isActive);
+    }
+  }, [isActive, onWorkoutActiveChange]);
   const [actionState, setActionState] = useState('idle'); // 'idle' | 'squeezing' | 'relaxing' | 'reverse' | 'transition' | 'breathing'
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
   const [currentRep, setCurrentRep] = useState(1);

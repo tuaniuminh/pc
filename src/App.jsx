@@ -15,7 +15,9 @@ import {
   Activity, 
   History as HistoryIcon, 
   Sparkles, 
-  Settings as SettingsIcon 
+  Settings as SettingsIcon,
+  Lock,
+  AlertCircle
 } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
@@ -23,6 +25,8 @@ function App() {
   const [activeTab, setActiveTab] = useState('timer'); // 'timer' | 'history' | 'plans' | 'settings'
   const [settings, setSettingsState] = useState(getSettings());
   const [userProfile, setUserProfile] = useState(getUserProfile());
+  const [isWorkoutActive, setIsWorkoutActive] = useState(false);
+  const [lockToast, setLockToast] = useState(null);
 
   // Kích hoạt cân chỉnh dữ liệu, phản hồi rung và Dark Mode / Status Bar
   useEffect(() => {
@@ -85,6 +89,18 @@ function App() {
     setActiveTab('timer'); // Chuyển về tab Tập Luyện khi chọn giáo án
   };
 
+  const handleTabClick = (tabKey) => {
+    // Khóa chuyển tab nếu buổi tập đang chạy
+    if (isWorkoutActive && tabKey !== 'timer') {
+      setLockToast("Đang trong buổi tập! Vui lòng Tạm dừng trước khi chuyển tab.");
+      setTimeout(() => {
+        setLockToast(null);
+      }, 2500);
+      return;
+    }
+    setActiveTab(tabKey);
+  };
+
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-100 dark:bg-oled text-slate-900 dark:text-white overflow-hidden font-sans transition-colors duration-300">
       {/* 1. Header Cố Định Ở Trên Cùng Có Safe Area Cho iPhone */}
@@ -102,6 +118,7 @@ function App() {
             settings={settings}
             userProfile={userProfile}
             onOpenAIPlan={() => setActiveTab('plans')}
+            onWorkoutActiveChange={setIsWorkoutActive}
           />
         )}
 
@@ -128,58 +145,94 @@ function App() {
         )}
       </main>
 
-      {/* 3. Bottom Navigation Bar Cố Định Ở Đáy */}
+      {/* Thông Báo Khóa Tab Khi Đang Tập (Floating Lock Toast) */}
+      {lockToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 max-w-xs w-full px-4 animate-fade-in">
+          <div className="glass-panel p-3 rounded-2xl border border-amber-500/50 bg-amber-500/15 backdrop-blur-xl text-amber-900 dark:text-amber-200 text-xs font-bold flex items-center space-x-2.5 shadow-xl">
+            <AlertCircle size={18} className="text-amber-500 shrink-0" />
+            <span className="leading-tight">{lockToast}</span>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Bottom Navigation Bar Cố Định Ở Đáy (Tự động khóa các tab khác khi đang tập) */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-oled/95 backdrop-blur-2xl border-t border-slate-200 dark:border-white/5 safe-bottom-padding px-6 pt-2 transition-colors duration-300">
         <div className="flex items-center justify-around max-w-md mx-auto">
           {/* Tab 1: Tập Luyện (Xanh Lá Neon / Emerald) */}
           <button
-            onClick={() => setActiveTab('timer')}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 ${
+            onClick={() => handleTabClick('timer')}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 relative ${
               activeTab === 'timer'
-                ? 'text-emerald-500 dark:text-neon scale-105 font-black'
+                ? 'text-emerald-600 dark:text-neon scale-105 font-black'
                 : 'text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300'
             }`}
           >
-            <Activity size={24} />
+            <div className="relative">
+              <Activity size={24} />
+              {isWorkoutActive && (
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 dark:bg-neon animate-ping" />
+              )}
+            </div>
             <span className="text-[10px] tracking-tight mt-1 font-bold">Tập Luyện</span>
           </button>
 
           {/* Tab 2: Thành Tích (Vàng Hổ Phách / Amber Gold) */}
           <button
-            onClick={() => setActiveTab('history')}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 ${
+            onClick={() => handleTabClick('history')}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 relative ${
               activeTab === 'history'
-                ? 'text-amber-500 dark:text-amber-400 scale-105 font-black'
+                ? 'text-amber-600 dark:text-amber-400 scale-105 font-black'
+                : isWorkoutActive 
+                ? 'text-slate-300 dark:text-gray-700 opacity-40 cursor-not-allowed'
                 : 'text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300'
             }`}
           >
-            <HistoryIcon size={24} />
+            <div className="relative">
+              <HistoryIcon size={24} />
+              {isWorkoutActive && (
+                <Lock size={10} className="absolute -top-1 -right-1 text-amber-500" />
+              )}
+            </div>
             <span className="text-[10px] tracking-tight mt-1 font-bold">Thành Tích</span>
           </button>
 
           {/* Tab 3: Trợ Lý AI (Xanh Cyan / Electric Blue) */}
           <button
-            onClick={() => setActiveTab('plans')}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 ${
+            onClick={() => handleTabClick('plans')}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 relative ${
               activeTab === 'plans'
-                ? 'text-cyan-500 dark:text-cyan-neon scale-105 font-black'
+                ? 'text-cyan-600 dark:text-cyan-neon scale-105 font-black'
+                : isWorkoutActive 
+                ? 'text-slate-300 dark:text-gray-700 opacity-40 cursor-not-allowed'
                 : 'text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300'
             }`}
           >
-            <Sparkles size={24} />
+            <div className="relative">
+              <Sparkles size={24} />
+              {isWorkoutActive && (
+                <Lock size={10} className="absolute -top-1 -right-1 text-cyan-500" />
+              )}
+            </div>
             <span className="text-[10px] tracking-tight mt-1 font-bold">Trợ Lý AI</span>
           </button>
 
           {/* Tab 4: Cài Đặt (Tím Điện Tử / Electric Purple) */}
           <button
-            onClick={() => setActiveTab('settings')}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 ${
+            onClick={() => handleTabClick('settings')}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 relative ${
               activeTab === 'settings'
                 ? 'text-violet-600 dark:text-violet-400 scale-105 font-black'
+                : isWorkoutActive 
+                ? 'text-slate-300 dark:text-gray-700 opacity-40 cursor-not-allowed'
                 : 'text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300'
             }`}
           >
-            <SettingsIcon size={24} />
+            <div className="relative">
+              <SettingsIcon size={24} />
+              {isWorkoutActive && (
+                <Lock size={10} className="absolute -top-1 -right-1 text-violet-500" />
+              )}
+            </div>
             <span className="text-[10px] tracking-tight mt-1 font-bold">Cài Đặt</span>
           </button>
         </div>
