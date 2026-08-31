@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Bug, X, Copy, Trash2, CheckCircle2, Play, RefreshCw, Cpu, Activity, Volume2, ShieldCheck } from 'lucide-react';
+import { Bug, X, Copy, Trash2, CheckCircle2, Play, RefreshCw, Cpu, Activity, Volume2, ShieldCheck, Tag } from 'lucide-react';
 import { liveActivityService } from '../../services/liveActivityService';
 import { audioEngine } from '../../utils/audioEngine';
 import { Capacitor } from '@capacitor/core';
 
+const APP_VERSION = 'v1.7.5';
 const LOG_STORAGE_KEY = 'pcflex_debug_logs_v2';
 
 const getStoredLogs = () => {
@@ -99,7 +100,14 @@ const DebugLogger = () => {
     const isLiveActivityAvail = Capacitor?.isPluginAvailable ? Capacitor.isPluginAvailable('LiveActivityPlugin') : false;
     const audioCtx = audioEngine?.audioCtx;
     
+    let settings = {};
+    try {
+      const raw = localStorage.getItem('pcflex_settings_v3') || localStorage.getItem('pc_flex_settings');
+      if (raw) settings = JSON.parse(raw);
+    } catch (e) {}
+
     setDiagInfo({
+      appVersion: APP_VERSION,
       platform: Capacitor.getPlatform(),
       isNative: Capacitor.isNativePlatform(),
       pluginsCount: plugins.length,
@@ -110,6 +118,8 @@ const DebugLogger = () => {
       pixelRatio: window.devicePixelRatio || 1,
       audioState: audioCtx ? audioCtx.state : 'uninitialized',
       sampleRate: audioCtx ? audioCtx.sampleRate : 0,
+      volumeSetting: `${settings.volume !== undefined ? settings.volume : 80}%`,
+      hapticsSetting: settings.hapticsEnabled !== false ? 'BẬT' : 'TẮT',
       userAgent: navigator.userAgent
     });
   };
@@ -119,7 +129,7 @@ const DebugLogger = () => {
     listeners.push(listener);
 
     refreshDiagnostics();
-    addAppLog('info', `[AppInit] Khởi tạo Con Bọ Siêu Chẩn Đoán v2 cho iPhone 14 Pro Max / iOS 16.6+`);
+    addAppLog('info', `[AppInit] Khởi tạo Con Bọ Siêu Chẩn Đoán v2.5 cho iPhone 14 Pro Max (${APP_VERSION})`);
 
     return () => {
       listeners = listeners.filter(fn => fn !== listener);
@@ -128,11 +138,13 @@ const DebugLogger = () => {
 
   const handleCopyLogs = () => {
     const summary = [
-      '=== PC FLEX ULTRA DIAGNOSTIC REPORT ===',
+      `=== PC FLEX ULTRA DIAGNOSTIC REPORT [${diagInfo.appVersion}] ===`,
       `Platform: ${diagInfo.platform} (Native: ${diagInfo.isNative})`,
+      `App Version: ${diagInfo.appVersion}`,
       `Screen Viewport: ${diagInfo.screenLogical} | Physical: ${diagInfo.screenPhysical} (DPR: ${diagInfo.pixelRatio})`,
       `LiveActivityPlugin Available: ${diagInfo.liveActivityAvailable}`,
       `Audio Context State: ${diagInfo.audioState} (${diagInfo.sampleRate}Hz)`,
+      `User Settings: Âm lượng: ${diagInfo.volumeSetting} | Rung: ${diagInfo.hapticsSetting}`,
       `Registered Plugins (${diagInfo.pluginsCount}): ${diagInfo.registeredPlugins}`,
       `UserAgent: ${diagInfo.userAgent}`,
       '=================================',
@@ -161,7 +173,10 @@ const DebugLogger = () => {
         actionState: 'squeezing',
         timeRemaining: 10,
         currentRep: 1,
-        stageLabel: 'Đang Siết (Kiểm thử 10s)'
+        stageLabel: 'Đang Siết (Kiểm thử 10s)',
+        volume: 0.9,
+        hapticsEnabled: true,
+        sfxEnabled: true
       });
       addAppLog('success', `[Test] Kết quả kích hoạt: ${JSON.stringify(res)}`);
     } catch (e) {
@@ -188,7 +203,12 @@ const DebugLogger = () => {
             <div className="flex items-center gap-2">
               <Bug className="w-5 h-5 text-emerald-400" />
               <div>
-                <h3 className="font-bold text-sm text-white">Chẩn Đoán Hệ Thống & Native Bridge</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-sm text-white">Chẩn Đoán Hệ Thống & Native Bridge</h3>
+                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/40">
+                    {APP_VERSION}
+                  </span>
+                </div>
                 <p className="text-[10px] text-zinc-400">iOS 16.6+ • Dynamic Island & Live Activities</p>
               </div>
             </div>
@@ -230,12 +250,12 @@ const DebugLogger = () => {
                 </span>
               </div>
               <div className="flex items-center justify-between p-1.5 rounded bg-black/40">
-                <span className="text-zinc-400 flex items-center gap-1"><Volume2 className="w-3 h-3 text-amber-400" /> Âm thanh:</span>
-                <span className="font-bold text-amber-300">{diagInfo.audioState} ({diagInfo.sampleRate}Hz)</span>
+                <span className="text-zinc-400 flex items-center gap-1"><Volume2 className="w-3 h-3 text-amber-400" /> Âm lượng:</span>
+                <span className="font-bold text-amber-300">{diagInfo.volumeSetting} (Rung: {diagInfo.hapticsSetting})</span>
               </div>
               <div className="flex items-center justify-between p-1.5 rounded bg-black/40">
-                <span className="text-zinc-400 flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-purple-400" /> Màn hình:</span>
-                <span className="font-bold text-purple-300">{diagInfo.screenLogical} (DPR: {diagInfo.pixelRatio})</span>
+                <span className="text-zinc-400 flex items-center gap-1"><Tag className="w-3 h-3 text-purple-400" /> Phiên bản:</span>
+                <span className="font-bold text-purple-300">{APP_VERSION}</span>
               </div>
             </div>
 
