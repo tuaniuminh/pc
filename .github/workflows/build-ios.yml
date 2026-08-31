@@ -61,7 +61,10 @@ jobs:
       - name: Tích hợp Widget Extension (Dynamic Island & Live Activities) vào Xcode
         run: |
           echo "Thiết lập Widget Extension cho ActivityKit"
-          ruby -r xcodeproj -r fileutils -e "
+          ruby << 'EOF'
+            require 'xcodeproj'
+            require 'fileutils'
+
             project = Xcodeproj::Project.open('ios/App/App.xcodeproj')
             main_target = project.targets.find { |t| t.name == 'App' }
 
@@ -107,7 +110,7 @@ jobs:
             embed_phase.add_file_reference(product_ref) unless embed_phase.files_references.include?(product_ref)
 
             project.save
-          "
+          EOF
 
       - name: Tạo Icon tự động từ Logo
         run: npm run generate-icons || true
