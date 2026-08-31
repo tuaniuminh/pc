@@ -48,6 +48,43 @@ jobs:
           echo "Đồng bộ AppDelegate.swift tùy chỉnh với AVAudioSession và xử lý dọn dẹp Live Activities"
           cp ios-native/AppDelegate.swift ios/App/App/AppDelegate.swift || true
 
+      - name: Tích hợp Widget Extension (Dynamic Island & Live Activities) vào Xcode
+        run: |
+          echo "Thiết lập Widget Extension cho ActivityKit"
+          ruby -r xcodeproj -r fileutils -e "
+            project = Xcodeproj::Project.open('ios/App/App.xcodeproj')
+            main_target = project.targets.find { |t| t.name == 'App' }
+
+            FileUtils.mkdir_p('ios/App/PCFlexWidget')
+            FileUtils.cp_r(Dir.glob('ios-native/PCFlexWidget/*'), 'ios/App/PCFlexWidget/')
+
+            widget_target = project.targets.find { |t| t.name == 'PCFlexWidget' } || project.new_target(:app_extension, 'PCFlexWidget', :ios, '16.1')
+            widget_group = project.main_group.find_subpath('PCFlexWidget', true)
+
+            widget_target.build_configurations.each do |config|
+              config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.pcflex.app.widget'
+              config.build_settings['INFOPLIST_FILE'] = 'PCFlexWidget/Info.plist'
+              config.build_settings['SWIFT_VERSION'] = '5.0'
+              config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.1'
+              config.build_settings['SKIP_INSTALL'] = 'YES'
+              config.build_settings['TARGETED_DEVICE_FAMILY'] = '1,2'
+              config.build_settings['ENABLE_BITCODE'] = 'NO'
+              config.build_settings['GENERATE_INFOPLIST_FILE'] = 'NO'
+            end
+
+            Dir.glob('ios/App/PCFlexWidget/*.swift').each do |file|
+              file_ref = widget_group.find_file_by_path(File.basename(file)) || widget_group.new_file(File.basename(file))
+              widget_target.add_file_references([file_ref]) unless widget_target.source_build_phase.files_references.include?(file_ref)
+            end
+
+            embed_phase = main_target.copy_files_build_phases.find { |p| p.dst_subfolder_spec == 13 } || main_target.new_copy_files_build_phase('Embed App Extensions')
+            embed_phase.dst_subfolder_spec = 13
+            product_ref = widget_target.product_reference
+            embed_phase.add_file_reference(product_ref) unless embed_phase.files_references.include?(product_ref)
+
+            project.save
+          " || true
+
       - name: Tạo Icon tự động từ Logo
         run: npm run generate-icons || true
 
