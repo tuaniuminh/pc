@@ -95,7 +95,26 @@ class AudioSynthesizer {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (AudioContextClass) {
       this.audioCtx = new AudioContextClass();
+
+      // Master Dynamics Compressor chống rè và vỡ tiếng (Limiter Headroom)
+      this.masterCompressor = this.audioCtx.createDynamicsCompressor();
+      this.masterCompressor.threshold.setValueAtTime(-12, this.audioCtx.currentTime);
+      this.masterCompressor.knee.setValueAtTime(30, this.audioCtx.currentTime);
+      this.masterCompressor.ratio.setValueAtTime(12, this.audioCtx.currentTime);
+      this.masterCompressor.attack.setValueAtTime(0.003, this.audioCtx.currentTime);
+      this.masterCompressor.release.setValueAtTime(0.25, this.audioCtx.currentTime);
+
+      this.masterGain = this.audioCtx.createGain();
+      this.masterGain.gain.setValueAtTime(0.85, this.audioCtx.currentTime);
+
+      this.masterCompressor.connect(this.masterGain);
+      this.masterGain.connect(this.audioCtx.destination);
     }
+  }
+
+  getMasterDestination() {
+    this.init();
+    return this.masterCompressor || this.audioCtx?.destination;
   }
 
   resumeContext() {

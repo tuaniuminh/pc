@@ -139,11 +139,3 @@ class LiveActivityService {
 
 export const liveActivityService = new LiveActivityService();
 
-if (typeof window !== 'undefined') {
-  window.addEventListener('beforeunload', () => {
-    liveActivityService.stopLiveActivity();
-  });
-  window.addEventListener('pagehide', () => {
-    liveActivityService.stopLiveActivity();
-  });
-}
