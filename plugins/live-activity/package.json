@@ -1,0 +1,12 @@
+{
+  "name": "capacitor-live-activity-plugin",
+  "version": "1.0.0",
+  "description": "Native Live Activities & Dynamic Island Plugin for PC Flex",
+  "main": "dist/plugin.js",
+  "types": "dist/plugin.d.ts",
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    }
+  }
+}

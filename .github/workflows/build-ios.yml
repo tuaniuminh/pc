@@ -45,37 +45,6 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" ios/App/App/Info.plist || true
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" ios/App/App/Info.plist || true
 
-          echo "Tích hợp và đăng ký mã nguồn Native (Swift & Obj-C) vào Xcode project"
-          cp ios-native/*.* ios/App/App/ || true
-          ruby -r xcodeproj -e "
-            project = Xcodeproj::Project.open('ios/App/App.xcodeproj')
-            target = project.targets.first
-            group = project.main_group.find_subpath('App', true)
-            
-            # Đăng ký -ObjC và Bridging Header để nạp đầy đủ Objective-C Bridge Category
-            target.build_configurations.each do |config|
-              flags = config.build_settings['OTHER_LDFLAGS'] || ['$(inherited)']
-              flags = [flags] if flags.is_a?(String)
-              flags << '-ObjC' unless flags.include?('-ObjC')
-              config.build_settings['OTHER_LDFLAGS'] = flags
-              config.build_settings['SWIFT_OBJC_BRIDGING_HEADER'] = 'App/App-Bridging-Header.h'
-            end
-
-            Dir.glob('ios-native/*.*').each do |file|
-              dest = \"ios/App/App/#{File.basename(file)}\"
-              FileUtils.cp(file, dest)
-              file_ref = group.find_file_by_path(File.basename(file)) || group.new_file(File.basename(file))
-              if ['.swift', '.m', '.c', '.cpp'].include?(File.extname(file))
-                target.add_file_references([file_ref]) unless target.source_build_phase.files_references.include?(file_ref)
-              end
-            end
-            project.save
-          " || cp ios-native/*.* ios/App/App/
-
-          echo "Đồng bộ Main.storyboard với MainViewController"
-          sed -i '' 's/customClass="CAPBridgeViewController"/customClass="MainViewController"/g' ios/App/App/Base.lproj/Main.storyboard || true
-          sed -i '' 's/customModule="Capacitor"/customModule="App"/g' ios/App/App/Base.lproj/Main.storyboard || true
-
       - name: Tạo Icon tự động từ Logo
         run: npm run generate-icons || true
 
