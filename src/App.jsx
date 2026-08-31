@@ -111,38 +111,38 @@ function App() {
         activeRoutineName={activeTab === 'timer' ? 'Sàn Chậu & Kegel AI' : null}
       />
 
-      {/* 2. Phần Thân Chứa 4 Tab Tính Năng (Cho phép cuộn trang mượt mà trên mọi tab) */}
+      {/* 2. Phần Thân Chứa 4 Tab Tính Năng (Duy trì trạng thái liên tục trong DOM, không bao giờ bị reset bài tập khi chuyển tab) */}
       <main className="flex-1 relative overflow-y-auto overflow-x-hidden pb-28">
-        {activeTab === 'timer' && (
+        <div className={activeTab === 'timer' ? 'block' : 'hidden'}>
           <Timer 
             settings={settings}
             userProfile={userProfile}
             onOpenAIPlan={() => setActiveTab('plans')}
             onWorkoutActiveChange={setIsWorkoutActive}
           />
-        )}
+        </div>
 
-        {activeTab === 'history' && (
+        <div className={activeTab === 'history' ? 'block' : 'hidden'}>
           <History 
             onStartWorkout={() => setActiveTab('timer')}
           />
-        )}
+        </div>
 
-        {activeTab === 'plans' && (
+        <div className={activeTab === 'plans' ? 'block' : 'hidden'}>
           <PlanManager 
             apiKey={settings.apiKey}
             onSelectPlan={handleSelectAIPlan}
             onOpenSettings={() => setActiveTab('settings')}
           />
-        )}
+        </div>
 
-        {activeTab === 'settings' && (
+        <div className={activeTab === 'settings' ? 'block' : 'hidden'}>
           <Settings 
             settings={settings}
             onUpdateSettings={handleUpdateSettings}
             onNavigateToAI={() => setActiveTab('plans')}
           />
-        )}
+        </div>
       </main>
 
       {/* Thông Báo Khóa Tab Khi Đang Tập (Floating Lock Toast) */}

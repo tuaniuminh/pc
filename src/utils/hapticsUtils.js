@@ -7,7 +7,7 @@ import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 
 export const isHapticsEnabled = () => {
   try {
-    const raw = localStorage.getItem('pc_flex_settings');
+    const raw = localStorage.getItem('pcflex_settings_v3') || localStorage.getItem('pc_flex_settings');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed.hapticsEnabled === false) return false;
