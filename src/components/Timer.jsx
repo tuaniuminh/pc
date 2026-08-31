@@ -215,15 +215,8 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
         setTimeRemaining(prev => {
           if (prev > 1) {
             const nextSec = prev - 1;
-            // Beep đếm ngược 3s cuối nếu là lượt siết dài
-            if (nextSec <= 3 && stageDuration >= 5 && sfxEnabled) {
-              audioEngine.playBeep(800, 0.08, 0.2);
-              triggerHapticHeartbeat();
-            }
-
-            // Cập nhật Live Activities & Dynamic Island trên màn hình khóa
+            // Cập nhật Live Activities & Dynamic Island trên màn hình khóa (không phát beep đếm ngược)
             syncLiveActivity(actionState, nextSec, currentRep, currentStages[currentStageIndex]);
-
             return nextSec;
           } else {
             // Hết giây của phase hiện tại -> Chuyển đổi trạng thái kế tiếp trong microtask riêng
@@ -260,6 +253,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
         setActionState('relaxing');
         setTimeRemaining(stage.relax);
         setStageDuration(stage.relax);
+        addAppLog('info', `[Workout] Chuyển sang Thả lỏng (${stage.relax}s, Hiệp ${currentRep}/${totalRoutineReps})`);
         syncLiveActivity('relaxing', stage.relax, currentRep, stage);
         if (sfxEnabled) audioEngine.playRelaxSFX(settings.actionSounds);
         triggerHapticMedium();
@@ -311,6 +305,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     setActionState(nextState);
     setTimeRemaining(stage.squeeze);
     setStageDuration(stage.squeeze);
+    addAppLog('info', `[Workout] Bắt đầu ${nextState === 'reverse' ? 'Kegel ngược' : nextState === 'breathing' ? 'Thở bụng' : 'Siết'} (${stage.squeeze}s, Hiệp ${targetRep}/${totalRoutineReps})`);
     syncLiveActivity(nextState, stage.squeeze, targetRep, stage);
 
     if (sfxEnabled) {
