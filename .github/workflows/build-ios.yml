@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout mã nguồn
@@ -163,3 +165,19 @@ jobs:
           name: PCFlex-v${{ env.APP_VERSION }}
           path: ${{ env.IPA_NAME }}
           retention-days: 14
+
+      - name: Xuất bản tệp IPA trực tiếp lên GitHub Releases (Không nén zip)
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: v${{ env.APP_VERSION }}
+          name: PC Flex v${{ env.APP_VERSION }}
+          files: ${{ env.IPA_NAME }}
+          draft: false
+          prerelease: false
+          body: |
+            ## 🚀 PC Flex v${{ env.APP_VERSION }}
+            - Tải trực tiếp tệp IPA chuẩn không cần giải nén zip.
+            - Hỗ trợ cài đặt trực tiếp qua TrollStore trên iOS 16.6+ (iPhone 14 Pro Max).
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

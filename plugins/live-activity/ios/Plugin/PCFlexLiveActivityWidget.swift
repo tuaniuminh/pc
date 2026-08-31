@@ -36,7 +36,8 @@ public struct PCFlexLiveActivityWidget: Widget {
 
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 2) {
-                        CountdownTextView(targetDate: context.state.targetDate, seconds: context.state.timeRemaining, fontSize: 24)
+                        Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
+                            .font(.system(size: 24, weight: .black, design: .monospaced))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.trailing)
                         Text("Hiệp \(context.state.currentRep)/\(context.state.totalReps)")
@@ -60,39 +61,22 @@ public struct PCFlexLiveActivityWidget: Widget {
                     .padding(.top, 4)
                 }
             } compactLeading: {
-                // Compact Leading (Chỉ icon siêu gọn ~14pt để không chiếm chỗ)
+                // Compact Leading (Chỉ 1 icon gọn gàng)
                 Text(actionIcon(for: context.state.actionState))
                     .font(.system(size: 13))
             } compactTrailing: {
-                // Compact Trailing (Số giây đếm ngược siêu nổi bật bên phải đảo)
-                Text("\(max(1, context.state.timeRemaining))s")
+                // Compact Trailing (Đồng hồ đếm lùi tự động mượt mà của Apple)
+                Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
                     .font(.system(size: 12, weight: .black, design: .monospaced))
                     .foregroundColor(actionColor(for: context.state.actionState))
-                    .frame(minWidth: 24, alignment: .trailing)
+                    .frame(minWidth: 26, alignment: .trailing)
             } minimal: {
-                // Minimal (Chế độ đảo nhỏ nhất)
-                Text(actionIcon(for: context.state.actionState))
-                    .font(.system(size: 12))
+                // Minimal: Đếm ngược khi ở dạng đảo nhỏ
+                Text("\(max(1, context.state.timeRemaining))")
+                    .font(.system(size: 11, weight: .black))
+                    .foregroundColor(actionColor(for: context.state.actionState))
             }
             .widgetURL(URL(string: "pcflex://workout"))
-        }
-    }
-}
-
-// MARK: - Safe Countdown View Component
-@available(iOS 16.1, *)
-struct CountdownTextView: View {
-    let targetDate: Date
-    let seconds: Int
-    let fontSize: CGFloat
-
-    var body: some View {
-        if targetDate > Date() {
-            Text(timerInterval: Date()...targetDate, countsDown: true)
-                .font(.system(size: fontSize, weight: .black, design: .monospaced))
-        } else {
-            Text("\(max(1, seconds))s")
-                .font(.system(size: fontSize, weight: .black, design: .monospaced))
         }
     }
 }
@@ -128,7 +112,8 @@ struct LockScreenLiveActivityView: View {
 
             // Cột bên phải: Đồng hồ đếm giây Live Activity tự động của Apple
             VStack(alignment: .trailing, spacing: 2) {
-                CountdownTextView(targetDate: context.state.targetDate, seconds: context.state.timeRemaining, fontSize: 32)
+                Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
+                    .font(.system(size: 32, weight: .black, design: .monospaced))
                     .foregroundColor(.white)
                 Text("GIÂY")
                     .font(.system(size: 9, weight: .black))
