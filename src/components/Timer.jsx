@@ -158,8 +158,18 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
       }
     };
 
+    const handlePageHide = () => {
+      liveActivityService.stopLiveActivity();
+    };
+
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('beforeunload', handlePageHide);
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('beforeunload', handlePageHide);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [isActive]);
 
   const syncLiveActivity = (customState, customTime, customRep, customStage) => {

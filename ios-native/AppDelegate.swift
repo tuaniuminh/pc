@@ -1,7 +1,6 @@
 import UIKit
 import Capacitor
 import AVFoundation
-import ActivityKit
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -29,18 +28,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         try? AVAudioSession.sharedInstance().setActive(true)
     }
 
-    func applicationWillTerminate(_ application: UIApplication) {
-        // Tự động đóng toàn bộ Dynamic Island & Live Activities khi người dùng thoát hẳn ứng dụng
-        #if canImport(ActivityKit)
-        if #available(iOS 16.1, *) {
-            for activity in Activity<PCFlexActivityAttributes>.activities {
-                Task {
-                    await activity.end(dismissalPolicy: .immediate)
-                }
-            }
-        }
-        #endif
-    }
+    func applicationWillTerminate(_ application: UIApplication) {}
 
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
         return ApplicationDelegateProxy.shared.application(app, open: url, options: options)
