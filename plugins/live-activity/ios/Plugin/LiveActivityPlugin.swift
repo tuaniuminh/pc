@@ -1,6 +1,8 @@
 import Foundation
 import Capacitor
 import ActivityKit
+import AudioToolbox
+import AVFoundation
 
 @objc(LiveActivityPlugin)
 public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
@@ -56,7 +58,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         )
 
         do {
-            // Dừng bất kỳ activity cũ nào trước khi tạo mới
+            // Dọn dẹp các activity cũ trước khi tạo mới
             for oldAct in Activity<PCFlexActivityAttributes>.activities {
                 Task {
                     await oldAct.end(dismissalPolicy: .immediate)
@@ -69,6 +71,10 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
                 pushType: nil
             )
             self.currentActivity = activity
+
+            // Phát âm thanh báo nhịp native
+            AudioServicesPlaySystemSound(1057)
+
             call.resolve([
                 "activityId": activity.id
             ])

@@ -45,6 +45,9 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" ios/App/App/Info.plist || true
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" ios/App/App/Info.plist || true
 
+          echo "Đồng bộ AppDelegate.swift tùy chỉnh với AVAudioSession và xử lý dọn dẹp Live Activities"
+          cp ios-native/AppDelegate.swift ios/App/App/AppDelegate.swift || true
+
       - name: Tạo Icon tự động từ Logo
         run: npm run generate-icons || true
 
