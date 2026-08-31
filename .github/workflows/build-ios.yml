@@ -77,6 +77,8 @@ jobs:
               widget_target.add_file_references([file_ref]) unless widget_target.source_build_phase.files_references.include?(file_ref)
             end
 
+            # 5. Nhúng Widget Extension vào App chính (Embed App Extensions)
+            main_target.add_dependency(widget_target)
             embed_phase = main_target.copy_files_build_phases.find { |p| p.dst_subfolder_spec == 13 } || main_target.new_copy_files_build_phase('Embed App Extensions')
             embed_phase.dst_subfolder_spec = 13
             product_ref = widget_target.product_reference
@@ -108,8 +110,15 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_IDENTITY=""
 
+          echo "Kiểm tra cấu trúc PlugIns sau khi build:"
+          ls -la build/Build/Products/Release-iphoneos/App.app/PlugIns || echo "Không tìm thấy thư mục PlugIns!"
+
       - name: Ký mã giả (Ad-Hoc) với Entitlements cho TrollStore
         run: |
+          if [ -d "ios/App/build/Build/Products/Release-iphoneos/App.app/PlugIns/PCFlexWidget.appex" ]; then
+            echo "Ký mã giả cho Widget Extension PCFlexWidget.appex"
+            codesign --force --sign - --entitlements ios-build-entitlements.plist ios/App/build/Build/Products/Release-iphoneos/App.app/PlugIns/PCFlexWidget.appex
+          fi
           codesign --force --sign - --deep --entitlements ios-build-entitlements.plist ios/App/build/Build/Products/Release-iphoneos/App.app
 
       - name: Đóng gói thành file IPA chuẩn

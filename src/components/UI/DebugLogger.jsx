@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Bug, X, Copy, Trash2, CheckCircle2, Play, RefreshCw, Cpu, Activity } from 'lucide-react';
+import { Bug, X, Copy, Trash2, CheckCircle2, Play, RefreshCw, Cpu, Activity, Volume2, ShieldCheck } from 'lucide-react';
 import { liveActivityService } from '../../services/liveActivityService';
+import { audioEngine } from '../../utils/audioEngine';
 import { Capacitor } from '@capacitor/core';
 
-const LOG_STORAGE_KEY = 'pcflex_debug_logs_v1';
+const LOG_STORAGE_KEY = 'pcflex_debug_logs_v2';
 
 const getStoredLogs = () => {
   try {
@@ -16,7 +17,7 @@ const getStoredLogs = () => {
 
 const saveLogs = (logs) => {
   try {
-    localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logs.slice(0, 150)));
+    localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logs.slice(0, 200)));
   } catch (e) {}
 };
 
@@ -24,20 +25,22 @@ let logStore = getStoredLogs();
 let listeners = [];
 
 export const addAppLog = (type, message, data = null) => {
+  const now = new Date();
+  const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}.${now.getMilliseconds().toString().padStart(3, '0')}`;
   const entry = {
     id: Date.now() + Math.random(),
-    time: new Date().toLocaleTimeString(),
+    time: timeStr,
     type, // 'info' | 'success' | 'warn' | 'error'
     message,
     data: data ? (typeof data === 'object' ? JSON.stringify(data) : String(data)) : null
   };
   logStore.unshift(entry);
-  if (logStore.length > 150) logStore.pop();
+  if (logStore.length > 200) logStore.pop();
   saveLogs(logStore);
   listeners.forEach(fn => fn([...logStore]));
 };
 
-// Tự động bắt tất cả console log
+// Tự động bắt tất cả console log & sự kiện background
 if (typeof window !== 'undefined') {
   const originalLog = console.log;
   const originalWarn = console.warn;
@@ -61,8 +64,27 @@ if (typeof window !== 'undefined') {
     addAppLog('error', msg);
   };
 
+  let bgStartTime = 0;
+  let bgInterval = null;
+  let bgTicks = 0;
+
   document.addEventListener('visibilitychange', () => {
-    addAppLog('info', `[AppState] Visibility change: document.hidden = ${document.hidden}`);
+    const isHidden = document.hidden;
+    if (isHidden) {
+      bgStartTime = Date.now();
+      bgTicks = 0;
+      addAppLog('warn', `[AppState] Ẩn app (document.hidden = true) - Bắt đầu đo nhịp nền`);
+      bgInterval = setInterval(() => {
+        bgTicks++;
+        if (bgTicks % 3 === 0) {
+          addAppLog('info', `[BackgroundPulse] Tiến trình nền vẫn đang chạy: ${bgTicks}s`);
+        }
+      }, 1000);
+    } else {
+      if (bgInterval) clearInterval(bgInterval);
+      const elapsed = bgStartTime > 0 ? ((Date.now() - bgStartTime) / 1000).toFixed(1) : 0;
+      addAppLog('success', `[AppState] Mở lại app (document.hidden = false) - Thời gian ẩn: ${elapsed}s (Số nhịp nền: ${bgTicks})`);
+    }
   });
 }
 
@@ -75,6 +97,7 @@ const DebugLogger = () => {
   const refreshDiagnostics = () => {
     const plugins = Capacitor?.Plugins ? Object.keys(Capacitor.Plugins) : [];
     const isLiveActivityAvail = Capacitor?.isPluginAvailable ? Capacitor.isPluginAvailable('LiveActivityPlugin') : false;
+    const audioCtx = audioEngine?.audioCtx;
     
     setDiagInfo({
       platform: Capacitor.getPlatform(),
@@ -82,7 +105,11 @@ const DebugLogger = () => {
       pluginsCount: plugins.length,
       registeredPlugins: plugins.join(', ') || 'None',
       liveActivityAvailable: isLiveActivityAvail,
-      screen: `${window.innerWidth}x${window.innerHeight}`,
+      screenLogical: `${window.innerWidth}x${window.innerHeight}`,
+      screenPhysical: `${window.screen?.width || 0}x${window.screen?.height || 0}`,
+      pixelRatio: window.devicePixelRatio || 1,
+      audioState: audioCtx ? audioCtx.state : 'uninitialized',
+      sampleRate: audioCtx ? audioCtx.sampleRate : 0,
       userAgent: navigator.userAgent
     });
   };
@@ -92,148 +119,175 @@ const DebugLogger = () => {
     listeners.push(listener);
 
     refreshDiagnostics();
-    addAppLog('info', `[AppInit] Khởi tạo chẩn đoán hệ thống cho iOS 16.6+`);
+    addAppLog('info', `[AppInit] Khởi tạo Con Bọ Siêu Chẩn Đoán v2 cho iPhone 14 Pro Max / iOS 16.6+`);
 
     return () => {
       listeners = listeners.filter(fn => fn !== listener);
     };
   }, []);
 
-  const handleCopy = () => {
-    const header = `=== PC FLEX DIAGNOSTIC REPORT ===\nPlatform: ${diagInfo.platform} (Native: ${diagInfo.isNative})\nScreen: ${diagInfo.screen}\nLiveActivityPlugin Available: ${diagInfo.liveActivityAvailable}\nRegistered Plugins (${diagInfo.pluginsCount}): ${diagInfo.registeredPlugins}\nUserAgent: ${diagInfo.userAgent}\n=================================\n\n`;
-    const text = header + logs.map(l => `[${l.time}] [${l.type.toUpperCase()}] ${l.message} ${l.data ? ' -> ' + l.data : ''}`).join('\n');
-    navigator.clipboard?.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopyLogs = () => {
+    const summary = [
+      '=== PC FLEX ULTRA DIAGNOSTIC REPORT ===',
+      `Platform: ${diagInfo.platform} (Native: ${diagInfo.isNative})`,
+      `Screen Viewport: ${diagInfo.screenLogical} | Physical: ${diagInfo.screenPhysical} (DPR: ${diagInfo.pixelRatio})`,
+      `LiveActivityPlugin Available: ${diagInfo.liveActivityAvailable}`,
+      `Audio Context State: ${diagInfo.audioState} (${diagInfo.sampleRate}Hz)`,
+      `Registered Plugins (${diagInfo.pluginsCount}): ${diagInfo.registeredPlugins}`,
+      `UserAgent: ${diagInfo.userAgent}`,
+      '=================================',
+      '',
+      ...logs.map(l => `[${l.time}] [${l.type.toUpperCase()}] ${l.message}${l.data ? ' -> ' + l.data : ''}`)
+    ].join('\n');
+
+    navigator.clipboard.writeText(summary).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
-  const handleClear = () => {
+  const handleClearLogs = () => {
     logStore = [];
-    saveLogs([]);
     setLogs([]);
+    saveLogs([]);
   };
 
   const handleTestLiveActivity = async () => {
-    refreshDiagnostics();
-    addAppLog('info', '--- BẮT ĐẦU TEST LIVE ACTIVITY ---');
-    addAppLog('info', `Plugins đã nạp: [${diagInfo.registeredPlugins}]`);
-    addAppLog('info', `Kiểm tra isPluginAvailable('LiveActivityPlugin'): ${Capacitor.isPluginAvailable('LiveActivityPlugin')}`);
-
+    addAppLog('info', '[Test] Bắt đầu kích hoạt thử nghiệm Live Activity (10s)...');
     try {
-      await liveActivityService.startLiveActivity({
-        routineName: 'Test Đảo Thích Ứng',
-        totalReps: 20,
+      const res = await liveActivityService.startLiveActivity({
+        routineName: 'Kiểm Thử Dynamic Island',
+        totalReps: 10,
         actionState: 'squeezing',
         timeRemaining: 10,
         currentRep: 1,
-        stageLabel: 'Siết cơ PC 10s'
+        stageLabel: 'Đang Siết (Kiểm thử 10s)'
       });
-      addAppLog('success', 'Đã hoàn thành yêu cầu startLiveActivity');
+      addAppLog('success', `[Test] Kết quả kích hoạt: ${JSON.stringify(res)}`);
     } catch (e) {
-      addAppLog('error', `Ngoại lệ khi gọi LiveActivity: ${e?.message || e}`, e?.stack);
+      addAppLog('error', `[Test] Lỗi kích hoạt: ${e.message || String(e)}`);
     }
   };
 
   return (
     <>
-      {/* Nút Bọ Log Nổi Trên Màn Hình (Góc Dưới Phải) */}
+      {/* Nút tròn Con Bọ nổi cố định góc dưới bên phải */}
       <button
-        onClick={() => {
-          refreshDiagnostics();
-          setIsOpen(!isOpen);
-        }}
-        className="fixed bottom-24 right-4 z-50 w-11 h-11 rounded-full bg-slate-950/90 text-emerald-400 border border-emerald-500/50 shadow-2xl flex items-center justify-center backdrop-blur-xl active:scale-95 transition-all"
-        title="Chẩn Đoán Native Bridge & Live Activities"
+        onClick={() => { setIsOpen(true); refreshDiagnostics(); }}
+        className="fixed bottom-24 right-4 z-50 w-11 h-11 rounded-full bg-emerald-500/20 border border-emerald-500/40 backdrop-blur-md flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-500/10 active:scale-95 transition-all hover:bg-emerald-500/30"
+        title="Nhật ký con bọ (Debug)"
       >
-        <Bug size={20} />
+        <Bug className="w-5 h-5 animate-pulse" />
       </button>
 
-      {/* Modal Nhật Ký Chẩn Đoán Lỗi */}
+      {/* Modal Console Logs Toàn Màn Hình */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 animate-fade-in">
-          <div className="glass-panel w-full max-w-md h-[86vh] rounded-3xl p-4 border border-emerald-500/40 flex flex-col space-y-2.5 shadow-2xl bg-slate-950 text-white font-mono text-xs">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-              <div className="flex items-center space-x-2">
-                <Bug size={18} className="text-emerald-400" />
-                <span className="font-bold text-sm text-emerald-400">Chẩn Đoán Chi Tiết iOS</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <button onClick={refreshDiagnostics} className="p-1 rounded-lg hover:bg-white/10 text-cyan-400" title="Làm mới thông số">
-                  <RefreshCw size={15} />
-                </button>
-                <button onClick={() => setIsOpen(false)} className="p-1 rounded-lg hover:bg-white/10 text-gray-400">
-                  <X size={18} />
-                </button>
+        <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex flex-col p-4 text-xs font-mono select-text">
+          {/* Header */}
+          <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+            <div className="flex items-center gap-2">
+              <Bug className="w-5 h-5 text-emerald-400" />
+              <div>
+                <h3 className="font-bold text-sm text-white">Chẩn Đoán Hệ Thống & Native Bridge</h3>
+                <p className="text-[10px] text-zinc-400">iOS 16.6+ • Dynamic Island & Live Activities</p>
               </div>
             </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCopyLogs}
+                className="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center gap-1 text-[11px]"
+              >
+                {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? 'Đã sao chép' : 'Sao chép'}
+              </button>
+              <button
+                onClick={handleClearLogs}
+                className="p-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-red-400"
+                title="Xóa log"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
 
-            {/* Thông Tin Native Bridge */}
-            <div className="p-2.5 bg-white/5 rounded-2xl border border-white/10 space-y-1 text-[10px] text-gray-300 leading-tight">
-              <div className="flex justify-between items-center">
-                <span>Nền tảng: <strong className="text-white">{diagInfo.platform}</strong> ({diagInfo.isNative ? 'Native IPA' : 'Browser'})</span>
-                <span className={`px-1.5 py-0.5 rounded font-bold ${diagInfo.liveActivityAvailable ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`}>
-                  {diagInfo.liveActivityAvailable ? 'LiveActivity: SẴN SÀNG' : 'LiveActivity: CHƯA ĐĂNG KÝ'}
+          {/* Diagnostics Widget Status Box */}
+          <div className="my-3 p-3 rounded-lg bg-zinc-900/90 border border-zinc-800 text-[11px] space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex items-center justify-between p-1.5 rounded bg-black/40">
+                <span className="text-zinc-400 flex items-center gap-1"><Cpu className="w-3 h-3 text-cyan-400" /> Nền tảng:</span>
+                <span className="font-bold text-cyan-300">{diagInfo.platform} (Native: {String(diagInfo.isNative)})</span>
+              </div>
+              <div className="flex items-center justify-between p-1.5 rounded bg-black/40">
+                <span className="text-zinc-400 flex items-center gap-1"><Activity className="w-3 h-3 text-emerald-400" /> LiveActivity:</span>
+                <span className={`font-bold ${diagInfo.liveActivityAvailable ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {diagInfo.liveActivityAvailable ? 'SẴN SÀNG' : 'CHƯA ĐĂNG KÝ'}
                 </span>
               </div>
-              <div className="line-clamp-2 text-gray-400">
-                <strong>Plugins ({diagInfo.pluginsCount}):</strong> {diagInfo.registeredPlugins}
+              <div className="flex items-center justify-between p-1.5 rounded bg-black/40">
+                <span className="text-zinc-400 flex items-center gap-1"><Volume2 className="w-3 h-3 text-amber-400" /> Âm thanh:</span>
+                <span className="font-bold text-amber-300">{diagInfo.audioState} ({diagInfo.sampleRate}Hz)</span>
+              </div>
+              <div className="flex items-center justify-between p-1.5 rounded bg-black/40">
+                <span className="text-zinc-400 flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-purple-400" /> Màn hình:</span>
+                <span className="font-bold text-purple-300">{diagInfo.screenLogical} (DPR: {diagInfo.pixelRatio})</span>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center space-x-2">
+            {/* Test Action Buttons */}
+            <div className="flex gap-2 pt-1">
               <button
                 onClick={handleTestLiveActivity}
-                className="flex-1 py-2.5 px-3 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-black flex items-center justify-center space-x-1.5 active:scale-95 transition-all text-xs"
+                className="flex-1 py-1.5 px-2 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold hover:bg-emerald-500/30 flex items-center justify-center gap-1 text-[11px]"
               >
-                <Play size={13} fill="currentColor" />
-                <span>Test Live Activity</span>
+                <Play className="w-3 h-3" /> Test Live Activity (10s)
               </button>
-
               <button
-                onClick={handleCopy}
-                className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-emerald-400 font-bold flex items-center space-x-1.5 active:scale-95 transition-all text-xs"
+                onClick={refreshDiagnostics}
+                className="py-1.5 px-2.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center gap-1"
+                title="Làm mới"
               >
-                {copied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
-                <span>{copied ? 'Đã copy' : 'Copy'}</span>
-              </button>
-
-              <button
-                onClick={handleClear}
-                className="py-2.5 px-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold flex items-center space-x-1 active:scale-95 transition-all"
-                title="Xóa logs"
-              >
-                <Trash2 size={14} />
+                <RefreshCw className="w-3 h-3" /> Làm mới
               </button>
             </div>
+          </div>
 
-            {/* Log Stream Body */}
-            <div className="flex-1 overflow-y-auto space-y-1.5 p-2 bg-black/70 rounded-2xl border border-white/5 font-mono text-[10.5px]">
-              {logs.length === 0 ? (
-                <div className="text-gray-500 text-center py-8">Chưa có log. Bấm "Test Live Activity" phía trên để kiểm tra.</div>
-              ) : (
-                logs.map((l) => (
-                  <div 
-                    key={l.id} 
-                    className={`p-1.5 rounded-xl border leading-tight ${
-                      l.type === 'error' ? 'bg-red-950/40 border-red-500/40 text-red-300' :
-                      l.type === 'warn' ? 'bg-amber-950/40 border-amber-500/40 text-amber-300' :
-                      l.type === 'success' ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300' :
-                      'bg-white/5 border-white/10 text-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-1 opacity-70 text-[9px]">
-                      <span>{l.time}</span>
-                      <span>•</span>
-                      <span className="uppercase font-bold">{l.type}</span>
-                    </div>
-                    <div className="mt-0.5 break-words font-semibold">{l.message}</div>
-                    {l.data && <div className="text-[9.5px] text-gray-400 mt-0.5 break-all font-mono opacity-85">{l.data}</div>}
+          {/* Logs List Area */}
+          <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 select-text">
+            {logs.length === 0 ? (
+              <div className="text-center py-10 text-zinc-600">Chưa có nhật ký ghi nhận nào.</div>
+            ) : (
+              logs.map((log) => (
+                <div
+                  key={log.id}
+                  className={`p-2 rounded border text-[11px] leading-relaxed break-all ${
+                    log.type === 'error'
+                      ? 'bg-red-500/10 border-red-500/30 text-red-300'
+                      : log.type === 'warn'
+                      ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                      : log.type === 'success'
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-[9px] opacity-70 mb-0.5">
+                    <span className="font-semibold uppercase tracking-wider">[{log.type}]</span>
+                    <span>{log.time}</span>
                   </div>
-                ))
-              )}
-            </div>
+                  <div>{log.message}</div>
+                  {log.data && (
+                    <div className="mt-1 p-1 bg-black/50 rounded text-zinc-400 text-[10px]">
+                      {log.data}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
