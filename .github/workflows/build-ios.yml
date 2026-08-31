@@ -102,10 +102,11 @@ jobs:
       - name: Build mã nguồn iOS & Widget Extension bằng Xcode (Không ký)
         working-directory: ios/App
         run: |
-          # 1. Build Widget Extension Target
+          # 1. Build trực tiếp Target PCFlexWidget bằng xcodebuild project
+          echo "Đang biên dịch Widget Extension PCFlexWidget..."
           xcodebuild \
-            -workspace App.xcworkspace \
-            -scheme PCFlexWidget \
+            -project App.xcodeproj \
+            -target PCFlexWidget \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath build \
@@ -113,7 +114,8 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_IDENTITY="" || true
 
-          # 2. Build Main App Target
+          # 2. Build Main App Target bằng Workspace
+          echo "Đang biên dịch App chính..."
           xcodebuild \
             -workspace App.xcworkspace \
             -scheme App \
