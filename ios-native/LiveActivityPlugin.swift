@@ -3,7 +3,15 @@ import Capacitor
 import ActivityKit
 
 @objc(LiveActivityPlugin)
-public class LiveActivityPlugin: CAPPlugin {
+public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "LiveActivityPlugin"
+    public let jsName = "LiveActivityPlugin"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "startActivity", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "updateActivity", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "stopActivity", returnType: CAPPluginReturnPromise)
+    ]
+
     private var _currentActivity: Any?
 
     #if canImport(ActivityKit)
