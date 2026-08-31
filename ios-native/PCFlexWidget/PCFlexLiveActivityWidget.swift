@@ -9,121 +9,147 @@ public struct PCFlexLiveActivityWidget: Widget {
 
     public var body: some WidgetConfiguration {
         ActivityConfiguration(for: PCFlexActivityAttributes.self) { context in
-            // Giao diện Màn hình khóa (Lock Screen Live Activity Banner)
+            // MARK: - Giao diện Màn hình khóa (Lock Screen Live Activity Banner)
             LockScreenLiveActivityView(context: context)
-                .activityBackgroundTint(Color.black.opacity(0.88))
-                .activitySystemActionForegroundColor(Color.white)
+                .activityBackgroundTint(Color(red: 0.04, green: 0.06, blue: 0.12).opacity(0.95))
+                .activitySystemActionForegroundColor(actionColor(for: context.state.actionState))
                 .widgetURL(URL(string: "pcflex://workout"))
         } dynamicIsland: { context in
             DynamicIsland {
-                // Expanded Dynamic Island (Khi nhấn giữ trên đảo thích ứng)
+                // MARK: - Expanded Dynamic Island (Khi nhấn giữ trên đảo thích ứng)
                 DynamicIslandExpandedRegion(.leading) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: 4) {
+                    HStack(spacing: 6) {
+                        ZStack {
+                            Circle()
+                                .fill(actionColor(for: context.state.actionState).opacity(0.2))
+                                .frame(width: 32, height: 32)
                             Text(actionIcon(for: context.state.actionState))
-                                .font(.system(size: 14))
-                            Text(actionTitle(for: context.state.actionState))
-                                .font(.system(size: 12, weight: .black))
-                                .foregroundColor(actionColor(for: context.state.actionState))
+                                .font(.system(size: 16))
                         }
-                        Text(context.state.stageLabel)
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.8))
-                            .lineLimit(1)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(actionTitle(for: context.state.actionState))
+                                .font(.system(size: 13, weight: .black, design: .rounded))
+                                .foregroundColor(actionColor(for: context.state.actionState))
+                            Text(context.state.stageLabel)
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                                .lineLimit(1)
+                        }
                     }
-                    .padding(.leading, 6)
+                    .padding(.leading, 4)
                 }
 
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text("\(max(1, context.state.timeRemaining))s")
-                            .font(.system(size: 24, weight: .black, design: .rounded))
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.trailing)
+                        Text(formatCountdown(context.state.timeRemaining))
+                            .font(.system(size: 26, weight: .black, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundColor(actionColor(for: context.state.actionState))
                         Text("Hiệp \(context.state.currentRep)/\(context.state.totalReps)")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(Color(red: 0.0, green: 0.8, blue: 0.9))
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundColor(.white.opacity(0.75))
                     }
-                    .padding(.trailing, 6)
+                    .padding(.trailing, 4)
                 }
 
                 DynamicIslandExpandedRegion(.bottom) {
-                    HStack {
-                        Text(context.attributes.routineName)
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.white.opacity(0.8))
-                        Spacer()
+                    VStack(spacing: 4) {
+                        HStack {
+                            Text(context.attributes.routineName)
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.white.opacity(0.7))
+                            Spacer()
+                            Text("\(Int(Double(context.state.currentRep) / Double(max(1, context.state.totalReps)) * 100))%")
+                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                .foregroundColor(actionColor(for: context.state.actionState))
+                        }
+                        
                         ProgressView(value: Double(context.state.currentRep), total: Double(max(1, context.state.totalReps)))
                             .progressViewStyle(LinearProgressViewStyle(tint: actionColor(for: context.state.actionState)))
-                            .frame(width: 130)
+                            .scaleEffect(x: 1, y: 1.5, anchor: .center)
+                            .clipShape(Capsule())
                     }
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, 6)
                     .padding(.top, 4)
                 }
             } compactLeading: {
-                // Compact Leading (Chỉ 1 icon gọn gàng)
-                Text(actionIcon(for: context.state.actionState))
-                    .font(.system(size: 13))
+                // MARK: - Compact Leading (Giống Đồng hồ Apple với icon chuyển động và màu theo trạng thái)
+                HStack(spacing: 2) {
+                    Text(actionIcon(for: context.state.actionState))
+                        .font(.system(size: 13))
+                }
+                .padding(.leading, 2)
             } compactTrailing: {
-                // Compact Trailing (Hiện số giây đếm ngược siêu gọn gàng: 5s, 1s - Cố định độ rộng không bao giờ giãn dài)
-                Text("\(max(1, context.state.timeRemaining))s")
-                    .font(.system(size: 13, weight: .black, design: .rounded))
+                // MARK: - Compact Trailing (Đếm ngược 0:06, 0:01 theo phong cách Apple Timer với màu Neon chuẩn PC Flex)
+                Text(formatCountdown(context.state.timeRemaining))
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .monospacedDigit()
                     .foregroundColor(actionColor(for: context.state.actionState))
-                    .frame(width: 24, alignment: .trailing)
+                    .padding(.trailing, 2)
             } minimal: {
-                // Minimal: Đếm ngược khi ở dạng đảo nhỏ
-                Text("\(max(1, context.state.timeRemaining))")
-                    .font(.system(size: 11, weight: .black, design: .rounded))
-                    .foregroundColor(actionColor(for: context.state.actionState))
+                // MARK: - Minimal: Biểu tượng trạng thái nhỏ gọn
+                Text(actionIcon(for: context.state.actionState))
+                    .font(.system(size: 11))
             }
             .widgetURL(URL(string: "pcflex://workout"))
         }
     }
 }
 
-// MARK: - Lock Screen View
+// MARK: - Lock Screen View (Màn hình khóa đẳng cấp)
 @available(iOS 16.1, *)
 struct LockScreenLiveActivityView: View {
     let context: ActivityViewContext<PCFlexActivityAttributes>
 
     var body: some View {
         HStack(spacing: 14) {
-            // Cột bên trái: Trạng thái & Tên bài
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
+            // Cột bên trái: Biểu tượng hình tròn & Tên bài tập
+            HStack(spacing: 10) {
+                ZStack {
+                    Circle()
+                        .fill(actionColor(for: context.state.actionState).opacity(0.2))
+                        .frame(width: 44, height: 44)
+                    Circle()
+                        .stroke(actionColor(for: context.state.actionState).opacity(0.5), lineWidth: 1.5)
+                        .frame(width: 44, height: 44)
                     Text(actionIcon(for: context.state.actionState))
-                        .font(.system(size: 16))
-                    Text(actionTitle(for: context.state.actionState))
-                        .font(.system(size: 14, weight: .black))
-                        .foregroundColor(actionColor(for: context.state.actionState))
+                        .font(.system(size: 22))
                 }
 
-                Text(context.state.stageLabel)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(0.85))
-                    .lineLimit(1)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(actionTitle(for: context.state.actionState))
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundColor(actionColor(for: context.state.actionState))
 
-                Text("\(context.attributes.routineName) • Hiệp \(context.state.currentRep)/\(context.state.totalReps)")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.gray)
+                    Text(context.state.stageLabel)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.85))
+                        .lineLimit(1)
+
+                    Text("\(context.attributes.routineName) • Hiệp \(context.state.currentRep)/\(context.state.totalReps)")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundColor(.gray)
+                }
             }
 
             Spacer()
 
-            // Cột bên phải: Đồng hồ đếm giây chuẩn xác
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("\(max(1, context.state.timeRemaining))")
-                    .font(.system(size: 34, weight: .black, design: .rounded))
-                    .foregroundColor(.white)
-                Text("GIÂY")
-                    .font(.system(size: 9, weight: .black))
+            // Cột bên phải: Đồng hồ đếm lùi lớn theo kiểu Apple Clock Timer
+            VStack(alignment: .trailing, spacing: 0) {
+                Text(formatCountdown(context.state.timeRemaining))
+                    .font(.system(size: 36, weight: .black, design: .rounded))
+                    .monospacedDigit()
                     .foregroundColor(actionColor(for: context.state.actionState))
+                Text(context.state.actionState == "squeezing" ? "ĐANG SIẾT" : context.state.actionState == "relaxing" ? "THẢ LỎNG" : "KEGEL")
+                    .font(.system(size: 9, weight: .black, design: .rounded))
+                    .foregroundColor(.white.opacity(0.6))
             }
         }
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(red: 0.05, green: 0.08, blue: 0.15).opacity(0.95))
+                .fill(Color(red: 0.05, green: 0.08, blue: 0.15).opacity(0.96))
                 .overlay(
                     RoundedRectangle(cornerRadius: 24, style: .continuous)
                         .stroke(actionColor(for: context.state.actionState).opacity(0.4), lineWidth: 1.5)
@@ -132,7 +158,15 @@ struct LockScreenLiveActivityView: View {
     }
 }
 
-// MARK: - Helpers
+// MARK: - Helpers & Color Palette Chuẩn PC Flex
+@available(iOS 16.1, *)
+func formatCountdown(_ seconds: Int) -> String {
+    let s = max(0, seconds)
+    let m = s / 60
+    let sec = s % 60
+    return String(format: "%d:%02d", m, sec)
+}
+
 @available(iOS 16.1, *)
 func actionIcon(for state: String) -> String {
     switch state {
@@ -160,12 +194,22 @@ func actionTitle(for state: String) -> String {
 @available(iOS 16.1, *)
 func actionColor(for state: String) -> Color {
     switch state {
-    case "squeezing": return Color(red: 0.06, green: 0.95, blue: 0.55) // Emerald
-    case "relaxing": return Color(red: 0.02, green: 0.71, blue: 0.83) // Cyan
-    case "reverse": return Color(red: 0.55, green: 0.36, blue: 0.96) // Violet
-    case "transition": return Color(red: 0.96, green: 0.62, blue: 0.04) // Amber
-    case "breathing": return Color(red: 0.06, green: 0.95, blue: 0.55)
-    default: return Color(red: 0.0, green: 0.8, blue: 0.9)
+    case "squeezing": 
+        // Màu Xanh Lục Neon (Emerald) rực rỡ như đồng hồ PC Flex
+        return Color(red: 0.0, green: 0.96, blue: 0.61)
+    case "relaxing": 
+        // Màu Xanh Băng Tuyết (Cyan) tươi mát
+        return Color(red: 0.0, green: 0.82, blue: 1.0)
+    case "reverse": 
+        // Màu Tím Neon (Violet) đẳng cấp
+        return Color(red: 0.66, green: 0.33, blue: 0.97)
+    case "transition": 
+        // Màu Cam Vàng (Amber) báo hiệu chuyển nhịp
+        return Color(red: 0.96, green: 0.62, blue: 0.04)
+    case "breathing": 
+        return Color(red: 0.06, green: 0.73, blue: 0.51)
+    default: 
+        return Color(red: 0.0, green: 0.82, blue: 1.0)
     }
 }
 #endif
