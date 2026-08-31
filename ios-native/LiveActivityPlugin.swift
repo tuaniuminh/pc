@@ -22,6 +22,10 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
     }
     #endif
 
+    public override func load() {
+        super.load()
+    }
+
     @objc public func startActivity(_ call: CAPPluginCall) {
         #if canImport(ActivityKit)
         guard #available(iOS 16.1, *) else {
