@@ -84,7 +84,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
             )
             self.currentActivity = activity
 
-            // Phát âm thanh báo nhịp native
+            // Âm thanh rung native mở đầu
             AudioServicesPlaySystemSound(1057)
 
             call.resolve([
@@ -126,6 +126,15 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
             stageLabel: stageLabel,
             targetDate: targetDate
         )
+
+        // Phát âm thanh Native trực tiếp từ hệ thống iOS
+        if actionState == "squeezing" {
+            AudioServicesPlaySystemSound(1057)
+        } else if actionState == "relaxing" {
+            AudioServicesPlaySystemSound(1054)
+        } else if actionState == "reverse" {
+            AudioServicesPlaySystemSound(1104)
+        }
 
         Task {
             await liveAct.update(using: updatedContentState)
