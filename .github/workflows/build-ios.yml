@@ -65,7 +65,9 @@ jobs:
               dest = \"ios/App/App/#{File.basename(file)}\"
               FileUtils.cp(file, dest)
               file_ref = group.find_file_by_path(File.basename(file)) || group.new_file(File.basename(file))
-              target.add_file_references([file_ref]) unless target.source_build_phase.files_references.include?(file_ref)
+              if ['.swift', '.m', '.c', '.cpp'].include?(File.extname(file))
+                target.add_file_references([file_ref]) unless target.source_build_phase.files_references.include?(file_ref)
+              end
             end
             project.save
           " || cp ios-native/*.* ios/App/App/
