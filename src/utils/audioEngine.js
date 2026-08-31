@@ -401,12 +401,21 @@ class AudioSynthesizer {
   startBackgroundAudioKeeper() {
     if (typeof window === 'undefined') return;
     try {
-      this.init();
+      this.resumeContext();
+
+      // 1. Tạo audio HTML5 vô thanh lặp vô tận để iOS coi trang là trình phát media hợp lệ
+      if (!this.silentAudioElement) {
+        this.silentAudioElement = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+        this.silentAudioElement.loop = true;
+        this.silentAudioElement.volume = 0.01;
+      }
+      this.silentAudioElement.play().catch(() => {});
+
+      // 2. Tạo một bộ dao động siêu âm vô thanh (inaudible carrier)
       if (!this.bgOscillator && this.audioCtx) {
-        // Tạo một bộ dao động siêu âm vô thanh (inaudible carrier) giữ tiến trình Web Audio không bị iOS WebKit đóng băng
         this.bgOscillator = this.audioCtx.createOscillator();
         this.bgGainNodeKeeper = this.audioCtx.createGain();
-        this.bgOscillator.frequency.setValueAtTime(20, this.audioCtx.currentTime); // 20Hz (dưới ngưỡng nghe của người)
+        this.bgOscillator.frequency.setValueAtTime(20, this.audioCtx.currentTime);
         this.bgGainNodeKeeper.gain.setValueAtTime(0.001, this.audioCtx.currentTime);
         this.bgOscillator.connect(this.bgGainNodeKeeper);
         this.bgGainNodeKeeper.connect(this.audioCtx.destination);
@@ -418,6 +427,12 @@ class AudioSynthesizer {
   }
 
   stopBackgroundAudioKeeper() {
+    if (this.silentAudioElement) {
+      try {
+        this.silentAudioElement.pause();
+        this.silentAudioElement.currentTime = 0;
+      } catch (e) {}
+    }
     if (this.bgOscillator) {
       try {
         this.bgOscillator.stop();

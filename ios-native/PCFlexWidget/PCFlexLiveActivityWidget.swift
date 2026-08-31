@@ -36,8 +36,8 @@ public struct PCFlexLiveActivityWidget: Widget {
 
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
-                            .font(.system(size: 24, weight: .black, design: .monospaced))
+                        Text("\(max(1, context.state.timeRemaining))s")
+                            .font(.system(size: 24, weight: .black, design: .rounded))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.trailing)
                         Text("Hiệp \(context.state.currentRep)/\(context.state.totalReps)")
@@ -65,15 +65,14 @@ public struct PCFlexLiveActivityWidget: Widget {
                 Text(actionIcon(for: context.state.actionState))
                     .font(.system(size: 13))
             } compactTrailing: {
-                // Compact Trailing (Đồng hồ đếm lùi tự động mượt mà của Apple)
-                Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
-                    .font(.system(size: 12, weight: .black, design: .monospaced))
+                // Compact Trailing (Hiện số giây đếm ngược chính xác, nhỏ gọn và sang trọng)
+                Text("\(max(1, context.state.timeRemaining))s")
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
                     .foregroundColor(actionColor(for: context.state.actionState))
-                    .frame(minWidth: 26, alignment: .trailing)
             } minimal: {
                 // Minimal: Đếm ngược khi ở dạng đảo nhỏ
                 Text("\(max(1, context.state.timeRemaining))")
-                    .font(.system(size: 11, weight: .black, design: .monospaced))
+                    .font(.system(size: 11, weight: .black, design: .rounded))
                     .foregroundColor(actionColor(for: context.state.actionState))
             }
             .widgetURL(URL(string: "pcflex://workout"))
@@ -110,10 +109,10 @@ struct LockScreenLiveActivityView: View {
 
             Spacer()
 
-            // Cột bên phải: Đồng hồ đếm giây Live Activity tự động của Apple
+            // Cột bên phải: Đồng hồ đếm giây chuẩn xác
             VStack(alignment: .trailing, spacing: 2) {
-                Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
-                    .font(.system(size: 32, weight: .black, design: .monospaced))
+                Text("\(max(1, context.state.timeRemaining))")
+                    .font(.system(size: 36, weight: .black, design: .rounded))
                     .foregroundColor(.white)
                 Text("GIÂY")
                     .font(.system(size: 9, weight: .black))
