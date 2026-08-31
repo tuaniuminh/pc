@@ -35,12 +35,16 @@ jobs:
           echo "Bật cờ CADisableMinimumFrameDurationOnPhone để mở khóa 120Hz ProMotion"
           /usr/libexec/PlistBuddy -c "Add :CADisableMinimumFrameDurationOnPhone bool true" ios/App/App/Info.plist || /usr/libexec/PlistBuddy -c "Set :CADisableMinimumFrameDurationOnPhone true" ios/App/App/Info.plist || true
 
-      - name: Kích hoạt Live Activities & Dynamic Island (ActivityKit iOS 16.1+)
+      - name: Kích hoạt Live Activities, Dynamic Island & Background Audio (iOS 16.1+)
         run: |
           echo "Bật cờ NSSupportsLiveActivities và NSSupportsLiveActivitiesFrequentUpdates trong Info.plist"
           /usr/libexec/PlistBuddy -c "Add :NSSupportsLiveActivities bool true" ios/App/App/Info.plist || /usr/libexec/PlistBuddy -c "Set :NSSupportsLiveActivities true" ios/App/App/Info.plist || true
           /usr/libexec/PlistBuddy -c "Add :NSSupportsLiveActivitiesFrequentUpdates bool true" ios/App/App/Info.plist || /usr/libexec/PlistBuddy -c "Set :NSSupportsLiveActivitiesFrequentUpdates true" ios/App/App/Info.plist || true
           
+          echo "Kích hoạt phát âm thanh nền Background Audio khi ẩn ứng dụng"
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" ios/App/App/Info.plist || true
+
           echo "Tích hợp mã nguồn Swift Live Activities & Dynamic Island"
           cp ios-native/*.swift ios/App/App/ || true
 

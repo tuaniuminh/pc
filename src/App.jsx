@@ -4,6 +4,7 @@ import Timer from './components/Timer';
 import History from './components/History';
 import PlanManager from './components/PlanManager';
 import Settings from './components/Settings';
+import DebugLogger from './components/UI/DebugLogger';
 import { 
   getSettings, 
   saveSettings, 
@@ -147,18 +148,13 @@ function App() {
           {/* Tab 1: Tập Luyện (Xanh Lá Neon / Emerald) */}
           <button
             onClick={() => handleTabClick('timer')}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 relative ${
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 ${
               activeTab === 'timer'
                 ? 'text-emerald-600 dark:text-neon scale-105 font-black'
                 : 'text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300'
             }`}
           >
-            <div className="relative">
-              <Activity size={24} />
-              {isWorkoutActive && (
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 dark:bg-neon animate-ping" />
-              )}
-            </div>
+            <Activity size={24} />
             <span className="text-[10px] tracking-tight mt-1 font-bold">Tập Luyện</span>
           </button>
 
@@ -223,6 +219,9 @@ function App() {
           </button>
         </div>
       </nav>
+
+      {/* 4. Con Bọ Log Nổi Chẩn Đoán Lỗi (Floating Debug Logger) */}
+      <DebugLogger />
     </div>
   );
 }

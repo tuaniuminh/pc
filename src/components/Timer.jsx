@@ -520,35 +520,44 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
       {/* 2. KHU VỰC CẤU HÌNH BÀI TẬP (WORKOUT CONFIGURATION CARD CHUẨN SÁNG & TỐI) */}
       <div className="glass-panel rounded-[32px] p-5 border border-slate-200 dark:border-white/10 space-y-4 shadow-md dark:shadow-xl transition-colors duration-300">
         <div>
-          <h3 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
-            Cấu Hình Bài Tập
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+              Cấu Hình Bài Tập
+            </h3>
+            {(isActive || actionState !== 'idle' || currentCompletedReps > 0 || sessionTotalSeconds > 0) && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400">
+                🔒 Đang trong bài tập
+              </span>
+            )}
+          </div>
           <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">
-            Chọn bài tập được lập trình sẵn hoặc tùy chỉnh theo ý muốn của bạn.
+            {(isActive || actionState !== 'idle' || currentCompletedReps > 0 || sessionTotalSeconds > 0)
+              ? 'Bấm "Đặt lại" phía trên nếu bạn muốn đổi sang bài tập hoặc cấp độ khác.'
+              : 'Chọn bài tập được lập trình sẵn hoặc tùy chỉnh theo ý muốn của bạn.'}
           </p>
         </div>
 
         {/* Gender Selection Group */}
         <div className="grid grid-cols-2 gap-2.5 p-1 bg-slate-200/70 dark:bg-white/5 rounded-2xl border border-slate-300/50 dark:border-white/5">
           <button
-            onClick={() => { if (!isActive) setSelectedGender('male'); }}
-            disabled={isActive}
+            onClick={() => { if (!isActive && actionState === 'idle' && sessionTotalSeconds === 0) setSelectedGender('male'); }}
+            disabled={isActive || actionState !== 'idle' || sessionTotalSeconds > 0}
             className={`py-3 rounded-xl font-extrabold text-sm transition-all ${
               selectedGender === 'male'
                 ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 shadow-md'
                 : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
+            } ${(isActive || actionState !== 'idle' || sessionTotalSeconds > 0) ? 'cursor-not-allowed opacity-75' : ''}`}
           >
             Nam giới
           </button>
           <button
-            onClick={() => { if (!isActive) setSelectedGender('female'); }}
-            disabled={isActive}
+            onClick={() => { if (!isActive && actionState === 'idle' && sessionTotalSeconds === 0) setSelectedGender('female'); }}
+            disabled={isActive || actionState !== 'idle' || sessionTotalSeconds > 0}
             className={`py-3 rounded-xl font-extrabold text-sm transition-all ${
               selectedGender === 'female'
                 ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md'
                 : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
+            } ${(isActive || actionState !== 'idle' || sessionTotalSeconds > 0) ? 'cursor-not-allowed opacity-75' : ''}`}
           >
             Nữ giới
           </button>
@@ -560,21 +569,22 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
           <div className="flex-1 flex items-center justify-between space-x-1.5">
             {[1, 2, 3, 4, 5].map((lvl) => {
               const isSelected = selectedLevel === lvl && selectedPresetType !== 'custom';
+              const isLocked = isActive || actionState !== 'idle' || sessionTotalSeconds > 0;
               return (
                 <button
                   key={lvl}
                   onClick={() => {
-                    if (!isActive) {
+                    if (!isLocked) {
                       setSelectedLevel(lvl);
                       if (selectedPresetType === 'custom') setSelectedPresetType('nightRecovery');
                     }
                   }}
-                  disabled={isActive}
+                  disabled={isLocked}
                   className={`flex-1 py-2 rounded-xl text-xs font-black transition-all ${
                     isSelected
                       ? 'bg-cyan-400 text-slate-950 shadow-sm'
                       : 'bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/5'
-                  }`}
+                  } ${isLocked && !isSelected ? 'opacity-40 cursor-not-allowed' : ''}`}
                 >
                   {lvl}
                 </button>
@@ -587,11 +597,13 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
         <div className="space-y-3 pt-2">
           {/* Card 1: Chào Buổi Sáng */}
           <div
-            onClick={() => { if (!isActive) setSelectedPresetType('goodMorning'); }}
-            className={`p-4 rounded-2xl border text-left cursor-pointer transition-all flex items-center space-x-3.5 ${
+            onClick={() => { if (!isActive && actionState === 'idle' && sessionTotalSeconds === 0) setSelectedPresetType('goodMorning'); }}
+            className={`p-4 rounded-2xl border text-left transition-all flex items-center space-x-3.5 ${
               selectedPresetType === 'goodMorning'
                 ? 'bg-amber-50/80 dark:bg-white/10 border-amber-500 ring-2 ring-amber-500/40 shadow-sm'
-                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-amber-500/40'
+                : (isActive || actionState !== 'idle' || sessionTotalSeconds > 0)
+                ? 'bg-white/50 dark:bg-white/5 border-slate-200 dark:border-white/5 opacity-40 cursor-not-allowed'
+                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-amber-500/40 cursor-pointer'
             }`}
           >
             <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-2xl shrink-0">
@@ -609,11 +621,13 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
 
           {/* Card 2: Combo Sức Mạnh */}
           <div
-            onClick={() => { if (!isActive) setSelectedPresetType('powerCombo'); }}
-            className={`p-4 rounded-2xl border text-left cursor-pointer transition-all flex items-center space-x-3.5 ${
+            onClick={() => { if (!isActive && actionState === 'idle' && sessionTotalSeconds === 0) setSelectedPresetType('powerCombo'); }}
+            className={`p-4 rounded-2xl border text-left transition-all flex items-center space-x-3.5 ${
               selectedPresetType === 'powerCombo'
                 ? 'bg-emerald-50/80 dark:bg-white/10 border-emerald-500 ring-2 ring-emerald-500/40 shadow-sm'
-                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-emerald-500/40'
+                : (isActive || actionState !== 'idle' || sessionTotalSeconds > 0)
+                ? 'bg-white/50 dark:bg-white/5 border-slate-200 dark:border-white/5 opacity-40 cursor-not-allowed'
+                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-emerald-500/40 cursor-pointer'
             }`}
           >
             <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-xl font-black text-emerald-500 dark:text-emerald-400 shrink-0">
@@ -631,11 +645,13 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
 
           {/* Card 3: Phục Hồi Ban Đêm */}
           <div
-            onClick={() => { if (!isActive) setSelectedPresetType('nightRecovery'); }}
-            className={`p-4 rounded-2xl border text-left cursor-pointer transition-all flex items-center space-x-3.5 ${
+            onClick={() => { if (!isActive && actionState === 'idle' && sessionTotalSeconds === 0) setSelectedPresetType('nightRecovery'); }}
+            className={`p-4 rounded-2xl border text-left transition-all flex items-center space-x-3.5 ${
               selectedPresetType === 'nightRecovery'
                 ? 'bg-violet-50/80 dark:bg-white/10 border-violet-500 ring-2 ring-violet-500/40 shadow-sm'
-                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-violet-500/40'
+                : (isActive || actionState !== 'idle' || sessionTotalSeconds > 0)
+                ? 'bg-white/50 dark:bg-white/5 border-slate-200 dark:border-white/5 opacity-40 cursor-not-allowed'
+                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-violet-500/40 cursor-pointer'
             }`}
           >
             <div className="w-12 h-12 rounded-2xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-xl shrink-0">
@@ -654,7 +670,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
           {/* Card 4: Thiết Kế Bài Tập Mới (Dashed Border) */}
           <div
             onClick={() => {
-              if (!isActive) {
+              if (!isActive && actionState === 'idle' && sessionTotalSeconds === 0) {
                 const plans = getCustomPlans();
                 setCustomPlansList(plans);
                 if (plans.length > 0) {
@@ -665,10 +681,12 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
                 }
               }
             }}
-            className={`p-4 rounded-2xl border border-dashed border-slate-300 dark:border-white/20 text-left cursor-pointer transition-all flex items-center space-x-3.5 hover:border-cyan-500/50 ${
+            className={`p-4 rounded-2xl border border-dashed border-slate-300 dark:border-white/20 text-left transition-all flex items-center space-x-3.5 ${
               selectedPresetType === 'custom'
                 ? 'bg-cyan-500/10 border-cyan-500 ring-2 ring-cyan-500/40'
-                : 'bg-transparent'
+                : (isActive || actionState !== 'idle' || sessionTotalSeconds > 0)
+                ? 'opacity-40 cursor-not-allowed'
+                : 'hover:border-cyan-500/50 cursor-pointer'
             }`}
           >
             <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-lg font-black text-amber-500 shrink-0">
