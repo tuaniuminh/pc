@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
 
 jobs:
   build:
@@ -15,11 +15,6 @@ jobs:
     steps:
       - name: Checkout mã nguồn
         uses: actions/checkout@v4
-
-      - name: Thiết lập môi trường Node.js LTS
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
 
       - name: Kiểm tra môi trường Node.js
         run: |
