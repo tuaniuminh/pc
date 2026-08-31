@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <Capacitor/Capacitor.h>
+#import "App-Swift.h"
 
 CAP_PLUGIN(LiveActivityPlugin, "LiveActivityPlugin",
     CAP_PLUGIN_METHOD(startActivity, CAPPluginReturnPromise);
