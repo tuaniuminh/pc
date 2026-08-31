@@ -90,6 +90,10 @@ function App() {
   };
 
   const handleTabClick = (tabKey) => {
+    // Chặn chuyển tab nếu buổi tập đang chạy (im lặng, không hiển thị Toast popup)
+    if (isWorkoutActive && tabKey !== 'timer') {
+      return;
+    }
     setActiveTab(tabKey);
   };
 
@@ -137,7 +141,7 @@ function App() {
         </div>
       </main>
 
-      {/* 3. Bottom Navigation Bar Cố Định Ở Đáy */}
+      {/* 3. Bottom Navigation Bar Cố Định Ở Đáy (Khóa chuyển tab khi đang tập, không hiện Toast) */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-oled/95 backdrop-blur-2xl border-t border-slate-200 dark:border-white/5 safe-bottom-padding px-6 pt-2 transition-colors duration-300">
         <div className="flex items-center justify-around max-w-md mx-auto">
           {/* Tab 1: Tập Luyện (Xanh Lá Neon / Emerald) */}
@@ -161,39 +165,60 @@ function App() {
           {/* Tab 2: Thành Tích (Vàng Hổ Phách / Amber Gold) */}
           <button
             onClick={() => handleTabClick('history')}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 ${
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 relative ${
               activeTab === 'history'
                 ? 'text-amber-600 dark:text-amber-400 scale-105 font-black'
+                : isWorkoutActive
+                ? 'text-slate-300 dark:text-gray-700 opacity-40 cursor-not-allowed'
                 : 'text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300'
             }`}
           >
-            <HistoryIcon size={24} />
+            <div className="relative">
+              <HistoryIcon size={24} />
+              {isWorkoutActive && (
+                <Lock size={10} className="absolute -top-1 -right-1 text-amber-500" />
+              )}
+            </div>
             <span className="text-[10px] tracking-tight mt-1 font-bold">Thành Tích</span>
           </button>
 
           {/* Tab 3: Trợ Lý AI (Xanh Cyan / Electric Blue) */}
           <button
             onClick={() => handleTabClick('plans')}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 ${
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 relative ${
               activeTab === 'plans'
                 ? 'text-cyan-600 dark:text-cyan-neon scale-105 font-black'
+                : isWorkoutActive
+                ? 'text-slate-300 dark:text-gray-700 opacity-40 cursor-not-allowed'
                 : 'text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300'
             }`}
           >
-            <Sparkles size={24} />
+            <div className="relative">
+              <Sparkles size={24} />
+              {isWorkoutActive && (
+                <Lock size={10} className="absolute -top-1 -right-1 text-cyan-500" />
+              )}
+            </div>
             <span className="text-[10px] tracking-tight mt-1 font-bold">Trợ Lý AI</span>
           </button>
 
           {/* Tab 4: Cài Đặt (Tím Điện Tử / Electric Purple) */}
           <button
             onClick={() => handleTabClick('settings')}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 ${
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 relative ${
               activeTab === 'settings'
                 ? 'text-violet-600 dark:text-violet-400 scale-105 font-black'
+                : isWorkoutActive
+                ? 'text-slate-300 dark:text-gray-700 opacity-40 cursor-not-allowed'
                 : 'text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300'
             }`}
           >
-            <SettingsIcon size={24} />
+            <div className="relative">
+              <SettingsIcon size={24} />
+              {isWorkoutActive && (
+                <Lock size={10} className="absolute -top-1 -right-1 text-violet-500" />
+              )}
+            </div>
             <span className="text-[10px] tracking-tight mt-1 font-bold">Cài Đặt</span>
           </button>
         </div>
