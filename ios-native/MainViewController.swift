@@ -2,8 +2,8 @@ import UIKit
 import Capacitor
 
 class MainViewController: CAPBridgeViewController {
-    override open func capacitorDidLoad() {
-        super.capacitorDidLoad()
+    override func viewDidLoad() {
+        super.viewDidLoad()
         bridge?.registerPluginType(LiveActivityPlugin.self)
     }
 }

@@ -69,6 +69,10 @@ jobs:
             project.save
           " || cp ios-native/*.* ios/App/App/
 
+          echo "Đồng bộ Main.storyboard với MainViewController"
+          sed -i '' 's/customClass="CAPBridgeViewController"/customClass="MainViewController"/g' ios/App/App/Base.lproj/Main.storyboard || true
+          sed -i '' 's/customModule="Capacitor"/customModule="App"/g' ios/App/App/Base.lproj/Main.storyboard || true
+
       - name: Tạo Icon tự động từ Logo
         run: npm run generate-icons || true
 

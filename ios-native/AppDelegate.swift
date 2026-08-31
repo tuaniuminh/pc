@@ -28,11 +28,3 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
     }
 }
-
-// Tự động đăng ký LiveActivityPlugin vào tất cả các đối tượng CAPBridgeViewController
-extension CAPBridgeViewController {
-    override open func capacitorDidLoad() {
-        super.capacitorDidLoad()
-        bridge?.registerPluginType(LiveActivityPlugin.self)
-    }
-}
