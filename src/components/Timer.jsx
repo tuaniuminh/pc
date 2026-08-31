@@ -165,10 +165,20 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     window.addEventListener('pagehide', handlePageHide);
     window.addEventListener('beforeunload', handlePageHide);
     document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    const unsubscribeTick = liveActivityService.onWorkoutTick((data) => {
+      if (data) {
+        if (data.actionState) setActionState(data.actionState);
+        if (data.timeRemaining !== undefined) setTimeRemaining(data.timeRemaining);
+        if (data.currentRep !== undefined) setCurrentRep(data.currentRep);
+      }
+    });
+
     return () => {
       window.removeEventListener('pagehide', handlePageHide);
       window.removeEventListener('beforeunload', handlePageHide);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (unsubscribeTick) unsubscribeTick();
     };
   }, [isActive]);
 
