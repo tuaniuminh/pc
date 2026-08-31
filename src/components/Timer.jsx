@@ -207,19 +207,22 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
 
         setTimeRemaining(prev => {
           if (prev > 1) {
+            const nextSec = prev - 1;
             // Beep đếm ngược 3s cuối nếu là lượt siết dài
-            if (prev <= 4 && stageDuration >= 5 && sfxEnabled) {
+            if (nextSec <= 3 && stageDuration >= 5 && sfxEnabled) {
               audioEngine.playBeep(800, 0.08, 0.2);
               triggerHapticHeartbeat();
             }
 
             // Cập nhật Live Activities & Dynamic Island trên màn hình khóa
-            syncLiveActivity(actionState, prev - 1, currentRep, currentStages[currentStageIndex]);
+            syncLiveActivity(actionState, nextSec, currentRep, currentStages[currentStageIndex]);
 
-            return prev - 1;
+            return nextSec;
           } else {
-            // Hết giây của phase hiện tại -> Chuyển đổi trạng thái kế tiếp
-            handlePhaseTransition();
+            // Hết giây của phase hiện tại -> Chuyển đổi trạng thái kế tiếp trong microtask riêng
+            setTimeout(() => {
+              handlePhaseTransition();
+            }, 0);
             return 0;
           }
         });
