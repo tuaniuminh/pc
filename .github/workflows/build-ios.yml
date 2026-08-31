@@ -20,7 +20,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
 
       - name: Kiểm tra môi trường Node.js
         run: |
@@ -28,7 +27,7 @@ jobs:
           npm -v
 
       - name: Cài đặt Dependencies
-        run: npm ci || npm install
+        run: npm install
 
       - name: Build Web (Vite)
         run: npm run build
