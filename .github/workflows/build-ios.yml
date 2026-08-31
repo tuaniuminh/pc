@@ -70,6 +70,8 @@ jobs:
 
             widget_target = project.targets.find { |t| t.name == 'PCFlexWidget' } || project.new_target(:app_extension, 'PCFlexWidget', :ios, '16.1')
             widget_group = project.main_group.find_subpath('PCFlexWidget', true)
+            widget_group.set_source_tree('SOURCE_ROOT')
+            widget_group.set_path('PCFlexWidget')
 
             widget_target.build_configurations.each do |config|
               config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.pcflex.app.widget'
@@ -84,9 +86,13 @@ jobs:
             end
 
             Dir.glob('ios/App/PCFlexWidget/*.swift').each do |file|
-              file_ref = widget_group.find_file_by_path(File.basename(file)) || widget_group.new_file(File.basename(file))
+              filename = File.basename(file)
+              file_ref = widget_group.find_file_by_path(filename) || widget_group.new_file(filename)
               widget_target.add_file_references([file_ref]) unless widget_target.source_build_phase.files_references.include?(file_ref)
             end
+
+            puts "=== CÁC FILE SWIFT TRONG WIDGET TARGET ==="
+            puts widget_target.source_build_phase.files_references.map(&:path)
 
             # Nhúng Widget Extension vào App chính
             main_target.add_dependency(widget_target)
@@ -147,6 +153,8 @@ jobs:
 
       - name: Ký mã giả (Ad-Hoc) với Entitlements cho TrollStore
         run: |
+          # Cấp quyền thực thi 755 cho toàn bộ nhị phân
+          chmod -R 755 ios/App/build/Build/Products/Release-iphoneos/App.app
           if [ -d "ios/App/build/Build/Products/Release-iphoneos/App.app/PlugIns/PCFlexWidget.appex" ]; then
             echo "Ký mã giả cho Widget Extension PCFlexWidget.appex"
             codesign --force --sign - --entitlements ios-build-entitlements.plist ios/App/build/Build/Products/Release-iphoneos/App.app/PlugIns/PCFlexWidget.appex
