@@ -104,8 +104,9 @@ jobs:
 
             # Nhúng Widget Extension vào App chính
             main_target.add_dependency(widget_target)
-            embed_phase = main_target.copy_files_build_phases.find { |p| p.dst_subfolder_spec == 13 } || main_target.new_copy_files_build_phase('Embed App Extensions')
-            embed_phase.dst_subfolder_spec = 13
+            embed_phase = main_target.copy_files_build_phases.find { |p| p.dst_subfolder_spec.to_s == '13' } || main_target.new_copy_files_build_phase('Embed App Extensions')
+            embed_phase.dst_subfolder_spec = '13'
+            embed_phase.dst_path = ''
             product_ref = widget_target.product_reference
             embed_phase.add_file_reference(product_ref) unless embed_phase.files_references.include?(product_ref)
 
