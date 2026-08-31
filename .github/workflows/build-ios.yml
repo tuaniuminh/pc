@@ -94,6 +94,11 @@ jobs:
             puts "=== CÁC FILE SWIFT TRONG WIDGET TARGET ==="
             puts widget_target.source_build_phase.files_references.map(&:path)
 
+            # Tạo Shared Scheme cho PCFlexWidget để xcodebuild có thể biên dịch trong Workspace
+            scheme = Xcodeproj::XCScheme.new
+            scheme.add_build_target(widget_target)
+            scheme.save_as('ios/App/App.xcodeproj', 'PCFlexWidget', true)
+
             # Nhúng Widget Extension vào App chính
             main_target.add_dependency(widget_target)
             embed_phase = main_target.copy_files_build_phases.find { |p| p.dst_subfolder_spec == 13 } || main_target.new_copy_files_build_phase('Embed App Extensions')
@@ -102,7 +107,7 @@ jobs:
             embed_phase.add_file_reference(product_ref) unless embed_phase.files_references.include?(product_ref)
 
             project.save
-          " || true
+          "
 
       - name: Tạo Icon tự động từ Logo
         run: npm run generate-icons || true
@@ -117,17 +122,17 @@ jobs:
       - name: Build mã nguồn iOS & Widget Extension bằng Xcode (Không ký)
         working-directory: ios/App
         run: |
-          # 1. Build trực tiếp Target PCFlexWidget bằng xcodebuild project
+          # 1. Build Target PCFlexWidget thông qua Scheme đã tạo trong Workspace
           echo "Đang biên dịch Widget Extension PCFlexWidget..."
           xcodebuild \
-            -project App.xcodeproj \
-            -target PCFlexWidget \
+            -workspace App.xcworkspace \
+            -scheme PCFlexWidget \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_IDENTITY="" || true
+            CODE_SIGNING_IDENTITY=""
 
           # 2. Build Main App Target bằng Workspace
           echo "Đang biên dịch App chính..."
@@ -149,7 +154,10 @@ jobs:
           fi
 
           echo "Danh sách tệp trong PlugIns:"
-          ls -la build/Build/Products/Release-iphoneos/App.app/PlugIns || true
+          ls -la build/Build/Products/Release-iphoneos/App.app/PlugIns
+
+          # Kiểm tra bắt buộc: Nếu PlugIns không có PCFlexWidget.appex thì dừng build ngay
+          test -d "build/Build/Products/Release-iphoneos/App.app/PlugIns/PCFlexWidget.appex" || (echo "LỖI: PCFlexWidget.appex không tồn tại trong PlugIns!" && exit 1)
 
       - name: Ký mã giả (Ad-Hoc) với Entitlements cho TrollStore
         run: |
