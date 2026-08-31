@@ -14,7 +14,7 @@ public class LiveActivityPlugin: CAPPlugin {
     }
     #endif
 
-    @objc func startActivity(_ call: CAPPluginCall) {
+    @objc public func startActivity(_ call: CAPPluginCall) {
         #if canImport(ActivityKit)
         guard #available(iOS 16.1, *) else {
             call.reject("Live Activities yêu cầu iOS 16.1 trở lên")
@@ -61,7 +61,7 @@ public class LiveActivityPlugin: CAPPlugin {
         #endif
     }
 
-    @objc func updateActivity(_ call: CAPPluginCall) {
+    @objc public func updateActivity(_ call: CAPPluginCall) {
         #if canImport(ActivityKit)
         guard #available(iOS 16.1, *), let activity = self.currentActivity else {
             call.resolve()
@@ -93,7 +93,7 @@ public class LiveActivityPlugin: CAPPlugin {
         #endif
     }
 
-    @objc func stopActivity(_ call: CAPPluginCall) {
+    @objc public func stopActivity(_ call: CAPPluginCall) {
         #if canImport(ActivityKit)
         guard #available(iOS 16.1, *), let activity = self.currentActivity else {
             call.resolve()

@@ -46,6 +46,7 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" ios/App/App/Info.plist || true
 
           echo "Tích hợp và đăng ký mã nguồn Native (Swift & Obj-C) vào Xcode project"
+          cp ios-native/MainViewController.swift ios/App/App/MainViewController.swift || true
           ruby -r xcodeproj -e "
             project = Xcodeproj::Project.open('ios/App/App.xcodeproj')
             target = project.targets.first
