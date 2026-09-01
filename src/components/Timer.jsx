@@ -105,6 +105,29 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     return sum + (st.reps || 0);
   }, 0);
 
+  // Tính tổng thời lượng ước tính (phút) để hoàn thành toàn bộ bài tập
+  const totalRoutineSeconds = currentStages.reduce((sum, st) => {
+    if (st.type === 'transition') {
+      return sum + (st.relax || 10);
+    }
+    const perRep = (st.squeeze || 0) + (st.relax || 0);
+    return sum + (perRep * (st.reps || 1));
+  }, 0);
+
+  const totalRoutineMinutes = Math.max(1, Math.round(totalRoutineSeconds / 60));
+
+  const getPresetPeriodLabel = (type) => {
+    if (type === 'goodMorning') return 'Buổi sáng';
+    if (type === 'powerCombo') return 'Buổi trưa';
+    if (type === 'nightRecovery') return 'Buổi tối';
+    return 'Buổi tập';
+  };
+
+  // Định dạng tên bài tập hiển thị: Cấp X - Buổi sáng/trưa/tối (Y phút)
+  const routineDisplayName = selectedPresetType === 'custom' && selectedCustomPlan
+    ? `${selectedCustomPlan.planName || 'Giáo Án Tùy Chỉnh'} (${totalRoutineMinutes} phút)`
+    : `Cấp ${selectedLevel} - ${getPresetPeriodLabel(selectedPresetType)} (${totalRoutineMinutes} phút)`;
+
   // Tổng số lượt tập đã hoàn thành tới thời điểm hiện tại
   const currentCompletedReps = currentStages.slice(0, currentStageIndex).reduce((sum, st) => {
     if (st.type === 'transition') return sum;
@@ -378,16 +401,12 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     <div className="p-4 sm:p-5 space-y-5 max-w-lg mx-auto">
       {/* 1. KHU VỰC ĐỒNG HỒ & BÀI TẬP CHÍNH (TRAINER CARD ĐỒNG BỘ SÁNG / TỐI) */}
       <div className="glass-panel rounded-[32px] p-5 border border-slate-200 dark:border-white/10 space-y-4 shadow-md dark:shadow-xl transition-colors duration-300">
-        {/* TÊN BÀI TẬP & TỔNG SỐ LƯỢT NỔI BẬT PHÍA TRÊN QUẢ CẦU */}
+        {/* TÊN BÀI TẬP & SỐ PHÚT HOÀN THÀNH PHÍA TRÊN QUẢ CẦU */}
         <div className="flex items-center justify-center pt-1">
           <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-xs">
             <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
-            <span className="text-xs font-black text-slate-800 dark:text-gray-100 tracking-wide truncate max-w-[200px]">
-              {currentRoutine.name}
-            </span>
-            <span className="text-slate-400 dark:text-gray-500">•</span>
-            <span className="text-xs font-mono font-extrabold text-cyan-600 dark:text-cyan-400">
-              {totalRoutineReps} lượt
+            <span className="text-xs font-black text-slate-800 dark:text-gray-100 tracking-wide">
+              {routineDisplayName}
             </span>
           </div>
         </div>
