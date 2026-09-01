@@ -403,6 +403,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
         <OrbVisualizer
           actionState={actionState}
           timeRemaining={timeRemaining}
+          stageDuration={stageDuration}
           currentRep={currentRep}
           totalReps={currentStage?.reps || 0}
           stageLabel={currentStage?.label || ''}

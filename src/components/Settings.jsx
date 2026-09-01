@@ -29,7 +29,7 @@ import { exportBackupJSON, importBackupJSON } from '../services/storageService';
 import { triggerHapticMedium, triggerHapticLight } from '../utils/hapticsUtils';
 import { checkForUpdate, installViaTrollStore, openDirectDownload, downloadIPAInApp } from '../services/updateService';
 
-const SETTINGS_APP_VERSION = 'v2.1.3';
+const SETTINGS_APP_VERSION = 'v2.2.0';
 
 const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
   const [showKey, setShowKey] = useState(false);
@@ -473,7 +473,7 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
             <div className="flex items-center space-x-2">
               <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Cập Nhật Ứng Dụng</h3>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 font-bold">
-                v2.1.3
+                v2.2.0
               </span>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-gray-400">Kiểm tra bản mới trên GitHub & cài đặt 1 chạm qua TrollStore</p>
