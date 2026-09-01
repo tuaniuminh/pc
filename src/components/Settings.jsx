@@ -31,7 +31,7 @@ import { exportBackupJSON, importBackupJSON } from '../services/storageService';
 import { triggerHapticMedium, triggerHapticLight } from '../utils/hapticsUtils';
 import { checkForUpdate, installViaTrollStore, openDirectDownload, downloadIPAInApp } from '../services/updateService';
 
-const SETTINGS_APP_VERSION = 'v2.2.2';
+const SETTINGS_APP_VERSION = 'v2.2.3';
 
 const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
   const [showKey, setShowKey] = useState(false);
