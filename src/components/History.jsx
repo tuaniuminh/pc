@@ -73,6 +73,26 @@ const History = ({ onStartWorkout, activeTab }) => {
   const today = new Date();
   const isCurrentMonthView = today.getFullYear() === viewYear && today.getMonth() === viewMonth;
 
+  const formatDurationText = (secVal) => {
+    const sec = Number(secVal) || 0;
+    if (sec <= 0) return '1 phút';
+    const mins = Math.floor(sec / 60);
+    const remSec = sec % 60;
+    if (mins === 0) return `${remSec}s`;
+    if (remSec === 0) return `${mins} phút`;
+    return `${mins}p ${remSec}s`;
+  };
+
+  const formatShortDuration = (secVal) => {
+    const sec = Number(secVal) || 0;
+    if (sec <= 0) return '1p';
+    const mins = Math.floor(sec / 60);
+    const remSec = sec % 60;
+    if (mins === 0) return `${remSec}s`;
+    if (remSec === 0) return `${mins}p`;
+    return `${mins}p ${remSec}s`;
+  };
+
   // Gom nhóm lịch sử theo ngày YYYY-MM-DD
   const workoutsMap = {};
   historyList.forEach((item) => {
@@ -85,7 +105,7 @@ const History = ({ onStartWorkout, activeTab }) => {
     workoutsMap[key].count += 1;
     workoutsMap[key].totalSqueezes += (item.totalSqueezes || 0);
     workoutsMap[key].totalReverseKegels += (item.totalReverseKegels || 0);
-    workoutsMap[key].totalDuration += (item.duration || 0);
+    workoutsMap[key].totalDuration += (item.duration || item.durationSeconds || 0);
     workoutsMap[key].sessions.push(item);
   });
 
@@ -320,7 +340,7 @@ const History = ({ onStartWorkout, activeTab }) => {
                       <div>
                         <div className="font-bold text-slate-900 dark:text-white">{sess.routineName}</div>
                         <div className="text-[11px] text-slate-500 dark:text-gray-400">
-                          {sess.totalSqueezes} lượt siết • {sess.totalReverseKegels} lượt ngược • {Math.round((sess.duration || 0) / 60)} phút
+                          {sess.totalSqueezes} lượt siết • {sess.totalReverseKegels} lượt ngược • {formatDurationText(sess.duration || sess.durationSeconds)}
                         </div>
                       </div>
                       <span className="text-[10px] font-mono text-slate-400">
@@ -396,7 +416,7 @@ const History = ({ onStartWorkout, activeTab }) => {
                           <span>•</span>
                           <span className="text-cyan-600 dark:text-cyan-neon font-bold">🌊 {item.totalReverseKegels || 0} ngược</span>
                           <span>•</span>
-                          <span>⏱️ {Math.round((item.duration || 0) / 60)}p</span>
+                          <span>⏱️ {formatShortDuration(item.duration || item.durationSeconds)}</span>
                         </div>
                       </div>
                     </div>

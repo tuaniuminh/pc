@@ -439,6 +439,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
       routineType: selectedPresetType,
       routineName: currentRoutine.name,
       gender: selectedGender,
+      duration: finalDuration,
       durationSeconds: finalDuration,
       totalSqueezes: finalSqueezes,
       totalReverseKegels: finalReverseKegels

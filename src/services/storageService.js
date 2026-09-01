@@ -694,7 +694,8 @@ export const getHistoryStats = () => {
   history.forEach(item => {
     totalSqueezes += (item.totalSqueezes || item.squeezes || 0);
     totalReverseKegels += (item.totalReverseKegels || item.reverseKegels || 0);
-    totalDuration += (item.duration || 0);
+    const sec = item.duration || item.durationSeconds || 0;
+    totalDuration += sec;
   });
 
   const streak = calculateStreak(history);
@@ -704,7 +705,7 @@ export const getHistoryStats = () => {
     totalSqueezes,
     totalReverseKegels,
     totalDuration,
-    totalMinutes: Math.round(totalDuration / 60),
+    totalMinutes: Math.max(1, Math.round(totalDuration / 60)),
     streak
   };
 };
@@ -743,6 +744,21 @@ export const checkAndUnlockBadges = () => {
 };
 
 export const recalibrateAndSyncAllData = () => {
+  try {
+    const history = getHistory();
+    let changed = false;
+    history.forEach(item => {
+      const sec = item.duration || item.durationSeconds || 0;
+      if (item.duration !== sec || item.durationSeconds !== sec) {
+        item.duration = sec;
+        item.durationSeconds = sec;
+        changed = true;
+      }
+    });
+    if (changed) {
+      localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
+    }
+  } catch (e) {}
   checkAndUnlockBadges();
 };
 
