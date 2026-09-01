@@ -94,25 +94,20 @@ export const checkForUpdate = async (currentAppVersion) => {
 };
 
 /**
- * Mở trực tiếp link cài đặt qua TrollStore (Universal Magnifier URL Scheme)
+ * Mở trực tiếp link cài đặt qua TrollStore URL Scheme
  */
 export const installViaTrollStore = (ipaDownloadUrl) => {
   if (!ipaDownloadUrl) return;
 
-  addAppLog('info', `[Updater] Đang chuyển tiếp cài đặt qua TrollStore: ${ipaDownloadUrl}`);
+  addAppLog('info', `[Updater] Đang gọi TrollStore URL Scheme: ${ipaDownloadUrl}`);
 
-  // Cấu trúc URL Scheme chuẩn của TrollStore
-  const trollStoreUrl = `apple-magnifier://install?url=${encodeURIComponent(ipaDownloadUrl)}`;
-  const fallbackUrl = `trollstore://install?url=${encodeURIComponent(ipaDownloadUrl)}`;
+  // URL Scheme chuẩn xác 100% của TrollStore 2
+  const trollStoreUrl = `trollstore://install?url=${encodeURIComponent(ipaDownloadUrl)}`;
 
-  // Thử mở bằng URL Scheme chính thức
   try {
     window.location.href = trollStoreUrl;
-    // Fallback sau 500ms nếu scheme đầu tiên không mở
-    setTimeout(() => {
-      window.location.href = fallbackUrl;
-    }, 500);
   } catch (e) {
+    addAppLog('warn', `[Updater] Không thể mở URL Scheme, chuyển sang tải trực tiếp`);
     window.open(ipaDownloadUrl, '_blank');
   }
 };
