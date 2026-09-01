@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from './components/Header';
 import Timer from './components/Timer';
 import History from './components/History';
@@ -19,12 +19,15 @@ import {
   History as HistoryIcon, 
   Sparkles, 
   Settings as SettingsIcon,
-  Lock,
-  AlertCircle
+  Smartphone,
+  CheckCircle2,
+  AlertCircle,
+  Zap,
+  Lock
 } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
-const APP_VERSION = 'v2.2.10';
+const APP_VERSION = 'v2.2.11';
 
 function App() {
   const [activeTab, setActiveTab] = useState('timer'); // 'timer' | 'history' | 'plans' | 'settings'
@@ -33,6 +36,14 @@ function App() {
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [lockToast, setLockToast] = useState(null);
   const [updateInfo, setUpdateInfo] = useState(null);
+  const mainScrollRef = useRef(null);
+
+  // Tự động cuộn mượt mà về đầu trang mỗi khi chuyển tab
+  useEffect(() => {
+    if (mainScrollRef.current) {
+      mainScrollRef.current.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, [activeTab]);
 
   // Tự động kiểm tra bản cập nhật mới trên GitHub khi khởi động
   useEffect(() => {
@@ -121,7 +132,7 @@ function App() {
       />
 
       {/* 2. Phần Thân Chứa 4 Tab Tính Năng (Duy trì trạng thái liên tục trong DOM, không bao giờ bị reset bài tập khi chuyển tab) */}
-      <main className="flex-1 relative overflow-y-auto overflow-x-hidden pb-28">
+      <main ref={mainScrollRef} className="flex-1 relative overflow-y-auto overflow-x-hidden pb-28">
         <div className={activeTab === 'timer' ? 'block' : 'hidden'}>
           <Timer 
             settings={settings}

@@ -127,7 +127,7 @@ const History = ({ onStartWorkout }) => {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 pb-28 max-w-lg mx-auto">
+    <div className="p-4 sm:p-5 space-y-5 max-w-lg mx-auto">
       {/* Title & Subtab Selector */}
       <div className="flex items-center justify-between">
         <div>

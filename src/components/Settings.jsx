@@ -31,7 +31,7 @@ import { exportBackupJSON, importBackupJSON } from '../services/storageService';
 import { triggerHapticMedium, triggerHapticLight } from '../utils/hapticsUtils';
 import { checkForUpdate, installViaTrollStore, openDirectDownload, downloadIPAInApp } from '../services/updateService';
 
-const SETTINGS_APP_VERSION = 'v2.2.10';
+const SETTINGS_APP_VERSION = 'v2.2.11';
 
 const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
   const [showKey, setShowKey] = useState(false);
@@ -174,7 +174,7 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
   const currentActionObj = SOUND_ACTIONS.find(a => a.key === activeActionKey) || SOUND_ACTIONS[0];
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 pb-28 max-w-lg mx-auto">
+    <div className="p-4 sm:p-5 space-y-5 max-w-lg mx-auto">
       {/* Title */}
       <div>
         <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
