@@ -15,7 +15,7 @@ class LiveActivityService {
     this.tickListeners = [];
 
     if (this.isSupported() && LiveActivityPlugin) {
-      LiveActivityPlugin.addListener?.('workoutTick', (data) => {
+      LiveActivityPlugin.addListener?.('nativeWorkoutTick', (data) => {
         this.tickListeners.forEach(fn => fn(data));
       });
       LiveActivityPlugin.addListener?.('workoutCompleted', () => {

@@ -156,26 +156,23 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
       if (document.hidden) {
         backgroundTime = Date.now();
       } else {
-        if (isActive && backgroundTime > 0) {
-          const elapsedSec = Math.floor((Date.now() - backgroundTime) / 1000);
-          if (elapsedSec > 0) {
-            setSessionTotalSeconds(s => s + elapsedSec);
-          }
+        if (isActive) {
+          liveActivityService.getNativeDiagnostics().then(diag => {
+            if (diag && diag.isNativeWorkoutRunning) {
+              if (diag.currentActionState) setActionState(diag.currentActionState);
+              if (diag.currentTimeRemaining !== undefined) setTimeRemaining(diag.currentTimeRemaining);
+              if (diag.currentRepNum !== undefined) setCurrentRep(diag.currentRepNum);
+              phaseStartTimeRef.current = Date.now() - ((stageDurationRef.current || 1) - (diag.currentTimeRemaining || 1)) * 1000;
+              addAppLog('success', `[NativeSync] Đồng bộ từ Swift Native: Hiệp ${diag.currentRepNum}, Trạng thái: ${diag.currentActionState}, Còn lại: ${diag.currentTimeRemaining}s`);
+            }
+          });
         }
       }
     };
 
-    const handlePageHide = () => {
-      liveActivityService.stopLiveActivity();
-    };
-
-    window.addEventListener('pagehide', handlePageHide);
-    window.addEventListener('beforeunload', handlePageHide);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      window.removeEventListener('pagehide', handlePageHide);
-      window.removeEventListener('beforeunload', handlePageHide);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [isActive]);
