@@ -173,29 +173,34 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
   const phaseStartTimeRef = useRef(Date.now());
   const stageDurationRef = useRef(stageDuration);
   stageDurationRef.current = stageDuration;
+  const timeRemainingRef = useRef(timeRemaining);
+  timeRemainingRef.current = timeRemaining;
+  const phaseRemainingOnStartRef = useRef(stageDuration);
 
-  // Main Engine Loop with Wall-Clock Delta Precision (Khắc phục 100% việc WebKit bị trôi nhịp trong nền)
+  // Main Engine Loop with Wall-Clock Delta Precision & Pause/Resume Preservation
   useEffect(() => {
     let timer = null;
 
     if (isActive) {
       phaseStartTimeRef.current = Date.now();
+      // Khi tiếp tục, bảo lưu chính xác số giây còn lại lúc tạm dừng thay vì reset về ban đầu
+      phaseRemainingOnStartRef.current = timeRemainingRef.current > 0 ? timeRemainingRef.current : (stageDurationRef.current || 1);
 
       timer = setInterval(() => {
         const now = Date.now();
         const elapsedSec = (now - phaseStartTimeRef.current) / 1000;
-        const currentTargetSec = stageDurationRef.current || 1;
-        const remaining = Math.max(0, Math.ceil(currentTargetSec - elapsedSec));
+        const initialRemaining = phaseRemainingOnStartRef.current;
+        const currentRemaining = Math.max(0, Math.ceil(initialRemaining - elapsedSec));
 
-        setTimeRemaining(remaining);
+        setTimeRemaining(currentRemaining);
 
-        if (elapsedSec >= currentTargetSec) {
+        if (elapsedSec >= initialRemaining) {
           phaseStartTimeRef.current = Date.now();
           setTimeout(() => {
             handlePhaseTransition();
           }, 0);
         }
-      }, 250); // Kiểm tra 4 lần/giây để chuyển nhịp tức thì không độ trễ
+      }, 200); // Kiểm tra 5 lần/giây để chuyển nhịp tức thì và mượt mà
     }
 
     return () => clearInterval(timer);
@@ -221,6 +226,8 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
 
       if (stage.relax > 0) {
         setActionState('relaxing');
+        timeRemainingRef.current = stage.relax;
+        phaseRemainingOnStartRef.current = stage.relax;
         setTimeRemaining(stage.relax);
         setStageDuration(stage.relax);
         stageDurationRef.current = stage.relax;
@@ -258,6 +265,8 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
       if (nextStage.type === 'transition') {
         phaseStartTimeRef.current = Date.now();
         setActionState('transition');
+        timeRemainingRef.current = nextStage.relax || 10;
+        phaseRemainingOnStartRef.current = nextStage.relax || 10;
         setTimeRemaining(nextStage.relax || 10);
         setStageDuration(nextStage.relax || 10);
         stageDurationRef.current = nextStage.relax || 10;
@@ -275,6 +284,8 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     phaseStartTimeRef.current = Date.now();
     const nextState = stage.type === 'reverse' ? 'reverse' : stage.type === 'breathing' ? 'breathing' : 'squeezing';
     setActionState(nextState);
+    timeRemainingRef.current = stage.squeeze;
+    phaseRemainingOnStartRef.current = stage.squeeze;
     setTimeRemaining(stage.squeeze);
     setStageDuration(stage.squeeze);
     stageDurationRef.current = stage.squeeze;
@@ -300,6 +311,8 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
       if (stage) {
         if (stage.type === 'transition') {
           setActionState('transition');
+          timeRemainingRef.current = stage.relax || 10;
+          phaseRemainingOnStartRef.current = stage.relax || 10;
           setTimeRemaining(stage.relax || 10);
           setStageDuration(stage.relax || 10);
           if (sfxEnabled) audioEngine.playTransitionRestSFX(settings.actionSounds);
@@ -311,7 +324,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
   };
 
   const handlePauseWorkout = () => {
-    addAppLog('info', `[Workout] Tạm dừng bài tập`);
+    addAppLog('info', `[Workout] Tạm dừng bài tập ở ${timeRemainingRef.current}s`);
     setIsActive(false);
     triggerHapticMedium();
   };
@@ -327,6 +340,8 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     setSessionTotalSeconds(0);
     const firstStage = currentStages[0];
     if (firstStage) {
+      timeRemainingRef.current = firstStage.squeeze || 1;
+      phaseRemainingOnStartRef.current = firstStage.squeeze || 1;
       setTimeRemaining(firstStage.squeeze || 1);
       setStageDuration(firstStage.squeeze || 1);
     }
