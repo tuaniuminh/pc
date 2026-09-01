@@ -30,6 +30,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
     private var lastInterruptionEvent: String = "None"
     private var lastRouteChangeEvent: String = "Default"
     private var lastActivityState: String = "Idle"
+    private var totalUpdatesDispatched: Int = 0
 
     #if canImport(ActivityKit)
     @available(iOS 16.1, *)
@@ -41,6 +42,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
 
     public override func load() {
         super.load()
+        UIDevice.current.isBatteryMonitoringEnabled = true
         configureAudioSession()
         setupAudioNotifications()
     }
@@ -235,8 +237,24 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         diagnostic["currentActionState"] = currentActionState
         diagnostic["currentTimeRemaining"] = currentTimeRemaining
         diagnostic["currentRepNum"] = currentRepNum
+        diagnostic["totalUpdatesDispatched"] = totalUpdatesDispatched
         diagnostic["lastInterruption"] = lastInterruptionEvent
         diagnostic["currentAudioRoute"] = lastRouteChangeEvent
+        diagnostic["lastActivityState"] = lastActivityState
+
+        // Cảm biến phần cứng & Pin & Nhiệt độ máy
+        let thermal = ProcessInfo.processInfo.thermalState
+        diagnostic["thermalState"] = thermal == .nominal ? "Nominal (Bình thường)" :
+                                     thermal == .fair ? "Fair (Hơi ấm)" :
+                                     thermal == .serious ? "Serious (Nóng)" : "Critical (Rất nóng)"
+        diagnostic["isLowPowerModeEnabled"] = ProcessInfo.processInfo.isLowPowerModeEnabled
+
+        let batteryLevel = UIDevice.current.batteryLevel
+        diagnostic["batteryLevelPercent"] = batteryLevel >= 0 ? Int(batteryLevel * 100) : -1
+        let batState = UIDevice.current.batteryState
+        diagnostic["batteryState"] = batState == .charging ? "Đang sạc" :
+                                    batState == .full ? "Đầy 100%" :
+                                    batState == .unplugged ? "Dùng pin" : "Không xác định"
 
         let session = AVAudioSession.sharedInstance()
         diagnostic["audioSessionCategory"] = session.category.rawValue
@@ -264,12 +282,14 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
             let allActivities = Activity<PCFlexActivityAttributes>.activities
             diagnostic["activeActivitiesCount"] = allActivities.count
             diagnostic["activeActivities"] = allActivities.map { act in
+                let duration = act.contentState.endDate.timeIntervalSince(act.contentState.startDate)
                 return [
                     "id": act.id,
                     "state": String(describing: act.activityState),
                     "actionState": act.contentState.actionState,
                     "timeRemaining": act.contentState.timeRemaining,
                     "currentRep": act.contentState.currentRep,
+                    "durationSeconds": String(format: "%.1f", duration),
                     "startDateIso": ISO8601DateFormatter().string(from: act.contentState.startDate),
                     "endDateIso": ISO8601DateFormatter().string(from: act.contentState.endDate)
                 ]
@@ -305,6 +325,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         currentTimeRemaining = call.getInt("timeRemaining") ?? 3
         currentRepNum = call.getInt("currentRep") ?? 1
         currentStageLabel = call.getString("stageLabel") ?? "Siết cơ PC"
+        totalUpdatesDispatched = 1
 
         let duration = Double(max(1, currentTimeRemaining))
         let now = Date()
@@ -341,6 +362,17 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
             self.currentActivity = activity
             self.lastActivityState = "Active"
 
+            // Lắng nghe biến động trạng thái của Activity từ iOS
+            Task {
+                for await state in activity.activityStateUpdates {
+                    self.lastActivityState = String(describing: state)
+                    self.notifyListeners("activityStateChanged", data: [
+                        "id": activity.id,
+                        "state": String(describing: state)
+                    ])
+                }
+            }
+
             startNativeAudioKeeper()
 
             call.resolve([
@@ -367,6 +399,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
             return
         }
 
+        totalUpdatesDispatched += 1
         if let state = call.getString("actionState") { currentActionState = state }
         if let time = call.getInt("timeRemaining") { currentTimeRemaining = time }
         if let rep = call.getInt("currentRep") { currentRepNum = rep }

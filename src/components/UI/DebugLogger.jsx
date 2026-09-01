@@ -27,7 +27,7 @@ import { audioEngine, SOUND_ACTIONS, SOUND_PRESETS } from '../../utils/audioEngi
 import { checkForUpdate } from '../../services/updateService';
 import { Capacitor } from '@capacitor/core';
 
-const APP_VERSION = 'v2.0.3';
+const APP_VERSION = 'v2.0.4';
 const LOG_STORAGE_KEY = 'pcflex_debug_logs_v2';
 
 const getStoredLogs = () => {
@@ -280,6 +280,9 @@ const DebugLogger = () => {
       `Has PlugIns Folder: ${nativeDiag?.hasPlugInsFolder ?? 'chưa quét'} | Widget Extension: ${nativeDiag?.hasWidgetExtension ?? 'chưa quét'}`,
       `PlugIns List: ${nativeDiag?.plugInsList?.join(', ') || 'none'}`,
       `Active Activities in SpringBoard: ${nativeDiag?.activeActivitiesCount ?? 0}`,
+      `Activity State: ${nativeDiag?.lastActivityState ?? 'Idle'} | Total Dispatched Updates: ${nativeDiag?.totalUpdatesDispatched ?? 0}`,
+      `Device Thermal State: ${nativeDiag?.thermalState ?? 'Chưa quét'} | Low Power Mode: ${nativeDiag?.isLowPowerModeEnabled ? 'BẬT' : 'TẮT'}`,
+      `Battery Level: ${nativeDiag?.batteryLevelPercent !== undefined && nativeDiag.batteryLevelPercent >= 0 ? nativeDiag.batteryLevelPercent + '%' : 'N/A'} (${nativeDiag?.batteryState ?? 'N/A'})`,
       `Current Audio Route: ${nativeDiag?.currentAudioRoute ?? 'Loa ngoài'}`,
       `Audio Interruption History: ${nativeDiag?.lastInterruption ?? 'None'}`,
       `Audio Context State: ${diagInfo.audioState} (${diagInfo.sampleRate}Hz)`,
@@ -327,7 +330,7 @@ const DebugLogger = () => {
               <Bug className="w-5 h-5 text-emerald-400" />
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-sm text-white">Trạm Chẩn Đoán Siêu Sâu v5.0</h3>
+                  <h3 className="font-bold text-sm text-white">Trạm Chẩn Đoán Siêu Sâu Con Bọ v6.0</h3>
                   <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/40">
                     {APP_VERSION}
                   </span>
