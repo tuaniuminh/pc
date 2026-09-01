@@ -148,49 +148,19 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     };
   }, [isActive, bgmActive]);
 
-  // Lắng nghe khi người dùng ẩn / mở lại app để bắt kịp tiến trình mà không bị đứng bài tập
+  // Lắng nghe khi người dùng ẩn / mở lại app
   useEffect(() => {
-    let backgroundTime = 0;
-
     const handleVisibilityChange = () => {
-      if (document.hidden) {
-        backgroundTime = Date.now();
-      } else {
-        if (isActive) {
-          liveActivityService.getNativeDiagnostics().then(diag => {
-            if (diag && diag.isNativeWorkoutRunning) {
-              if (diag.currentActionState) setActionState(diag.currentActionState);
-              if (diag.currentTimeRemaining !== undefined) setTimeRemaining(diag.currentTimeRemaining);
-              if (diag.currentRepNum !== undefined) setCurrentRep(diag.currentRepNum);
-              phaseStartTimeRef.current = Date.now() - ((stageDurationRef.current || 1) - (diag.currentTimeRemaining || 1)) * 1000;
-              addAppLog('success', `[NativeSync] Đồng bộ từ Swift Native: Hiệp ${diag.currentRepNum}, Trạng thái: ${diag.currentActionState}, Còn lại: ${diag.currentTimeRemaining}s`);
-            }
-          });
-        }
+      if (!document.hidden && isActive) {
+        addAppLog('info', `[AppState] Mở lại app - Tiến trình bài tập đang tiếp diễn`);
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [isActive]);
-
-  const syncLiveActivity = (customState, customTime, customRep, customStage) => {
-    const state = customState || actionState;
-    const time = customTime !== undefined ? customTime : timeRemaining;
-    const rep = customRep !== undefined ? customRep : currentRep;
-    const stg = customStage || currentStages[currentStageIndex];
-
-    liveActivityService.updateLiveActivity({
-      actionState: state,
-      timeRemaining: Math.max(1, time),
-      currentRep: rep,
-      totalReps: totalRoutineReps,
-      stageLabel: stg?.label || (state === 'squeezing' ? 'Siết cơ PC' : state === 'relaxing' ? 'Thả lỏng' : state === 'reverse' ? 'Kegel ngược' : 'Nghỉ chuyển')
-    });
-  };
 
   const phaseStartTimeRef = useRef(Date.now());
   const stageDurationRef = useRef(stageDuration);
@@ -247,7 +217,6 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
         setStageDuration(stage.relax);
         stageDurationRef.current = stage.relax;
         addAppLog('info', `[Workout] Chuyển sang Thả lỏng (${stage.relax}s, Hiệp ${currentRep}/${totalRoutineReps})`);
-        syncLiveActivity('relaxing', stage.relax, currentRep, stage);
         if (sfxEnabled) audioEngine.playRelaxSFX(settings.actionSounds);
         triggerHapticMedium();
       } else {
@@ -284,7 +253,6 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
         setTimeRemaining(nextStage.relax || 10);
         setStageDuration(nextStage.relax || 10);
         stageDurationRef.current = nextStage.relax || 10;
-        syncLiveActivity('transition', nextStage.relax || 10, 1, nextStage);
         if (sfxEnabled) audioEngine.playTransitionRestSFX(settings.actionSounds);
         triggerHapticHeavy();
       } else {
@@ -303,7 +271,6 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     setStageDuration(stage.squeeze);
     stageDurationRef.current = stage.squeeze;
     addAppLog('info', `[Workout] Bắt đầu ${nextState === 'reverse' ? 'Kegel ngược' : nextState === 'breathing' ? 'Thở bụng' : 'Siết'} (${stage.squeeze}s, Hiệp ${targetRep}/${totalRoutineReps})`);
-    syncLiveActivity(nextState, stage.squeeze, targetRep, stage);
 
     if (sfxEnabled) {
       if (stage.type === 'reverse') audioEngine.playReverseKegelSFX(settings.actionSounds);
@@ -334,21 +301,6 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
         }
       }
     }
-
-    // Kích hoạt Live Activities & Dynamic Island trên màn hình khóa
-    liveActivityService.startLiveActivity({
-      routineName: currentRoutine.name,
-      totalReps: totalRoutineReps,
-      actionState: currentStages[0]?.type === 'reverse' ? 'reverse' : 'squeezing',
-      timeRemaining: currentStages[0]?.squeeze || 1,
-      currentRep: 1,
-      stageLabel: currentStages[0]?.label || 'Siết cơ PC',
-      squeezeTime: currentStages[0]?.squeeze || 1,
-      relaxTime: currentStages[0]?.relax || 2,
-      hapticsEnabled: settings?.hapticsEnabled !== false,
-      sfxEnabled: !!sfxEnabled,
-      volume: (settings?.volume !== undefined ? settings.volume : 80) / 100
-    });
   };
 
   const handlePauseWorkout = () => {
@@ -356,7 +308,6 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     setIsActive(false);
     audioEngine.stopBackgroundAudioKeeper();
     triggerHapticMedium();
-    liveActivityService.stopLiveActivity();
   };
 
   const handleResetWorkout = () => {
@@ -375,7 +326,6 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
       setStageDuration(firstStage.squeeze || 1);
     }
     triggerHapticMedium();
-    liveActivityService.stopLiveActivity();
   };
 
   const completeSession = () => {
@@ -385,7 +335,6 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     setActionState('idle');
     triggerHapticSuccess();
     if (sfxEnabled) audioEngine.playCompletionSFX(settings.actionSounds);
-    liveActivityService.stopLiveActivity();
 
     const sessionData = {
       level: selectedPresetType === 'custom' ? 'custom' : selectedLevel,

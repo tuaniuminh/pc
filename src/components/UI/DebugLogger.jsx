@@ -27,7 +27,7 @@ import { audioEngine, SOUND_ACTIONS, SOUND_PRESETS } from '../../utils/audioEngi
 import { checkForUpdate } from '../../services/updateService';
 import { Capacitor } from '@capacitor/core';
 
-const APP_VERSION = 'v2.0.7';
+const APP_VERSION = 'v2.1.0';
 const LOG_STORAGE_KEY = 'pcflex_debug_logs_v2';
 
 const getStoredLogs = () => {
@@ -200,58 +200,28 @@ const DebugLogger = () => {
     try {
       const nat = await liveActivityService.getNativeDiagnostics();
       setNativeDiag(nat);
-      if (nat.areActivitiesEnabled === false) {
-        addAppLog('error', `[Scan 2/5] LỖI: Live Activities đang bị TẮT trong Cài đặt iOS của máy! (Settings -> PC Flex -> Live Activities -> BẬT)`);
-      } else {
-        addAppLog('success', `[Scan 2/5] Quyền Live Activities: ĐƯỢC PHÉP (areActivitiesEnabled = true)`);
-      }
-
-      if (nat.hasPlugInsFolder && nat.hasWidgetExtension) {
-        addAppLog('success', `[Scan 2/5] Widget Extension: ĐÃ TÌM THẤY PCFlexWidget.appex trong Bundle!`);
-      } else {
-        addAppLog('error', `[Scan 2/5] CẢNH BÁO: Chưa tìm thấy PCFlexWidget.appex trong thư mục PlugIns!`);
-      }
-
-      addAppLog('info', `[Scan 2/5] Số lượng Live Activity trên SpringBoard: ${nat.activeActivitiesCount || 0}`);
+      addAppLog('info', `[Scan 2/4] Nhiệt độ máy: ${nat?.thermalState || 'Bình thường'} | Chế độ tiết kiệm pin: ${nat?.isLowPowerModeEnabled ? 'BẬT' : 'TẮT'}`);
+      addAppLog('info', `[Scan 2/4] Pin: ${nat?.batteryLevelPercent >= 0 ? nat.batteryLevelPercent + '%' : 'N/A'} (${nat?.batteryState || 'N/A'})`);
     } catch (e) {
-      addAppLog('error', `[Scan 2/5] Lỗi truy vấn ActivityKit: ${e.message || String(e)}`);
+      addAppLog('error', `[Scan 2/4] Lỗi truy vấn phần cứng: ${e.message || String(e)}`);
     }
 
     // TẦNG 3: Audio Session & Route Detector
     const audioCtx = audioEngine?.audioCtx;
-    addAppLog('info', `[Scan 3/5] Web Audio State: ${audioCtx ? audioCtx.state : 'uninitialized'} (${audioCtx?.sampleRate || 0}Hz)`);
-    addAppLog('info', `[Scan 3/5] Audio Route Hiện Tại: ${nativeDiag?.currentAudioRoute || 'Loa ngoài iPhone'} | Interruption: ${nativeDiag?.lastInterruption || 'None'}`);
+    addAppLog('info', `[Scan 3/4] Web Audio State: ${audioCtx ? audioCtx.state : 'uninitialized'} (${audioCtx?.sampleRate || 0}Hz)`);
+    addAppLog('info', `[Scan 3/4] Audio Route Hiện Tại: ${nativeDiag?.currentAudioRoute || 'Loa ngoài iPhone'} | Interruption: ${nativeDiag?.lastInterruption || 'None'}`);
 
-    // TẦNG 4: Kiểm tra kết nối GitHub OTA API
+    // TẦNG 4: Kiểm tra kết nối GitHub OTA API & In-App Downloader
     try {
       const startTime = Date.now();
       const otaRes = await checkForUpdate(APP_VERSION);
       const pingMs = Date.now() - startTime;
-      addAppLog('success', `[Scan 4/5] GitHub OTA API Ping: ${pingMs}ms | Bản mới nhất trên GitHub: ${otaRes.tagName || 'None'}`);
+      addAppLog('success', `[Scan 4/4] GitHub OTA API Ping: ${pingMs}ms | Bản mới nhất trên GitHub: ${otaRes.tagName || 'None'}`);
     } catch (e) {
-      addAppLog('warn', `[Scan 4/5] GitHub OTA API Check: ${e.message || String(e)}`);
+      addAppLog('warn', `[Scan 4/4] GitHub OTA API Check: ${e.message || String(e)}`);
     }
 
-    // TẦNG 5: Thử nghiệm kích hoạt Live Activity 5 giây với Hardware TimerInterval
-    addAppLog('info', `[Scan 5/5] Đang kích hoạt thử nghiệm Live Activity với Apple Hardware TimerInterval...`);
-    try {
-      const startRes = await liveActivityService.startLiveActivity({
-        routineName: 'Chẩn Đoán Đảo Động',
-        totalReps: 5,
-        actionState: 'squeezing',
-        timeRemaining: 5,
-        currentRep: 1,
-        stageLabel: 'Kiểm tra Dynamic Island Apple Hardware Timer',
-        volume: 0.8,
-        hapticsEnabled: false,
-        sfxEnabled: true
-      });
-      addAppLog('success', `[Scan 5/5] Phản hồi kích hoạt Live Activity: ${JSON.stringify(startRes)}`);
-    } catch (e) {
-      addAppLog('error', `[Scan 5/5] Lỗi khởi động Live Activity: ${e.message || String(e)}`);
-    }
-
-    addAppLog('info', '================ HOÀN THÀNH QUÉT CHẨN ĐOÁN v5.0 ================');
+    addAppLog('info', '================ HOÀN THÀNH QUÉT CHẨN ĐOÁN (v2.1.0) ================');
     setScanning(false);
   };
 
