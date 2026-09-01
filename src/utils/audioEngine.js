@@ -82,6 +82,9 @@ export const ACTION_SOUND_KEYS = [
   { key: 'complete', name: '🎉 Hoàn Thành', defaultPreset: 'preset_20' }
 ];
 
+export const SOUND_ACTIONS = ACTION_SOUND_KEYS;
+export const SOUND_PRESETS = SOUND_STUDIO_PRESETS;
+
 class AudioSynthesizer {
   constructor() {
     this.audioCtx = null;
