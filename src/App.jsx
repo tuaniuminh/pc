@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
-const APP_VERSION = 'v2.2.14';
+const APP_VERSION = 'v2.2.15';
 
 function App() {
   const [activeTab, setActiveTab] = useState('timer'); // 'timer' | 'history' | 'plans' | 'settings'
@@ -144,6 +144,7 @@ function App() {
 
         <div className={activeTab === 'history' ? 'block' : 'hidden'}>
           <History 
+            activeTab={activeTab}
             onStartWorkout={() => setActiveTab('timer')}
           />
         </div>

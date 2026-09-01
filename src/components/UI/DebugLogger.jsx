@@ -27,7 +27,7 @@ import { audioEngine, SOUND_ACTIONS, SOUND_PRESETS } from '../../utils/audioEngi
 import { checkForUpdate } from '../../services/updateService';
 import { Capacitor } from '@capacitor/core';
 
-const APP_VERSION = 'v2.2.14';
+const APP_VERSION = 'v2.2.15';
 const LOG_STORAGE_KEY = 'pcflex_debug_logs_v2';
 
 const getStoredLogs = () => {

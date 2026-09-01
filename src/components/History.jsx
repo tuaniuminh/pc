@@ -29,7 +29,7 @@ import {
   recalibrateAndSyncAllData
 } from '../services/storageService';
 
-const History = ({ onStartWorkout }) => {
+const History = ({ onStartWorkout, activeTab }) => {
   const [activeSubtab, setActiveSubtab] = useState('calendar'); // 'calendar' | 'badges'
   const [historyList, setHistoryList] = useState(getHistory());
   const [stats, setStats] = useState(getHistoryStats());
@@ -48,7 +48,7 @@ const History = ({ onStartWorkout }) => {
 
   useEffect(() => {
     refreshData();
-  }, []);
+  }, [activeTab]);
 
   const handleConfirmDelete = () => {
     if (!deleteTarget) return;

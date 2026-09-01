@@ -200,6 +200,11 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
   timeRemainingRef.current = timeRemaining;
   const phaseRemainingOnStartRef = useRef(stageDuration);
 
+  // Bộ đếm tham chiếu chống Stale Closure để lưu chính xác lịch sử
+  const sessionSqueezesRef = useRef(0);
+  const sessionReverseKegelsRef = useRef(0);
+  const accumulatedWorkoutSecondsRef = useRef(0);
+
   // Main Engine Loop with Wall-Clock Delta Precision & Pause/Resume Preservation
   useEffect(() => {
     let timer = null;
@@ -236,15 +241,22 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     if (!stage) return;
 
     if (stage.type === 'transition') {
+      accumulatedWorkoutSecondsRef.current += (stage.relax || 10);
+      setSessionTotalSeconds(accumulatedWorkoutSecondsRef.current);
       advanceToNextStage();
       return;
     }
 
     if (actionState === 'squeezing' || actionState === 'reverse' || actionState === 'breathing') {
+      accumulatedWorkoutSecondsRef.current += (stage.squeeze || 0);
+      setSessionTotalSeconds(accumulatedWorkoutSecondsRef.current);
+
       if (stage.type === 'reverse') {
-        setSessionReverseKegels(r => r + 1);
+        sessionReverseKegelsRef.current += 1;
+        setSessionReverseKegels(sessionReverseKegelsRef.current);
       } else {
-        setSessionSqueezes(s => s + 1);
+        sessionSqueezesRef.current += 1;
+        setSessionSqueezes(sessionSqueezesRef.current);
       }
 
       if (stage.relax > 0) {
@@ -261,6 +273,10 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
         advanceRepOrStage();
       }
     } else if (actionState === 'relaxing' || actionState === 'idle') {
+      if (actionState === 'relaxing') {
+        accumulatedWorkoutSecondsRef.current += (stage.relax || 0);
+        setSessionTotalSeconds(accumulatedWorkoutSecondsRef.current);
+      }
       advanceRepOrStage();
     }
   };
@@ -330,6 +346,13 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     setIsActive(true);
 
     if (actionState === 'idle') {
+      sessionSqueezesRef.current = 0;
+      sessionReverseKegelsRef.current = 0;
+      accumulatedWorkoutSecondsRef.current = 0;
+      setSessionSqueezes(0);
+      setSessionReverseKegels(0);
+      setSessionTotalSeconds(0);
+
       const stage = currentStages[0];
       if (stage) {
         if (stage.type === 'transition') {
@@ -358,6 +381,9 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     setActionState('idle');
     setCurrentStageIndex(0);
     setCurrentRep(1);
+    sessionSqueezesRef.current = 0;
+    sessionReverseKegelsRef.current = 0;
+    accumulatedWorkoutSecondsRef.current = 0;
     setSessionSqueezes(0);
     setSessionReverseKegels(0);
     setSessionTotalSeconds(0);
@@ -367,6 +393,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
       phaseRemainingOnStartRef.current = firstStage.squeeze || 1;
       setTimeRemaining(firstStage.squeeze || 1);
       setStageDuration(firstStage.squeeze || 1);
+      stageDurationRef.current = firstStage.squeeze || 1;
     }
     triggerHapticMedium();
   };
@@ -378,16 +405,46 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     triggerHapticSuccess();
     if (sfxEnabled) audioEngine.playCompletionSFX(settings.actionSounds);
 
+    // Tính toán tổng thời lượng chuẩn xác của toàn bộ bài tập
+    const totalCalculatedSeconds = currentStages.reduce((sum, st) => {
+      if (st.type === 'transition') return sum + (st.relax || 10);
+      const perRep = (st.squeeze || 0) + (st.relax || 0);
+      return sum + (perRep * (st.reps || 1));
+    }, 0);
+
+    const totalCalculatedSqueezes = currentStages.reduce((sum, st) => {
+      if (st.type === 'reverse' || st.type === 'transition' || st.type === 'breathing') return sum;
+      return sum + (st.reps || 0);
+    }, 0);
+
+    const totalCalculatedReverseKegels = currentStages.reduce((sum, st) => {
+      if (st.type === 'reverse') return sum + (st.reps || 0);
+      return sum;
+    }, 0);
+
+    const finalDuration = accumulatedWorkoutSecondsRef.current > 0
+      ? Math.round(accumulatedWorkoutSecondsRef.current)
+      : totalCalculatedSeconds;
+
+    const finalSqueezes = sessionSqueezesRef.current > 0
+      ? sessionSqueezesRef.current
+      : totalCalculatedSqueezes;
+
+    const finalReverseKegels = sessionReverseKegelsRef.current > 0
+      ? sessionReverseKegelsRef.current
+      : totalCalculatedReverseKegels;
+
     const sessionData = {
       level: selectedPresetType === 'custom' ? 'custom' : selectedLevel,
       routineType: selectedPresetType,
       routineName: currentRoutine.name,
       gender: selectedGender,
-      durationSeconds: sessionTotalSeconds,
-      totalSqueezes: sessionSqueezes,
-      totalReverseKegels: sessionReverseKegels
+      durationSeconds: finalDuration,
+      totalSqueezes: finalSqueezes,
+      totalReverseKegels: finalReverseKegels
     };
 
+    addAppLog('success', `[Workout] Lưu kết quả: ${finalDuration}s, ${finalSqueezes} lượt siết, ${finalReverseKegels} Kegel ngược`);
     const { newlyUnlocked } = saveHistorySession(sessionData);
 
     setCompletedSummary({
