@@ -205,10 +205,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
 
         setTimeRemaining(prev => {
           if (prev > 1) {
-            const nextSec = prev - 1;
-            // Cập nhật Live Activities & Dynamic Island trên màn hình khóa (không phát beep đếm ngược)
-            syncLiveActivity(actionState, nextSec, currentRep, currentStages[currentStageIndex]);
-            return nextSec;
+            return prev - 1;
           } else {
             // Hết giây của phase hiện tại -> Chuyển đổi trạng thái kế tiếp trong microtask riêng
             setTimeout(() => {

@@ -42,10 +42,11 @@ public struct PCFlexLiveActivityWidget: Widget {
 
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text(formatCountdown(context.state.timeRemaining))
+                        Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
                             .font(.system(size: 26, weight: .black, design: .rounded))
                             .monospacedDigit()
                             .foregroundColor(actionColor(for: context.state.actionState))
+                            .lineLimit(1)
                         Text("Hiệp \(context.state.currentRep)/\(context.state.totalReps)")
                             .font(.system(size: 10, weight: .bold, design: .rounded))
                             .foregroundColor(.white.opacity(0.75))
@@ -74,18 +75,19 @@ public struct PCFlexLiveActivityWidget: Widget {
                     .padding(.top, 4)
                 }
             } compactLeading: {
-                // MARK: - Compact Leading (Giống Đồng hồ Apple với icon chuyển động và màu theo trạng thái)
+                // MARK: - Compact Leading (Biểu tượng trạng thái phát sáng)
                 HStack(spacing: 2) {
                     Text(actionIcon(for: context.state.actionState))
                         .font(.system(size: 13))
                 }
                 .padding(.leading, 2)
             } compactTrailing: {
-                // MARK: - Compact Trailing (Đếm ngược 0:06, 0:01 theo phong cách Apple Timer với màu Neon chuẩn PC Flex)
-                Text(formatCountdown(context.state.timeRemaining))
+                // MARK: - Compact Trailing (Đồng hồ tự động đếm lùi từng giây của hệ điều hành Apple)
+                Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .foregroundColor(actionColor(for: context.state.actionState))
+                    .lineLimit(1)
                     .padding(.trailing, 2)
             } minimal: {
                 // MARK: - Minimal: Biểu tượng trạng thái nhỏ gọn
@@ -135,12 +137,13 @@ struct LockScreenLiveActivityView: View {
 
             Spacer()
 
-            // Cột bên phải: Đồng hồ đếm lùi lớn theo kiểu Apple Clock Timer
+            // Cột bên phải: Đồng hồ đếm lùi lớn tự động của iOS
             VStack(alignment: .trailing, spacing: 0) {
-                Text(formatCountdown(context.state.timeRemaining))
+                Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
                     .font(.system(size: 36, weight: .black, design: .rounded))
                     .monospacedDigit()
                     .foregroundColor(actionColor(for: context.state.actionState))
+                    .lineLimit(1)
                 Text(context.state.actionState == "squeezing" ? "ĐANG SIẾT" : context.state.actionState == "relaxing" ? "THẢ LỎNG" : "KEGEL")
                     .font(.system(size: 9, weight: .black, design: .rounded))
                     .foregroundColor(.white.opacity(0.6))
@@ -159,14 +162,6 @@ struct LockScreenLiveActivityView: View {
 }
 
 // MARK: - Helpers & Color Palette Chuẩn PC Flex
-@available(iOS 16.1, *)
-func formatCountdown(_ seconds: Int) -> String {
-    let s = max(0, seconds)
-    let m = s / 60
-    let sec = s % 60
-    return String(format: "%d:%02d", m, sec)
-}
-
 @available(iOS 16.1, *)
 func actionIcon(for state: String) -> String {
     switch state {
@@ -195,17 +190,13 @@ func actionTitle(for state: String) -> String {
 func actionColor(for state: String) -> Color {
     switch state {
     case "squeezing": 
-        // Màu Xanh Lục Neon (Emerald) rực rỡ như đồng hồ PC Flex
-        return Color(red: 0.0, green: 0.96, blue: 0.61)
+        return Color(red: 0.0, green: 0.96, blue: 0.61) // Emerald
     case "relaxing": 
-        // Màu Xanh Băng Tuyết (Cyan) tươi mát
-        return Color(red: 0.0, green: 0.82, blue: 1.0)
+        return Color(red: 0.0, green: 0.82, blue: 1.0)  // Cyan
     case "reverse": 
-        // Màu Tím Neon (Violet) đẳng cấp
-        return Color(red: 0.66, green: 0.33, blue: 0.97)
+        return Color(red: 0.66, green: 0.33, blue: 0.97) // Violet
     case "transition": 
-        // Màu Cam Vàng (Amber) báo hiệu chuyển nhịp
-        return Color(red: 0.96, green: 0.62, blue: 0.04)
+        return Color(red: 0.96, green: 0.62, blue: 0.04) // Amber
     case "breathing": 
         return Color(red: 0.06, green: 0.73, blue: 0.51)
     default: 
