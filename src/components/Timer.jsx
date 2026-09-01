@@ -412,64 +412,68 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
           isActive={isActive}
         />
 
-        {/* Chi tiết Lượt tập & Thanh tiến trình logic cũ (Chặng đã hoàn thành sẽ tự động ẩn đi) */}
-        <div className="space-y-2 pt-1">
-          <div className="flex items-center justify-between text-sm font-extrabold text-slate-800 dark:text-gray-200">
-            <span>Lượt tập:</span>
-            <span className="font-mono text-base text-cyan-600 dark:text-cyan-400 font-black">
-              {currentCompletedReps} / {totalRoutineReps}
-            </span>
+        {/* KHU VỰC HIỆU ỨNG SÓNG SINH HỌC & TIẾN ĐỘ THÔNG MINH (BIO-HARMONIC SPECTRUM & STAGE MATRIX) */}
+        <div className="space-y-3 pt-1">
+          {/* Huy hiệu Thông tin Chặng & Lượt tập dạng Hologram Pill */}
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 font-bold text-slate-700 dark:text-gray-300 shadow-xs">
+              <span className={`w-2 h-2 rounded-full animate-ping ${
+                actionState === 'squeezing' ? 'bg-emerald-500' :
+                actionState === 'relaxing' ? 'bg-cyan-500' :
+                actionState === 'reverse' ? 'bg-violet-500' : 'bg-amber-500'
+              }`} />
+              <span className="truncate max-w-[170px]">
+                Chặng {currentStageIndex + 1}/{currentStages.length}: {currentStage?.label || 'Chuẩn bị'}
+              </span>
+            </div>
+
+            <div className="px-3 py-1.5 rounded-full bg-cyan-500/10 dark:bg-cyan-500/15 border border-cyan-500/30 font-black text-cyan-600 dark:text-cyan-400 font-mono shadow-xs flex items-center space-x-1">
+              <span>🔥</span>
+              <span>{currentCompletedReps} / {totalRoutineReps} lượt</span>
+            </div>
           </div>
 
-          {/* Thanh Tiến Trình Phân Đoạn (Chặng đã hoàn thành tự động trượt ẩn sang trái) */}
-          <div className="h-2 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden flex gap-1 p-0.5">
-            {currentStages.map((st, idx) => {
-              const isPast = idx < currentStageIndex;
-              const isCurrent = idx === currentStageIndex;
+          {/* DẢI SÓNG NĂNG LƯỢNG SINH HỌC DAO ĐỘNG THỜI GIAN THỰC (BIO-FREQUENCY EQUALIZER SPECTRUM) */}
+          <div className="p-3 rounded-2xl bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 dark:from-white/[0.03] dark:via-white/[0.06] dark:to-white/[0.03] border border-slate-200/80 dark:border-white/10 flex items-center justify-center gap-1.5 h-12 overflow-hidden shadow-inner">
+            {[...Array(18)].map((_, i) => {
+              // Tính chiều cao nhấp nhô của sóng sinh học theo hình sin & nhịp tập
+              const mid = 8.5;
+              const dist = Math.abs(i - mid);
+              const factor = Math.max(0.2, (9 - dist) / 9);
 
-              if (isPast) {
-                // ĐÃ HOÀN THÀNH -> Ẩn hoàn toàn chặng này
-                return (
-                  <div
-                    key={idx}
-                    className="w-0 max-w-0 min-w-0 opacity-0 pointer-events-none -mr-1 scale-x-0 transition-all duration-500 overflow-hidden"
-                  />
-                );
+              let barHeight = 'h-1.5';
+              let barColor = 'bg-slate-300 dark:bg-white/20';
+
+              if (isActive) {
+                if (actionState === 'squeezing') {
+                  barColor = 'bg-gradient-to-t from-emerald-500 to-teal-300 shadow-sm shadow-emerald-500/50';
+                  // Sóng siết: biên độ cao, co cuộn mạnh mẽ
+                  const heights = ['h-3', 'h-5', 'h-7', 'h-9', 'h-10', 'h-8', 'h-6', 'h-4'];
+                  barHeight = heights[(i + (timeRemaining % 4)) % heights.length];
+                } else if (actionState === 'relaxing') {
+                  barColor = 'bg-gradient-to-t from-cyan-500 to-sky-300 shadow-sm shadow-cyan-500/50';
+                  // Sóng thả lỏng: gợn sóng êm dịu, nhịp nhàng
+                  const heights = ['h-2', 'h-4', 'h-6', 'h-7', 'h-5', 'h-3', 'h-2'];
+                  barHeight = heights[(i + (timeRemaining % 3)) % heights.length];
+                } else if (actionState === 'reverse') {
+                  barColor = 'bg-gradient-to-t from-violet-500 to-purple-300 shadow-sm shadow-violet-500/50';
+                  // Sóng Kegel ngược: dao động rộng và sâu
+                  const heights = ['h-3', 'h-6', 'h-8', 'h-9', 'h-7', 'h-4'];
+                  barHeight = heights[(i + (timeRemaining % 2)) % heights.length];
+                } else {
+                  barColor = 'bg-gradient-to-t from-amber-500 to-yellow-300';
+                  barHeight = 'h-3';
+                }
               }
 
-              const stagePercent = isCurrent 
-                ? Math.min(100, Math.round(((actionState === 'idle' ? 0 : currentRep) / (st.reps || 1)) * 100))
-                : 0;
-
               return (
-                <div 
-                  key={idx} 
-                  className="h-full flex-1 bg-slate-300/70 dark:bg-white/5 rounded-full overflow-hidden relative transition-all duration-500"
-                >
-                  <div 
-                    className="h-full bg-gradient-to-r from-cyan-400 to-teal-400 transition-all duration-500 rounded-full"
-                    style={{ width: `${stagePercent}%` }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Nhãn Giai Đoạn Chi Tiết (Chỉ hiển thị các chặng chưa và đang tập để không bị dồn chữ) */}
-          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-gray-400 font-semibold pt-0.5">
-            {currentStages.map((st, idx) => {
-              if (idx < currentStageIndex) return null; // Ẩn nhãn của chặng đã qua
-
-              const isCurrent = idx === currentStageIndex;
-              return (
-                <span 
-                  key={idx}
-                  className={`flex-1 text-center transition-all duration-300 line-clamp-1 px-1 ${
-                    isCurrent ? 'text-cyan-600 dark:text-cyan-400 font-extrabold scale-105' : 'text-slate-400 dark:text-gray-500'
-                  }`}
-                >
-                  {st.label || (st.type === 'reverse' ? `Kegel ngược ${st.squeeze}s` : st.type === 'breathing' ? 'Thở bụng' : `Siết ${st.squeeze}s`)}
-                </span>
+                <div
+                  key={i}
+                  className={`w-1 rounded-full transition-all duration-300 ${barColor} ${barHeight}`}
+                  style={{
+                    opacity: isActive ? 0.95 : 0.4
+                  }}
+                />
               );
             })}
           </div>

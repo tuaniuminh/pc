@@ -41,7 +41,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin, UIDocumentInteract
         return self.bridge?.viewController?.view.bounds ?? .zero
     }
 
-    // MARK: - Native In-App IPA Downloader & TrollStore Sharer
+    // MARK: - Native In-App IPA Downloader & TrollStore Direct Opener
     @objc public func downloadAndOpenIPA(_ call: CAPPluginCall) {
         guard let urlString = call.getString("url"), let url = URL(string: urlString) else {
             call.reject("URL tải file IPA không hợp lệ")
@@ -88,29 +88,49 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin, UIDocumentInteract
                         return
                     }
 
-                    // Sử dụng UIDocumentInteractionController để mở menu "Mở bằng..." (Open in...)
-                    // Menu này liệt kê trực tiếp TrollStore ở vị trí ưu tiên số 1
-                    self.docInteractionController = UIDocumentInteractionController(url: destinationUrl)
-                    self.docInteractionController?.delegate = self
-                    self.docInteractionController?.uti = "com.apple.itunes.ipa"
+                    // 1. Mở trực tiếp TrollStore qua URL Scheme (Ưu tiên số 1 - Cài đặt tức thì không cần Share Sheet)
+                    let fileUrlString = destinationUrl.absoluteString
+                    let filePathString = destinationUrl.path
+                    let trollUrls = [
+                        URL(string: "apple-magnifier://install?url=\(fileUrlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"),
+                        URL(string: "trollstore://install?url=\(fileUrlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"),
+                        URL(string: "apple-magnifier://install?url=\(filePathString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"),
+                        URL(string: "trollstore://install?url=\(filePathString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")
+                    ]
 
-                    let centerRect = CGRect(x: viewController.view.bounds.midX, y: viewController.view.bounds.midY, width: 0, height: 0)
-                    let presented = self.docInteractionController?.presentOpenInMenu(from: centerRect, in: viewController.view, animated: true) ?? false
-
-                    if !presented {
-                        // Nếu không có menu Open In, mở Share Sheet
-                        let activityVC = UIActivityViewController(activityItems: [destinationUrl], applicationActivities: nil)
-                        if let popover = activityVC.popoverPresentationController {
-                            popover.sourceView = viewController.view
-                            popover.sourceRect = centerRect
-                            popover.permittedArrowDirections = []
+                    var openedDirectly = false
+                    for tUrl in trollUrls.compactMap({ $0 }) {
+                        if UIApplication.shared.canOpenURL(tUrl) {
+                            UIApplication.shared.open(tUrl, options: [:], completionHandler: nil)
+                            openedDirectly = true
+                            break
                         }
-                        viewController.present(activityVC, animated: true)
+                    }
+
+                    // 2. Fallback sang Open-In Menu nếu không bắt được Scheme
+                    if !openedDirectly {
+                        self.docInteractionController = UIDocumentInteractionController(url: destinationUrl)
+                        self.docInteractionController?.delegate = self
+                        self.docInteractionController?.uti = "com.apple.itunes.ipa"
+
+                        let centerRect = CGRect(x: viewController.view.bounds.midX, y: viewController.view.bounds.midY, width: 0, height: 0)
+                        let presented = self.docInteractionController?.presentOpenInMenu(from: centerRect, in: viewController.view, animated: true) ?? false
+
+                        if !presented {
+                            let activityVC = UIActivityViewController(activityItems: [destinationUrl], applicationActivities: nil)
+                            if let popover = activityVC.popoverPresentationController {
+                                popover.sourceView = viewController.view
+                                popover.sourceRect = centerRect
+                                popover.permittedArrowDirections = []
+                            }
+                            viewController.present(activityVC, animated: true)
+                        }
                     }
 
                     call.resolve([
                         "success": true,
-                        "path": destinationUrl.path
+                        "path": destinationUrl.path,
+                        "openedDirectly": openedDirectly
                     ])
                 }
             } catch {

@@ -55,6 +55,11 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" ios/App/App/Info.plist || true
           /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string pcflex" ios/App/App/Info.plist || true
 
+          echo "Đăng ký LSApplicationQueriesSchemes cho TrollStore"
+          /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes array" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes:0 string apple-magnifier" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes:1 string trollstore" ios/App/App/Info.plist || true
+
           echo "Đồng bộ AppDelegate.swift tùy chỉnh với AVAudioSession và xử lý dọn dẹp Live Activities"
           cp ios-native/AppDelegate.swift ios/App/App/AppDelegate.swift || true
 
