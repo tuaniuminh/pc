@@ -62,7 +62,7 @@ const UpdateModal = ({ updateInfo, onClose }) => {
         <div className="flex items-center space-x-3">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-emerald-400 p-0.5 shadow-lg shadow-cyan-500/25 flex items-center justify-center">
             <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center text-cyan-400">
-              <Rocket size={24} className={isDownloading ? "animate-spin" : "animate-bounce"} />
+              <Rocket size={24} className="transform -rotate-45 text-cyan-400" />
             </div>
           </div>
           <div>
