@@ -42,11 +42,10 @@ public struct PCFlexLiveActivityWidget: Widget {
 
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text(timerInterval: context.state.startDate...context.state.endDate, countsDown: true)
+                        Text(context.state.endDate, style: .timer)
                             .font(.system(size: 26, weight: .black, design: .rounded))
                             .monospacedDigit()
                             .foregroundColor(actionColor(for: context.state.actionState))
-                            .lineLimit(1)
                         Text("Hiệp \(context.state.currentRep)/\(context.state.totalReps)")
                             .font(.system(size: 10, weight: .bold, design: .rounded))
                             .foregroundColor(.white.opacity(0.75))
@@ -78,18 +77,16 @@ public struct PCFlexLiveActivityWidget: Widget {
                 // MARK: - Compact Leading (Biểu tượng trạng thái phát sáng)
                 HStack(spacing: 2) {
                     Text(actionIcon(for: context.state.actionState))
-                        .font(.system(size: 13))
+                        .font(.system(size: 12))
                 }
                 .padding(.leading, 2)
             } compactTrailing: {
-                // MARK: - Compact Trailing (Đếm ngược phần cứng tuyệt đối không bao giờ lỗi range)
-                Text(timerInterval: context.state.startDate...context.state.endDate, countsDown: true)
+                // MARK: - Compact Trailing (Đồng hồ đếm lùi siêu gọn chuẩn Apple style: .timer không bao giờ bị tràn khung)
+                Text(context.state.endDate, style: .timer)
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .foregroundColor(actionColor(for: context.state.actionState))
-                    .frame(minWidth: 28, alignment: .trailing)
-                    .lineLimit(1)
-                    .padding(.trailing, 2)
+                    .frame(maxWidth: 44, alignment: .trailing)
             } minimal: {
                 // MARK: - Minimal: Biểu tượng trạng thái nhỏ gọn
                 Text(actionIcon(for: context.state.actionState))
@@ -140,11 +137,10 @@ struct LockScreenLiveActivityView: View {
 
             // Cột bên phải: Đồng hồ đếm lùi lớn tự động của iOS
             VStack(alignment: .trailing, spacing: 0) {
-                Text(timerInterval: context.state.startDate...context.state.endDate, countsDown: true)
+                Text(context.state.endDate, style: .timer)
                     .font(.system(size: 36, weight: .black, design: .rounded))
                     .monospacedDigit()
                     .foregroundColor(actionColor(for: context.state.actionState))
-                    .lineLimit(1)
                 Text(context.state.actionState == "squeezing" ? "ĐANG SIẾT" : context.state.actionState == "relaxing" ? "THẢ LỎNG" : "KEGEL")
                     .font(.system(size: 9, weight: .black, design: .rounded))
                     .foregroundColor(.white.opacity(0.6))
