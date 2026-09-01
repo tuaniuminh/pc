@@ -148,11 +148,19 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     };
   }, [isActive, bgmActive]);
 
-  // Lắng nghe khi người dùng ẩn / mở lại app
+  // Lắng nghe khi người dùng ẩn / mở lại app: Tự động tạm dừng bài tập & ngắt 100% âm thanh khi ẩn app
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (!document.hidden && isActive) {
-        addAppLog('info', `[AppState] Mở lại app - Tiến trình bài tập đang tiếp diễn`);
+      if (document.hidden) {
+        if (isActive) {
+          addAppLog('info', `[AppState] Ẩn ứng dụng - Tự động tạm dừng bài tập và ngắt âm thanh`);
+          setIsActive(false);
+          if (audioEngine.audioCtx && audioEngine.audioCtx.state === 'running') {
+            audioEngine.audioCtx.suspend();
+          }
+        }
+      } else {
+        addAppLog('info', `[AppState] Mở lại ứng dụng`);
       }
     };
 
@@ -285,7 +293,6 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     phaseStartTimeRef.current = Date.now();
     addAppLog('info', `[Workout] Bắt đầu: ${currentRoutine.name} (${totalRoutineReps} hiệp)`);
     audioEngine.resumeContext();
-    audioEngine.startBackgroundAudioKeeper();
     setIsActive(true);
 
     if (actionState === 'idle') {
@@ -306,14 +313,12 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
   const handlePauseWorkout = () => {
     addAppLog('info', `[Workout] Tạm dừng bài tập`);
     setIsActive(false);
-    audioEngine.stopBackgroundAudioKeeper();
     triggerHapticMedium();
   };
 
   const handleResetWorkout = () => {
     addAppLog('info', `[Workout] Đặt lại bài tập`);
     setIsActive(false);
-    audioEngine.stopBackgroundAudioKeeper();
     setActionState('idle');
     setCurrentStageIndex(0);
     setCurrentRep(1);
@@ -331,7 +336,6 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
   const completeSession = () => {
     addAppLog('success', `[Workout] Hoàn thành bài tập!`);
     setIsActive(false);
-    audioEngine.stopBackgroundAudioKeeper();
     setActionState('idle');
     triggerHapticSuccess();
     if (sfxEnabled) audioEngine.playCompletionSFX(settings.actionSounds);
