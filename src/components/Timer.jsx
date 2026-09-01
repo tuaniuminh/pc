@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import OrbVisualizer from './UI/OrbVisualizer';
 import { audioEngine } from '../utils/audioEngine';
 import { liveActivityService } from '../services/liveActivityService';
@@ -195,33 +195,40 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     });
   };
 
-  // Main Engine Interval Loop
+  const phaseStartTimeRef = useRef(Date.now());
+  const stageDurationRef = useRef(stageDuration);
+  stageDurationRef.current = stageDuration;
+
+  // Main Engine Loop with Wall-Clock Delta Precision (Khắc phục 100% việc WebKit bị trôi nhịp trong nền)
   useEffect(() => {
     let timer = null;
 
     if (isActive) {
-      timer = setInterval(() => {
-        setSessionTotalSeconds(s => s + 1);
+      phaseStartTimeRef.current = Date.now();
 
-        setTimeRemaining(prev => {
-          if (prev > 1) {
-            return prev - 1;
-          } else {
-            // Hết giây của phase hiện tại -> Chuyển đổi trạng thái kế tiếp trong microtask riêng
-            setTimeout(() => {
-              handlePhaseTransition();
-            }, 0);
-            return 0;
-          }
-        });
-      }, 1000);
+      timer = setInterval(() => {
+        const now = Date.now();
+        const elapsedSec = (now - phaseStartTimeRef.current) / 1000;
+        const currentTargetSec = stageDurationRef.current || 1;
+        const remaining = Math.max(0, Math.ceil(currentTargetSec - elapsedSec));
+
+        setTimeRemaining(remaining);
+
+        if (elapsedSec >= currentTargetSec) {
+          phaseStartTimeRef.current = Date.now();
+          setTimeout(() => {
+            handlePhaseTransition();
+          }, 0);
+        }
+      }, 250); // Kiểm tra 4 lần/giây để chuyển nhịp tức thì không độ trễ
     }
 
     return () => clearInterval(timer);
-  }, [isActive, actionState, currentStageIndex, currentRep, stageDuration]);
+  }, [isActive, actionState, currentStageIndex, currentRep]);
 
   // Xử lý chuyển đổi giữa Siết (Squeeze) <-> Thả lỏng (Relax) <-> Sang Rep tiếp theo hoặc Chặng tiếp theo
   const handlePhaseTransition = () => {
+    phaseStartTimeRef.current = Date.now();
     const stage = currentStages[currentStageIndex];
     if (!stage) return;
 
@@ -241,6 +248,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
         setActionState('relaxing');
         setTimeRemaining(stage.relax);
         setStageDuration(stage.relax);
+        stageDurationRef.current = stage.relax;
         addAppLog('info', `[Workout] Chuyển sang Thả lỏng (${stage.relax}s, Hiệp ${currentRep}/${totalRoutineReps})`);
         syncLiveActivity('relaxing', stage.relax, currentRep, stage);
         if (sfxEnabled) audioEngine.playRelaxSFX(settings.actionSounds);
@@ -274,9 +282,11 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
       const nextStage = currentStages[nextIndex];
 
       if (nextStage.type === 'transition') {
+        phaseStartTimeRef.current = Date.now();
         setActionState('transition');
         setTimeRemaining(nextStage.relax || 10);
         setStageDuration(nextStage.relax || 10);
+        stageDurationRef.current = nextStage.relax || 10;
         syncLiveActivity('transition', nextStage.relax || 10, 1, nextStage);
         if (sfxEnabled) audioEngine.playTransitionRestSFX(settings.actionSounds);
         triggerHapticHeavy();
@@ -289,10 +299,12 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
   };
 
   const startSqueezePhase = (stage, targetRep = currentRep) => {
+    phaseStartTimeRef.current = Date.now();
     const nextState = stage.type === 'reverse' ? 'reverse' : stage.type === 'breathing' ? 'breathing' : 'squeezing';
     setActionState(nextState);
     setTimeRemaining(stage.squeeze);
     setStageDuration(stage.squeeze);
+    stageDurationRef.current = stage.squeeze;
     addAppLog('info', `[Workout] Bắt đầu ${nextState === 'reverse' ? 'Kegel ngược' : nextState === 'breathing' ? 'Thở bụng' : 'Siết'} (${stage.squeeze}s, Hiệp ${targetRep}/${totalRoutineReps})`);
     syncLiveActivity(nextState, stage.squeeze, targetRep, stage);
 
@@ -306,6 +318,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
 
 
   const handleStartWorkout = () => {
+    phaseStartTimeRef.current = Date.now();
     addAppLog('info', `[Workout] Bắt đầu: ${currentRoutine.name} (${totalRoutineReps} hiệp)`);
     audioEngine.resumeContext();
     audioEngine.startBackgroundAudioKeeper();

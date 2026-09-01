@@ -42,7 +42,7 @@ public struct PCFlexLiveActivityWidget: Widget {
 
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
+                        Text(context.state.targetDate, style: .timer)
                             .font(.system(size: 26, weight: .black, design: .rounded))
                             .monospacedDigit()
                             .foregroundColor(actionColor(for: context.state.actionState))
@@ -82,8 +82,8 @@ public struct PCFlexLiveActivityWidget: Widget {
                 }
                 .padding(.leading, 2)
             } compactTrailing: {
-                // MARK: - Compact Trailing (Đồng hồ tự động đếm lùi từng giây của hệ điều hành Apple)
-                Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
+                // MARK: - Compact Trailing (Đồng hồ đếm lùi tự động phần cứng style: .timer chuẩn Apple)
+                Text(context.state.targetDate, style: .timer)
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .foregroundColor(actionColor(for: context.state.actionState))
@@ -139,7 +139,7 @@ struct LockScreenLiveActivityView: View {
 
             // Cột bên phải: Đồng hồ đếm lùi lớn tự động của iOS
             VStack(alignment: .trailing, spacing: 0) {
-                Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
+                Text(context.state.targetDate, style: .timer)
                     .font(.system(size: 36, weight: .black, design: .rounded))
                     .monospacedDigit()
                     .foregroundColor(actionColor(for: context.state.actionState))
