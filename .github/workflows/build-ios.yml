@@ -128,7 +128,9 @@ jobs:
           VERSION=$(jq -r '.version' package.json)
           echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
           echo "Cập nhật MARKETING_VERSION = $VERSION vào Xcode project"
-          sed -i '' "s/MARKETING_VERSION = .*/MARKETING_VERSION = $VERSION;/g" ios/App/App.xcodeproj/project.pbxproj
+          sed -i '' "s/MARKETING_VERSION = .*/MARKETING_VERSION = $VERSION;/g" ios/App/App.xcodeproj/project.pbxproj || true
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" ios/App/PCFlexWidget/Info.plist || /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string $VERSION" ios/App/PCFlexWidget/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1" ios/App/PCFlexWidget/Info.plist || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string 1" ios/App/PCFlexWidget/Info.plist || true
 
       - name: Build mã nguồn iOS & Widget Extension bằng Xcode (Không ký)
         working-directory: ios/App
@@ -170,15 +172,30 @@ jobs:
           # Kiểm tra bắt buộc: Nếu PlugIns không có PCFlexWidget.appex thì dừng build ngay
           test -d "build/Build/Products/Release-iphoneos/App.app/PlugIns/PCFlexWidget.appex" || (echo "LỖI: PCFlexWidget.appex không tồn tại trong PlugIns!" && exit 1)
 
-      - name: Ký mã giả (Ad-Hoc) với Entitlements cho TrollStore
+      - name: Ký mã giả (Ad-Hoc) với Entitlements cho TrollStore (Nested Inside-Out Signing)
         run: |
           # Cấp quyền thực thi 755 cho toàn bộ nhị phân
           chmod -R 755 ios/App/build/Build/Products/Release-iphoneos/App.app
-          if [ -d "ios/App/build/Build/Products/Release-iphoneos/App.app/PlugIns/PCFlexWidget.appex" ]; then
-            echo "Ký mã giả cho Widget Extension PCFlexWidget.appex"
-            codesign --force --sign - --entitlements ios-build-entitlements.plist ios/App/build/Build/Products/Release-iphoneos/App.app/PlugIns/PCFlexWidget.appex
+
+          # 1. Ký các Frameworks nếu có
+          if [ -d "ios/App/build/Build/Products/Release-iphoneos/App.app/Frameworks" ]; then
+            for fw in ios/App/build/Build/Products/Release-iphoneos/App.app/Frameworks/*; do
+              if [ -d "$fw" ] || [ -f "$fw" ]; then
+                echo "Ký Framework: $fw"
+                codesign --force --sign - --timestamp=none "$fw" || true
+              fi
+            done
           fi
-          codesign --force --sign - --deep --entitlements ios-build-entitlements.plist ios/App/build/Build/Products/Release-iphoneos/App.app
+
+          # 2. Ký Widget Extension PCFlexWidget.appex trước (Inside-out)
+          if [ -d "ios/App/build/Build/Products/Release-iphoneos/App.app/PlugIns/PCFlexWidget.appex" ]; then
+            echo "Ký mã giả chuẩn cho Widget Extension PCFlexWidget.appex"
+            codesign --force --sign - --timestamp=none --entitlements ios-build-entitlements.plist ios/App/build/Build/Products/Release-iphoneos/App.app/PlugIns/PCFlexWidget.appex
+          fi
+
+          # 3. Ký Main App mà KHÔNG dùng --deep để bảo vệ toàn vẹn chữ ký của PlugIns
+          echo "Ký mã giả cho App chính"
+          codesign --force --sign - --timestamp=none --entitlements ios-build-entitlements.plist ios/App/build/Build/Products/Release-iphoneos/App.app
 
       - name: Đóng gói thành file IPA chuẩn
         run: |
