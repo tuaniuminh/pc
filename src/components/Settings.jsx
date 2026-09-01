@@ -31,7 +31,7 @@ import { exportBackupJSON, importBackupJSON } from '../services/storageService';
 import { triggerHapticMedium, triggerHapticLight } from '../utils/hapticsUtils';
 import { checkForUpdate, installViaTrollStore, openDirectDownload, downloadIPAInApp } from '../services/updateService';
 
-const SETTINGS_APP_VERSION = 'v2.2.9';
+const SETTINGS_APP_VERSION = 'v2.2.10';
 
 const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
   const [showKey, setShowKey] = useState(false);
@@ -61,21 +61,29 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
   };
 
   const handleCheckUpdateManual = async () => {
+    if (isCheckingUpdate) return;
     setIsCheckingUpdate(true);
-    setUpdateCheckState(null);
+    triggerHapticLight();
     try {
-      const res = await checkForUpdate(SETTINGS_APP_VERSION);
+      const [res] = await Promise.all([
+        checkForUpdate(SETTINGS_APP_VERSION),
+        new Promise(r => setTimeout(r, 600)) // Đảm bảo độ trễ tối thiểu 600ms chống giật nháy liên tục
+      ]);
       if (res && res.hasUpdate) {
         setUpdateCheckState(res);
+        triggerHapticMedium();
       } else {
         setUpdateCheckState({
           hasUpdate: false,
-          message: res?.error ? `Lỗi: ${res.error}` : `🎉 Bạn đang sử dụng phiên bản mới nhất (${SETTINGS_APP_VERSION})!`
+          timestamp: Date.now(),
+          message: res?.error ? `Lỗi: ${res.error}` : `Bạn đang sử dụng phiên bản mới nhất (${SETTINGS_APP_VERSION})`
         });
+        triggerHapticLight();
       }
     } catch (e) {
       setUpdateCheckState({
         hasUpdate: false,
+        timestamp: Date.now(),
         message: `Lỗi kết nối: ${e.message || e}`
       });
     } finally {
@@ -195,7 +203,7 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
         </div>
 
         {updateCheckState && (
-          <div className={`p-3 rounded-2xl text-xs ${updateCheckState.hasUpdate ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-gray-400'}`}>
+          <div className={`p-3.5 rounded-2xl text-xs transition-all duration-300 ${updateCheckState.hasUpdate ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-white/10'}`}>
             {updateCheckState.hasUpdate ? (
               <div className="space-y-2">
                 <div className="font-bold flex items-center space-x-1">
@@ -250,7 +258,21 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
                 )}
               </div>
             ) : (
-              <span>{updateCheckState.message || "Bạn đang sử dụng phiên bản mới nhất!"}</span>
+              <div className="flex items-center space-x-2.5">
+                <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
+                  <CheckCircle2 size={13} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-xs text-slate-800 dark:text-gray-200">
+                    {updateCheckState.message || `Bạn đang sử dụng phiên bản mới nhất (${SETTINGS_APP_VERSION})`}
+                  </div>
+                  {updateCheckState.timestamp && (
+                    <div className="text-[10px] text-slate-400 dark:text-gray-500 mt-0.5">
+                      Đã kiểm tra lúc {new Date(updateCheckState.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         )}
