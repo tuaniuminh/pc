@@ -5,7 +5,7 @@ import AVFoundation
 import UIKit
 
 @objc(LiveActivityPlugin)
-public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
+public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin, UIDocumentInteractionControllerDelegate {
     public let identifier = "LiveActivityPlugin"
     public let jsName = "LiveActivityPlugin"
     public let pluginMethods: [CAPPluginMethod] = [
@@ -19,6 +19,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
     private var _currentActivity: Any?
     private var silentAudioKeeper: AVAudioPlayer?
     private var activeDownloader: IPADownloadManager?
+    private var docInteractionController: UIDocumentInteractionController?
 
     private var currentRoutineName: String = "PC Flex"
     private var currentActionState: String = "squeezing"
@@ -108,6 +109,19 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         #endif
     }
 
+    // MARK: - UIDocumentInteractionController Delegate
+    public func documentInteractionControllerViewControllerForPreview(_ controller: UIDocumentInteractionController) -> UIViewController {
+        return self.bridge?.viewController ?? UIViewController()
+    }
+
+    public func documentInteractionControllerViewForPreview(_ controller: UIDocumentInteractionController) -> UIView? {
+        return self.bridge?.viewController?.view
+    }
+
+    public func documentInteractionControllerRectForPreview(_ controller: UIDocumentInteractionController) -> CGRect {
+        return self.bridge?.viewController?.view.bounds ?? .zero
+    }
+
     // MARK: - Native In-App IPA Downloader & TrollStore Sharer
     @objc public func downloadAndOpenIPA(_ call: CAPPluginCall) {
         guard let urlString = call.getString("url"), let url = URL(string: urlString) else {
@@ -120,13 +134,14 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         try? FileManager.default.removeItem(at: destinationUrl)
 
         self.activeDownloader = IPADownloadManager()
-        self.activeDownloader?.onProgress = { [weak self] progress, downloaded, total in
+        self.activeDownloader?.onProgress = { [weak self] progress, downloaded, total, speed in
             self?.notifyListeners("ipaDownloadProgress", data: [
                 "progress": progress,
                 "downloadedBytes": downloaded,
                 "totalBytes": total,
                 "downloadedMB": String(format: "%.1f", Double(downloaded) / 1024.0 / 1024.0),
-                "totalMB": String(format: "%.1f", Double(total) / 1024.0 / 1024.0)
+                "totalMB": String(format: "%.1f", Double(total) / 1024.0 / 1024.0),
+                "speed": speed
             ])
         }
 
@@ -154,21 +169,30 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
                         return
                     }
 
-                    // Mở bảng chia sẻ trực tiếp sang TrollStore
-                    let activityVC = UIActivityViewController(activityItems: [destinationUrl], applicationActivities: nil)
-                    
-                    if let popover = activityVC.popoverPresentationController {
-                        popover.sourceView = viewController.view
-                        popover.sourceRect = CGRect(x: viewController.view.bounds.midX, y: viewController.view.bounds.midY, width: 0, height: 0)
-                        popover.permittedArrowDirections = []
+                    // Sử dụng UIDocumentInteractionController để mở menu "Mở bằng..." (Open in...)
+                    // Menu này liệt kê trực tiếp TrollStore ở vị trí ưu tiên số 1
+                    self.docInteractionController = UIDocumentInteractionController(url: destinationUrl)
+                    self.docInteractionController?.delegate = self
+                    self.docInteractionController?.uti = "com.apple.itunes.ipa"
+
+                    let centerRect = CGRect(x: viewController.view.bounds.midX, y: viewController.view.bounds.midY, width: 0, height: 0)
+                    let presented = self.docInteractionController?.presentOpenInMenu(from: centerRect, in: viewController.view, animated: true) ?? false
+
+                    if !presented {
+                        // Nếu không có menu Open In, mở Share Sheet
+                        let activityVC = UIActivityViewController(activityItems: [destinationUrl], applicationActivities: nil)
+                        if let popover = activityVC.popoverPresentationController {
+                            popover.sourceView = viewController.view
+                            popover.sourceRect = centerRect
+                            popover.permittedArrowDirections = []
+                        }
+                        viewController.present(activityVC, animated: true)
                     }
 
-                    viewController.present(activityVC, animated: true) {
-                        call.resolve([
-                            "success": true,
-                            "path": destinationUrl.path
-                        ])
-                    }
+                    call.resolve([
+                        "success": true,
+                        "path": destinationUrl.path
+                    ])
                 }
             } catch {
                 DispatchQueue.main.async {
@@ -451,15 +475,21 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 }
 
-// MARK: - IPADownloadManager (Hỗ trợ theo dõi tiến trình tải % và chia sẻ sang TrollStore)
+// MARK: - IPADownloadManager (Hỗ trợ theo dõi tiến trình tải % & tính tốc độ tải Speed MB/s)
 class IPADownloadManager: NSObject, URLSessionDownloadDelegate {
-    var onProgress: ((Double, Int64, Int64) -> Void)?
+    var onProgress: ((Double, Int64, Int64, String) -> Void)?
     var onCompletion: ((URL?, Error?) -> Void)?
     private var downloadSession: URLSession?
+    private var lastSpeedCalculationTime: Date = Date()
+    private var lastBytesCount: Int64 = 0
+    private var currentSpeedStr: String = "0 KB/s"
 
     func startDownload(from url: URL) {
         let config = URLSessionConfiguration.default
         downloadSession = URLSession(configuration: config, delegate: self, delegateQueue: nil)
+        lastSpeedCalculationTime = Date()
+        lastBytesCount = 0
+        currentSpeedStr = "0 KB/s"
         let task = downloadSession?.downloadTask(with: url)
         task?.resume()
     }
@@ -469,8 +499,22 @@ class IPADownloadManager: NSObject, URLSessionDownloadDelegate {
     }
 
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        let now = Date()
+        let timeInterval = now.timeIntervalSince(lastSpeedCalculationTime)
+        if timeInterval >= 0.4 {
+            let bytesDiff = totalBytesWritten - lastBytesCount
+            let bytesPerSec = Double(bytesDiff) / timeInterval
+            if bytesPerSec >= 1024.0 * 1024.0 {
+                currentSpeedStr = String(format: "%.1f MB/s", bytesPerSec / 1024.0 / 1024.0)
+            } else {
+                currentSpeedStr = String(format: "%.0f KB/s", bytesPerSec / 1024.0)
+            }
+            lastSpeedCalculationTime = now
+            lastBytesCount = totalBytesWritten
+        }
+
         let progress = totalBytesExpectedToWrite > 0 ? Double(totalBytesWritten) / Double(totalBytesExpectedToWrite) : 0.0
-        onProgress?(progress, totalBytesWritten, totalBytesExpectedToWrite)
+        onProgress?(progress, totalBytesWritten, totalBytesExpectedToWrite, currentSpeedStr)
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {

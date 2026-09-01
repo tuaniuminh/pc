@@ -29,7 +29,7 @@ import { exportBackupJSON, importBackupJSON } from '../services/storageService';
 import { triggerHapticMedium, triggerHapticLight } from '../utils/hapticsUtils';
 import { checkForUpdate, installViaTrollStore, openDirectDownload, downloadIPAInApp } from '../services/updateService';
 
-const SETTINGS_APP_VERSION = 'v2.0.6';
+const SETTINGS_APP_VERSION = 'v2.0.7';
 
 const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
   const [showKey, setShowKey] = useState(false);
@@ -40,6 +40,23 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
   // In-App Update State
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [updateCheckState, setUpdateCheckState] = useState(null);
+  const [isDownloadingIPA, setIsDownloadingIPA] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(null);
+
+  const handleInAppDownloadInSettings = async (url) => {
+    try {
+      setIsDownloadingIPA(true);
+      triggerHapticMedium();
+      await downloadIPAInApp(url, (data) => {
+        setDownloadProgress(data);
+      });
+      triggerHapticLight();
+    } catch (e) {
+      alert(`Lỗi tải: ${e.message || e}`);
+    } finally {
+      setIsDownloadingIPA(false);
+    }
+  };
 
   const handleCheckUpdateManual = async () => {
     setIsCheckingUpdate(true);
@@ -490,7 +507,7 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
             <div className="flex items-center space-x-2">
               <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Cập Nhật Ứng Dụng</h3>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 font-bold">
-                v2.0.6
+                v2.0.7
               </span>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-gray-400">Kiểm tra bản mới trên GitHub & cài đặt 1 chạm qua TrollStore</p>
@@ -506,22 +523,51 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
                   <span>Đã có phiên bản mới: {updateCheckState.tagName}!</span>
                 </div>
                 <p className="text-[11px] opacity-90">{updateCheckState.releaseName}</p>
-                <div className="flex gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => installViaTrollStore(updateCheckState.ipaDownloadUrl)}
-                    className="flex-1 py-2 px-3 rounded-xl bg-emerald-500 text-white font-black text-xs shadow-md active:scale-95 transition-all"
-                  >
-                    ⚡ Cài Qua TrollStore
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openDirectDownload(updateCheckState.ipaDownloadUrl)}
-                    className="py-2 px-3 rounded-xl bg-slate-200 dark:bg-white/10 text-slate-800 dark:text-white font-bold text-xs active:scale-95 transition-all"
-                  >
-                    Tải IPA
-                  </button>
-                </div>
+                {isDownloadingIPA ? (
+                  <div className="p-3 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-cyan-300">Đang tải bản cập nhật...</span>
+                      <div className="flex items-center space-x-2">
+                        {downloadProgress?.speed && (
+                          <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/20 px-1.5 py-0.5 rounded font-bold">
+                            {downloadProgress.speed}
+                          </span>
+                        )}
+                        <span className="font-mono font-bold text-emerald-400">
+                          {downloadProgress ? Math.round((downloadProgress.progress || 0) * 100) : 0}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-white/10">
+                      <div 
+                        className="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 rounded-full transition-all duration-200"
+                        style={{ width: `${Math.max(5, Math.round((downloadProgress?.progress || 0) * 100))}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[10px] text-gray-400 font-mono">
+                      <span>{downloadProgress?.downloadedMB ? `${downloadProgress.downloadedMB} MB` : 'Đang nạp...'}</span>
+                      <span>{downloadProgress?.totalMB ? `${downloadProgress.totalMB} MB` : ''}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => handleInAppDownloadInSettings(updateCheckState.ipaDownloadUrl)}
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-950 font-black text-xs shadow-md active:scale-95 transition-all flex items-center justify-center space-x-1"
+                    >
+                      <Zap size={13} fill="currentColor" />
+                      <span>⚡ Tải & Cài Đặt Trực Tiếp</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openDirectDownload(updateCheckState.ipaDownloadUrl)}
+                      className="py-2.5 px-3 rounded-xl bg-slate-200 dark:bg-white/10 text-slate-800 dark:text-white font-bold text-xs active:scale-95 transition-all"
+                    >
+                      Tải Safari
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <span>{updateCheckState.message || "Bạn đang sử dụng phiên bản mới nhất!"}</span>

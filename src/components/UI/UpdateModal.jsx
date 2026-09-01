@@ -2,20 +2,18 @@ import React, { useState } from 'react';
 import { 
   Rocket, 
   Download, 
-  ExternalLink, 
   X, 
-  CheckCircle2, 
   Sparkles, 
-  ArrowRight,
-  ShieldCheck,
+  ArrowRight, 
   Zap,
-  Loader2
+  Loader2,
+  Gauge
 } from 'lucide-react';
-import { downloadIPAInApp, installViaTrollStore, openDirectDownload } from '../../services/updateService';
+import { downloadIPAInApp, openDirectDownload } from '../../services/updateService';
 import { triggerHapticMedium, triggerHapticSuccess } from '../../utils/hapticsUtils';
 
 const UpdateModal = ({ updateInfo, onClose }) => {
-  const [downloadProgress, setDownloadProgress] = useState(null); // { progress: 0.5, downloadedMB: '14.2', totalMB: '28.5' }
+  const [downloadProgress, setDownloadProgress] = useState(null); // { progress: 0.5, downloadedMB: '14.2', totalMB: '28.5', speed: '2.4 MB/s' }
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState(null);
 
@@ -37,10 +35,6 @@ const UpdateModal = ({ updateInfo, onClose }) => {
       setIsDownloading(false);
       setDownloadError(e.message || 'Lỗi khi tải tệp');
     }
-  };
-
-  const handleInstallTrollStore = () => {
-    installViaTrollStore(updateInfo.ipaDownloadUrl);
   };
 
   const handleDirectDownload = () => {
@@ -114,7 +108,7 @@ const UpdateModal = ({ updateInfo, onClose }) => {
           </div>
         )}
 
-        {/* Tiến trình tải trong ứng dụng */}
+        {/* Tiến trình tải trong ứng dụng với tốc độ tải Speed MB/s */}
         {isDownloading && (
           <div className="p-4 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 space-y-3">
             <div className="flex items-center justify-between text-xs">
@@ -122,19 +116,27 @@ const UpdateModal = ({ updateInfo, onClose }) => {
                 <Loader2 size={14} className="animate-spin text-cyan-400" />
                 Đang tải file IPA...
               </span>
-              <span className="font-mono font-black text-emerald-400 text-sm">{percent}%</span>
+              <div className="flex items-center space-x-2">
+                {downloadProgress?.speed && (
+                  <span className="text-[11px] font-mono text-cyan-300 flex items-center gap-1 bg-cyan-500/20 px-2 py-0.5 rounded-md font-bold">
+                    <Gauge size={12} />
+                    {downloadProgress.speed}
+                  </span>
+                )}
+                <span className="font-mono font-black text-emerald-400 text-sm">{percent}%</span>
+              </div>
             </div>
 
             {/* Thanh Progress Bar */}
             <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-white/10">
               <div 
-                className="h-full bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-400 rounded-full transition-all duration-300 shadow-md shadow-cyan-500/50"
+                className="h-full bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-400 rounded-full transition-all duration-200 shadow-md shadow-cyan-500/50"
                 style={{ width: `${Math.max(5, percent)}%` }}
               />
             </div>
 
             <div className="flex justify-between text-[11px] text-gray-400 font-mono">
-              <span>{downloadProgress?.downloadedMB ? `${downloadProgress.downloadedMB} MB` : 'Đang nạp...'}</span>
+              <span>{downloadProgress?.downloadedMB ? `${downloadProgress.downloadedMB} MB` : 'Đang nạp dữ liệu...'}</span>
               <span>{downloadProgress?.totalMB ? `${downloadProgress.totalMB} MB` : ''}</span>
             </div>
           </div>
@@ -159,7 +161,7 @@ const UpdateModal = ({ updateInfo, onClose }) => {
             </button>
           )}
 
-          {/* Nút phụ: Mở Safari hoặc URL Scheme nếu muốn */}
+          {/* Nút phụ: Mở Safari hoặc Để sau */}
           {!isDownloading && (
             <div className="flex gap-2">
               <button
