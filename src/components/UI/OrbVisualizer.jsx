@@ -1,8 +1,8 @@
 import React from 'react';
 
 /**
- * Quả Cầu Đồng Hồ Sinh Học Visualizer 3D Siêu Đẳng Cấp (Apple Fitness+ & Cyber-Health Aesthetics)
- * Tích hợp vòng tròn SVG tiến trình phát sáng Neon động theo từng giây
+ * Quả Cầu Đồng Hồ Sinh Học Visualizer 3D Siêu Đẳng Cấp (Apple Design & Cyber-Health Aesthetics)
+ * Viền phát sáng xung quanh hoạt động theo cơ chế MỜ DẦN (Fade Out) mượt mà theo từng giây đếm ngược về 0
  * Đồ họa Glassmorphism, chiều sâu ánh sáng 3D và vật lý co giãn sinh học mượt mà 120 FPS
  */
 const OrbVisualizer = ({
@@ -48,7 +48,7 @@ const OrbVisualizer = ({
       themeColor: '#06b6d4',
       badgeClass: 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-300 border-cyan-500/40 shadow-sm shadow-cyan-500/20',
       ringGradient: ['#06b6d4', '#0284c7', '#38bdf8'],
-      glowShadow: '0 0 55px rgba(6, 182, 212, 0.45), inset 0 0 25px rgba(6, 182, 212, 0.2)',
+      glowShadow: '0 0 55px rgba(6, 182, 212, 0.45), inset 0 0 25px rgba(16, 182, 212, 0.2)',
       orbScale: 'scale-[1.12]', // Giãn nở biểu thị thả lỏng
       subText: 'Thả lỏng toàn bộ cơ thể',
       ringColor: '#06b6d4'
@@ -91,76 +91,41 @@ const OrbVisualizer = ({
     };
   }
 
-  // Tính toán % tiến trình của pha hiện tại cho Vòng tròn SVG đếm lùi
+  // TÍNH TOÁN ĐỘ MỜ DẦN (FADE RATIO) KHI ĐỒNG HỒ ĐẾM LÙI VỀ 0
   const maxSec = Math.max(1, stageDuration || 1);
   const currentSec = Math.max(0, timeRemaining || 0);
-  const progressRatio = actionState === 'idle' ? 1 : Math.min(1, currentSec / maxSec);
-
-  // Tham số SVG Circle
-  const radius = 104;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - progressRatio);
+  const fadeRatio = !isActive || actionState === 'idle' 
+    ? 0.35 
+    : Math.max(0.12, currentSec / maxSec);
 
   const formattedSeconds = timeRemaining < 10 ? `0${timeRemaining}` : `${timeRemaining}`;
 
   return (
-    <div className="relative flex items-center justify-center select-none w-72 h-72 mx-auto my-3">
-      {/* 1. Hào quang Aura lan tỏa phía sau (Ambient Glow Pulse) */}
+    <div className="relative flex items-center justify-center select-none w-72 h-72 mx-auto my-2">
+      {/* 1. Hào quang Aura phát sáng lan tỏa phía sau (Mờ dần theo thời gian thực về 0) */}
       <div
-        className="absolute w-60 h-60 rounded-full pointer-events-none transition-all duration-700 ease-out"
+        className="absolute w-60 h-60 rounded-full pointer-events-none transition-all duration-500 ease-out"
         style={{
           boxShadow: isActive ? config.glowShadow : 'none',
-          opacity: isActive ? 0.9 : 0.3
+          opacity: fadeRatio
         }}
       />
 
-      {/* 2. Vòng tròn Tiến Trình SVG Đếm Lùi Siêu Mượt (Animated SVG Ring) */}
-      <svg className="absolute w-full h-full -rotate-90 pointer-events-none transform" viewBox="0 0 240 240">
-        <defs>
-          <linearGradient id="timerRingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={config.ringGradient[0]} />
-            <stop offset="100%" stopColor={config.ringGradient[1]} />
-          </linearGradient>
-          <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
-        </defs>
-
-        {/* Vòng nền mờ (Background Track) */}
-        <circle
-          cx="120"
-          cy="120"
-          r={radius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="6"
-          className="text-slate-200/80 dark:text-white/10"
-        />
-
-        {/* Vòng tiến trình phát sáng đếm ngược thời gian thực */}
-        <circle
-          cx="120"
-          cy="120"
-          r={radius}
-          fill="none"
-          stroke="url(#timerRingGradient)"
-          strokeWidth="7"
-          strokeLinecap="round"
-          filter={isActive ? "url(#glow)" : "none"}
-          style={{
-            strokeDasharray: circumference,
-            strokeDashoffset: strokeDashoffset,
-            transition: 'stroke-dashoffset 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-          }}
-        />
-      </svg>
+      {/* 2. Vòng Quỹ Đạo Viền Kính Phát Sáng Neon (Mờ dần đều khi đồng hồ về 0) */}
+      <div 
+        className="absolute w-[236px] h-[236px] rounded-full border-2 pointer-events-none transition-all duration-300 ease-out"
+        style={{
+          borderColor: config.themeColor,
+          opacity: fadeRatio,
+          boxShadow: isActive ? `0 0 20px ${config.themeColor}80` : 'none'
+        }}
+      />
 
       {/* 3. Quả cầu trung tâm 3D Sinh Học (3D Biological Orb Glass) */}
       <div
         className={`w-52 h-52 rounded-full border-2 flex flex-col items-center justify-center text-center p-4 relative cursor-default transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${config.orbScale} bg-gradient-to-b from-white via-slate-50 to-slate-100 dark:from-slate-900/90 dark:via-slate-950/95 dark:to-black/95 backdrop-blur-2xl shadow-2xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.9)]`}
         style={{
-          borderColor: isActive ? `${config.themeColor}70` : 'rgba(255, 255, 255, 0.15)'
+          borderColor: isActive ? `${config.themeColor}${Math.round(fadeRatio * 255).toString(16).padStart(2, '0')}` : 'rgba(255, 255, 255, 0.15)'
         }}
       >
         {/* Nhãn hành động (Capsule Pill Badge) */}
