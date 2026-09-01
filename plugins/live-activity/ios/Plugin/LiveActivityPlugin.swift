@@ -16,6 +16,9 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
 
     private var _currentActivity: Any?
     private var silentAudioKeeper: AVAudioPlayer?
+    private var lastInterruptionEvent: String = "None"
+    private var lastRouteChangeEvent: String = "Default"
+    private var lastActivityState: String = "Idle"
 
     #if canImport(ActivityKit)
     @available(iOS 16.1, *)
@@ -28,6 +31,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
     public override func load() {
         super.load()
         configureAudioSession()
+        setupAudioNotifications()
     }
 
     private func configureAudioSession() {
@@ -37,7 +41,48 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         } catch {}
     }
 
+    private func setupAudioNotifications() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAudioInterruption),
+            name: AVAudioSession.interruptionNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAudioRouteChange),
+            name: AVAudioSession.routeChangeNotification,
+            object: nil
+        )
+    }
+
+    @objc private func handleAudioInterruption(notification: Notification) {
+        guard let info = notification.userInfo,
+              let typeValue = info[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }
+
+        if type == .began {
+            lastInterruptionEvent = "Began (\(Date().description))"
+            notifyListeners("audioInterruption", data: ["event": "began"])
+        } else if type == .ended {
+            lastInterruptionEvent = "Ended (\(Date().description))"
+            configureAudioSession()
+            if silentAudioKeeper != nil && !(silentAudioKeeper?.isPlaying ?? false) {
+                silentAudioKeeper?.play()
+            }
+            notifyListeners("audioInterruption", data: ["event": "ended"])
+        }
+    }
+
+    @objc private func handleAudioRouteChange(notification: Notification) {
+        let currentRoute = AVAudioSession.sharedInstance().currentRoute
+        let outputs = currentRoute.outputs.map { $0.portName }.joined(separator: ", ")
+        lastRouteChangeEvent = outputs.isEmpty ? "Default Speaker" : outputs
+        notifyListeners("audioRouteChange", data: ["route": lastRouteChangeEvent])
+    }
+
     deinit {
+        NotificationCenter.default.removeObserver(self)
         stopNativeAudioKeeper()
         #if canImport(ActivityKit)
         if #available(iOS 16.1, *) {
@@ -104,6 +149,12 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         diagnostic["appVersion"] = Bundle.main.infoDictionary?["CFBundleShortVersionString"] ?? "unknown"
         diagnostic["bundlePath"] = Bundle.main.bundlePath
         diagnostic["nativeAudioKeeperRunning"] = silentAudioKeeper?.isPlaying ?? false
+        diagnostic["lastInterruption"] = lastInterruptionEvent
+        diagnostic["currentAudioRoute"] = lastRouteChangeEvent
+
+        let session = AVAudioSession.sharedInstance()
+        diagnostic["audioSessionCategory"] = session.category.rawValue
+        diagnostic["audioSessionMode"] = session.mode.rawValue
 
         let pluginsPath = Bundle.main.bundlePath + "/PlugIns"
         let fileManager = FileManager.default
@@ -132,7 +183,8 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
                     "state": String(describing: act.activityState),
                     "actionState": act.contentState.actionState,
                     "timeRemaining": act.contentState.timeRemaining,
-                    "currentRep": act.contentState.currentRep
+                    "currentRep": act.contentState.currentRep,
+                    "targetDateIso": ISO8601DateFormatter().string(from: act.contentState.targetDate)
                 ]
             }
         } else {
@@ -196,8 +248,17 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
                 pushType: nil
             )
             self.currentActivity = activity
+            self.lastActivityState = "Active"
 
-            // Bắt đầu phát luồng âm thanh giữ nhịp nền để iOS không bao giờ đóng băng ứng dụng
+            // Theo dõi vòng đời của ActivityKit trong nền
+            Task {
+                for await state in activity.activityStateUpdates {
+                    self.lastActivityState = String(describing: state)
+                    self.notifyListeners("activityStateChanged", data: ["state": String(describing: state)])
+                }
+            }
+
+            // Bắt đầu phát luồng âm thanh giữ nhịp nền
             startNativeAudioKeeper()
 
             call.resolve([
@@ -262,6 +323,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
                 await act.end(dismissalPolicy: .immediate)
             }
             self.currentActivity = nil
+            self.lastActivityState = "Ended"
             call.resolve()
         }
         #else

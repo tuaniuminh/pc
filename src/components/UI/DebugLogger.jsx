@@ -1,10 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { Bug, X, Copy, Trash2, CheckCircle2, Play, RefreshCw, Cpu, Activity, Volume2, ShieldCheck, Tag, SearchCode, Music, Clock, Zap, AlertOctagon } from 'lucide-react';
+import { 
+  Bug, 
+  X, 
+  Copy, 
+  Trash2, 
+  CheckCircle2, 
+  Play, 
+  RefreshCw, 
+  Cpu, 
+  Activity, 
+  Volume2, 
+  ShieldCheck, 
+  Tag, 
+  SearchCode, 
+  Music, 
+  Clock, 
+  Zap, 
+  AlertOctagon,
+  Radio,
+  Wifi,
+  Headphones,
+  Timer as TimerIcon
+} from 'lucide-react';
 import { liveActivityService } from '../../services/liveActivityService';
 import { audioEngine, SOUND_ACTIONS, SOUND_PRESETS } from '../../utils/audioEngine';
+import { checkForUpdate } from '../../services/updateService';
 import { Capacitor } from '@capacitor/core';
 
-const APP_VERSION = 'v1.9.6';
+const APP_VERSION = 'v1.9.7';
 const LOG_STORAGE_KEY = 'pcflex_debug_logs_v2';
 
 const getStoredLogs = () => {
@@ -76,14 +99,14 @@ if (typeof window !== 'undefined') {
       bgStartTime = Date.now();
       lastPulseTime = Date.now();
       bgTicks = 0;
-      addAppLog('warn', `[AppState] Ẩn app (document.hidden = true) - Bắt đầu đo nhịp nền & phát hiện đóng băng`);
+      addAppLog('warn', `[AppState] Ẩn app (document.hidden = true) - Bắt đầu giám sát chạy nền v5.0`);
       bgInterval = setInterval(() => {
         bgTicks++;
         const now = Date.now();
         const delta = now - lastPulseTime;
         lastPulseTime = now;
 
-        // Nếu khoảng cách giữa 2 nhịp vượt quá 2.5s -> WebKit vừa bị đóng băng (Suspended)
+        // Nếu khoảng cách giữa 2 nhịp vượt quá 2.5s -> Cảnh báo WebKit bị gián đoạn
         if (delta > 2500) {
           addAppLog('error', `[EngineFreeze] Phát hiện WebKit bị iOS đóng băng ${(delta / 1000).toFixed(1)}s trong nền!`);
         }
@@ -96,7 +119,7 @@ if (typeof window !== 'undefined') {
       if (bgInterval) clearInterval(bgInterval);
       const elapsed = bgStartTime > 0 ? ((Date.now() - bgStartTime) / 1000).toFixed(1) : 0;
       const missedTicks = Math.max(0, Math.round(elapsed - bgTicks));
-      addAppLog('success', `[AppState] Mở lại app (document.hidden = false) - Thời gian ẩn: ${elapsed}s (Số nhịp ghi nhận: ${bgTicks}, Nhịp bị mất do iOS ngủ: ${missedTicks})`);
+      addAppLog('success', `[AppState] Mở lại app (document.hidden = false) - Thời gian ẩn: ${elapsed}s (Số nhịp ghi nhận: ${bgTicks}, Nhịp mất: ${missedTicks})`);
     }
   });
 }
@@ -109,6 +132,7 @@ const DebugLogger = () => {
   const [nativeDiag, setNativeDiag] = useState(null);
   const [scanning, setScanning] = useState(false);
   const [soundSettings, setSoundSettings] = useState({});
+  const [activeTab, setActiveTab] = useState('logs'); // 'logs' | 'sensors' | 'ota'
 
   const refreshDiagnostics = async () => {
     const plugins = Capacitor?.Plugins ? Object.keys(Capacitor.Plugins) : [];
@@ -143,7 +167,7 @@ const DebugLogger = () => {
     };
     setDiagInfo(info);
 
-    // Chạy thuật toán chẩn đoán Native sâu
+    // Chạy truy vấn Native sâu
     try {
       const natRes = await liveActivityService.getNativeDiagnostics();
       setNativeDiag(natRes);
@@ -157,7 +181,7 @@ const DebugLogger = () => {
     listeners.push(listener);
 
     refreshDiagnostics();
-    addAppLog('info', `[AppInit] Khởi tạo Con Bọ Siêu Chẩn Đoán v4.0 cho iOS 16.6+ (${APP_VERSION})`);
+    addAppLog('info', `[AppInit] Khởi động Trạm Chẩn Đoán Cấp Chuyên Gia v5.0 (${APP_VERSION})`);
 
     return () => {
       listeners = listeners.filter(fn => fn !== listener);
@@ -166,50 +190,50 @@ const DebugLogger = () => {
 
   const handleRunFullDiagnosticScan = async () => {
     setScanning(true);
-    addAppLog('info', '================ BẮT ĐẦU QUÉT CHẨN ĐOÁN TOÀN DIỆN v4.0 ================');
+    addAppLog('info', '================ BẮT ĐẦU QUÉT CHẨN ĐOÁN TOÀN DIỆN v5.0 ================');
     
-    // 1. Kiểm tra Bridge & Plugins
+    // TẦNG 1: Capacitor Bridge & Plugins
     const plugins = Capacitor?.Plugins ? Object.keys(Capacitor.Plugins) : [];
-    addAppLog('info', `[Scan 1/5] Capacitor Bridge: ${Capacitor.isNativePlatform() ? 'NATIVE OK' : 'WEB'} - Plugins (${plugins.length}): ${plugins.join(', ')}`);
+    addAppLog('info', `[Scan 1/5] Capacitor Native Bridge: ${Capacitor.isNativePlatform() ? 'NATIVE OK' : 'WEB'} - Plugins (${plugins.length}): ${plugins.join(', ')}`);
 
-    // 2. Kiểm tra quyền Live Activity & Widget Extension
+    // TẦNG 2: ActivityKit & Dynamic Island State
     try {
       const nat = await liveActivityService.getNativeDiagnostics();
       setNativeDiag(nat);
       if (nat.areActivitiesEnabled === false) {
         addAppLog('error', `[Scan 2/5] LỖI: Live Activities đang bị TẮT trong Cài đặt iOS của máy! (Settings -> PC Flex -> Live Activities -> BẬT)`);
       } else {
-        addAppLog('success', `[Scan 2/5] Quyền Live Activities trên iOS: ĐƯỢC PHÉP (areActivitiesEnabled = true)`);
+        addAppLog('success', `[Scan 2/5] Quyền Live Activities: ĐƯỢC PHÉP (areActivitiesEnabled = true)`);
       }
 
-      if (nat.hasPlugInsFolder) {
-        addAppLog('success', `[Scan 2/5] Thư mục PlugIns trên iPhone: TỒN TẠI (Gồm ${nat.plugInsList?.length || 0} phần mở rộng: ${nat.plugInsList?.join(', ') || 'Rỗng'})`);
-        if (nat.hasWidgetExtension) {
-          addAppLog('success', `[Scan 2/5] Widget Extension: ĐÃ TÌM THẤY PCFlexWidget.appex trong IPA!`);
-        } else {
-          addAppLog('error', `[Scan 2/5] CẢNH BÁO: Không tìm thấy tệp Widget Extension trong thư mục PlugIns!`);
-        }
+      if (nat.hasPlugInsFolder && nat.hasWidgetExtension) {
+        addAppLog('success', `[Scan 2/5] Widget Extension: ĐÃ TÌM THẤY PCFlexWidget.appex trong Bundle!`);
       } else {
-        addAppLog('warn', `[Scan 2/5] Thư mục PlugIns không tồn tại trong Bundle.`);
+        addAppLog('error', `[Scan 2/5] CẢNH BÁO: Chưa tìm thấy PCFlexWidget.appex trong thư mục PlugIns!`);
       }
 
-      addAppLog('info', `[Scan 2/5] Số lượng Live Activity đang chạy trong bộ nhớ iOS: ${nat.activeActivitiesCount || 0}`);
+      addAppLog('info', `[Scan 2/5] Số lượng Live Activity trên SpringBoard: ${nat.activeActivitiesCount || 0}`);
     } catch (e) {
-      addAppLog('error', `[Scan 2/5] Lỗi truy vấn Native: ${e.message || String(e)}`);
+      addAppLog('error', `[Scan 2/5] Lỗi truy vấn ActivityKit: ${e.message || String(e)}`);
     }
 
-    // 3. Kiểm tra Audio Engine & Âm thanh Preset
+    // TẦNG 3: Audio Session & Route Detector
     const audioCtx = audioEngine?.audioCtx;
-    addAppLog('info', `[Scan 3/5] Audio Engine State: ${audioCtx ? audioCtx.state : 'uninitialized'} (${audioCtx?.sampleRate || 0}Hz)`);
-    addAppLog('info', `[Scan 3/5] Sound Presets Đang Dùng: Siết: ${diagInfo.squeezePreset}, Thả: ${diagInfo.relaxPreset}, Ngược: ${diagInfo.reversePreset}, Âm lượng: ${diagInfo.volumeSetting}`);
+    addAppLog('info', `[Scan 3/5] Web Audio State: ${audioCtx ? audioCtx.state : 'uninitialized'} (${audioCtx?.sampleRate || 0}Hz)`);
+    addAppLog('info', `[Scan 3/5] Audio Route Hiện Tại: ${nativeDiag?.currentAudioRoute || 'Loa ngoài iPhone'} | Interruption: ${nativeDiag?.lastInterruption || 'None'}`);
 
-    // 4. Kiểm tra Màn hình & Dynamic Island Hardware
-    const dpr = window.devicePixelRatio || 1;
-    const isDynIslandPhone = (window.screen.height >= 844 || window.screen.width >= 390) && dpr >= 3;
-    addAppLog('info', `[Scan 4/5] Phần cứng Màn hình: ${window.screen.width}x${window.screen.height} (DPR: ${dpr}) -> ${isDynIslandPhone ? 'Hỗ trợ Dynamic Island' : 'Màn hình tiêu chuẩn'}`);
+    // TẦNG 4: Kiểm tra kết nối GitHub OTA API
+    try {
+      const startTime = Date.now();
+      const otaRes = await checkForUpdate(APP_VERSION);
+      const pingMs = Date.now() - startTime;
+      addAppLog('success', `[Scan 4/5] GitHub OTA API Ping: ${pingMs}ms | Bản mới nhất trên GitHub: ${otaRes.tagName || 'None'}`);
+    } catch (e) {
+      addAppLog('warn', `[Scan 4/5] GitHub OTA API Check: ${e.message || String(e)}`);
+    }
 
-    // 5. Thử nghiệm kích hoạt Live Activity 5 giây
-    addAppLog('info', `[Scan 5/5] Đang kích hoạt thử nghiệm Live Activity 5s theo phong cách Apple Clock Timer...`);
+    // TẦNG 5: Thử nghiệm kích hoạt Live Activity 5 giây với Hardware TimerInterval
+    addAppLog('info', `[Scan 5/5] Đang kích hoạt thử nghiệm Live Activity với Apple Hardware TimerInterval...`);
     try {
       const startRes = await liveActivityService.startLiveActivity({
         routineName: 'Chẩn Đoán Đảo Động',
@@ -217,7 +241,7 @@ const DebugLogger = () => {
         actionState: 'squeezing',
         timeRemaining: 5,
         currentRep: 1,
-        stageLabel: 'Kiểm tra Dynamic Island Apple Clock Timer',
+        stageLabel: 'Kiểm tra Dynamic Island Apple Hardware Timer',
         volume: 0.8,
         hapticsEnabled: false,
         sfxEnabled: true
@@ -227,7 +251,7 @@ const DebugLogger = () => {
       addAppLog('error', `[Scan 5/5] Lỗi khởi động Live Activity: ${e.message || String(e)}`);
     }
 
-    addAppLog('info', '================ HOÀN THÀNH QUÉT CHẨN ĐOÁN v4.0 ================');
+    addAppLog('info', '================ HOÀN THÀNH QUÉT CHẨN ĐOÁN v5.0 ================');
     setScanning(false);
   };
 
@@ -256,6 +280,8 @@ const DebugLogger = () => {
       `Has PlugIns Folder: ${nativeDiag?.hasPlugInsFolder ?? 'chưa quét'} | Widget Extension: ${nativeDiag?.hasWidgetExtension ?? 'chưa quét'}`,
       `PlugIns List: ${nativeDiag?.plugInsList?.join(', ') || 'none'}`,
       `Active Activities in SpringBoard: ${nativeDiag?.activeActivitiesCount ?? 0}`,
+      `Current Audio Route: ${nativeDiag?.currentAudioRoute ?? 'Loa ngoài'}`,
+      `Audio Interruption History: ${nativeDiag?.lastInterruption ?? 'None'}`,
       `Audio Context State: ${diagInfo.audioState} (${diagInfo.sampleRate}Hz)`,
       `User Sound Presets: Siết=${diagInfo.squeezePreset} | Thả=${diagInfo.relaxPreset} | Ngược=${diagInfo.reversePreset}`,
       `User Settings: Âm lượng: ${diagInfo.volumeSetting} | Rung: ${diagInfo.hapticsSetting}`,
@@ -289,7 +315,7 @@ const DebugLogger = () => {
         <Bug className="w-5 h-5 animate-pulse" />
       </button>
 
-      {/* Modal Console Logs Toàn Màn Hình với Safe Area Inset chống tràn Notch & Dynamic Island */}
+      {/* Modal Console Logs Toàn Màn Hình với Safe Area Inset */}
       {isOpen && (
         <div 
           className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-xl flex flex-col px-4 pb-6 text-xs font-mono select-text"
@@ -301,12 +327,12 @@ const DebugLogger = () => {
               <Bug className="w-5 h-5 text-emerald-400" />
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-sm text-white">Thuật Toán Chẩn Đoán Sâu v4.0</h3>
+                  <h3 className="font-bold text-sm text-white">Trạm Chẩn Đoán Siêu Sâu v5.0</h3>
                   <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/40">
                     {APP_VERSION}
                   </span>
                 </div>
-                <p className="text-[10px] text-zinc-400">iOS 16.6+ • Freeze Detector & Native Background Engine</p>
+                <p className="text-[10px] text-zinc-400">iOS 16.6+ • 4-Layer Sensors & Dynamic Island Inspector</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -343,22 +369,20 @@ const DebugLogger = () => {
               <div className="flex items-center justify-between p-1.5 rounded bg-black/40">
                 <span className="text-zinc-400 flex items-center gap-1"><Activity className="w-3 h-3 text-emerald-400" /> Quyền LiveAct:</span>
                 <span className={`font-bold ${nativeDiag?.areActivitiesEnabled ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {nativeDiag ? (nativeDiag.areActivitiesEnabled ? 'BẬT' : 'TẮT TRONG CÀI ĐẶT') : 'Đang kiểm tra...'}
+                  {nativeDiag ? (nativeDiag.areActivitiesEnabled ? 'BẬT' : 'TẮT') : 'Đang đọc...'}
                 </span>
               </div>
               <div className="flex items-center justify-between p-1.5 rounded bg-black/40">
-                <span className="text-zinc-400 flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-purple-400" /> Widget Extension:</span>
-                <span className={`font-bold ${nativeDiag?.hasWidgetExtension ? 'text-emerald-400' : 'text-amber-400'}`}>
-                  {nativeDiag ? (nativeDiag.hasWidgetExtension ? 'ĐÃ NHÚNG' : 'CHƯA CÓ') : 'Đang đọc IPA...'}
-                </span>
+                <span className="text-zinc-400 flex items-center gap-1"><Headphones className="w-3 h-3 text-purple-400" /> Kênh Âm Thanh:</span>
+                <span className="font-bold text-purple-300 truncate max-w-[90px]">{nativeDiag?.currentAudioRoute || 'Loa ngoài'}</span>
               </div>
               <div className="flex items-center justify-between p-1.5 rounded bg-black/40">
-                <span className="text-zinc-400 flex items-center gap-1"><Volume2 className="w-3 h-3 text-amber-400" /> Âm lượng:</span>
-                <span className="font-bold text-amber-300">{diagInfo.volumeSetting}</span>
+                <span className="text-zinc-400 flex items-center gap-1"><Radio className="w-3 h-3 text-amber-400" /> Gián Đoạn:</span>
+                <span className="font-bold text-amber-300 truncate max-w-[90px]">{nativeDiag?.lastInterruption || 'None'}</span>
               </div>
             </div>
 
-            {/* Thanh kiểm tra âm thanh trực tiếp (Audio Preset Tester) */}
+            {/* Thanh kiểm tra âm thanh trực tiếp */}
             <div className="p-2 rounded bg-black/50 border border-zinc-800 space-y-1">
               <div className="text-[10px] text-zinc-400 flex items-center gap-1 font-bold">
                 <Music className="w-3 h-3 text-pink-400" /> Thử Nghiệm Âm Thanh Preset Cài Đặt:
@@ -368,24 +392,24 @@ const DebugLogger = () => {
                   onClick={() => handleTestAudioPreset('squeeze')}
                   className="flex-1 py-1 px-1.5 rounded bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold active:scale-95"
                 >
-                  ⚡ Thử Âm Siết
+                  ⚡ Siết
                 </button>
                 <button
                   onClick={() => handleTestAudioPreset('relax')}
                   className="flex-1 py-1 px-1.5 rounded bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-[10px] font-bold active:scale-95"
                 >
-                  ❄️ Thử Âm Thả
+                  ❄️ Thả
                 </button>
                 <button
                   onClick={() => handleTestAudioPreset('reverse')}
                   className="flex-1 py-1 px-1.5 rounded bg-purple-500/20 border border-purple-500/30 text-purple-300 text-[10px] font-bold active:scale-95"
                 >
-                  🌊 Thử Âm Ngược
+                  🌊 Ngược
                 </button>
               </div>
             </div>
 
-            {/* Thuật toán quét chuyên sâu Button */}
+            {/* Thuật toán quét chuyên sâu 5 bước Button */}
             <div className="flex gap-2 pt-1">
               <button
                 onClick={handleRunFullDiagnosticScan}
@@ -393,7 +417,7 @@ const DebugLogger = () => {
                 className="flex-1 py-1.5 px-2 rounded bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold hover:bg-cyan-500/30 flex items-center justify-center gap-1.5 text-[11px] transition-all"
               >
                 <SearchCode className={`w-3.5 h-3.5 ${scanning ? 'animate-spin' : ''}`} />
-                {scanning ? 'Đang chạy thuật toán quét 5 bước...' : '🔍 Quét Sâu Toàn Bộ Hệ Thống v4.0'}
+                {scanning ? 'Đang chạy thuật toán quét 5 bước...' : '🔍 Quét Sâu Toàn Bộ Hệ Thống v5.0'}
               </button>
               <button
                 onClick={refreshDiagnostics}
