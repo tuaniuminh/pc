@@ -42,10 +42,11 @@ public struct PCFlexLiveActivityWidget: Widget {
 
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text(formatCountdown(context.state.timeRemaining))
+                        Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
                             .font(.system(size: 26, weight: .black, design: .rounded))
                             .monospacedDigit()
                             .foregroundColor(actionColor(for: context.state.actionState))
+                            .lineLimit(1)
                         Text("Hiệp \(context.state.currentRep)/\(context.state.totalReps)")
                             .font(.system(size: 10, weight: .bold, design: .rounded))
                             .foregroundColor(.white.opacity(0.75))
@@ -81,11 +82,13 @@ public struct PCFlexLiveActivityWidget: Widget {
                 }
                 .padding(.leading, 2)
             } compactTrailing: {
-                // MARK: - Compact Trailing (Đếm ngược 0:03, 0:02, 0:01 theo Native Engine từng giây)
-                Text(formatCountdown(context.state.timeRemaining))
+                // MARK: - Compact Trailing (Đếm ngược phần cứng iOS tự động không bao giờ đứng)
+                Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .foregroundColor(actionColor(for: context.state.actionState))
+                    .frame(minWidth: 26, alignment: .trailing)
+                    .lineLimit(1)
                     .padding(.trailing, 2)
             } minimal: {
                 // MARK: - Minimal: Biểu tượng trạng thái nhỏ gọn
@@ -135,12 +138,13 @@ struct LockScreenLiveActivityView: View {
 
             Spacer()
 
-            // Cột bên phải: Đồng hồ đếm lùi lớn Native
+            // Cột bên phải: Đồng hồ đếm lùi lớn tự động của iOS
             VStack(alignment: .trailing, spacing: 0) {
-                Text(formatCountdown(context.state.timeRemaining))
+                Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
                     .font(.system(size: 36, weight: .black, design: .rounded))
                     .monospacedDigit()
                     .foregroundColor(actionColor(for: context.state.actionState))
+                    .lineLimit(1)
                 Text(context.state.actionState == "squeezing" ? "ĐANG SIẾT" : context.state.actionState == "relaxing" ? "THẢ LỎNG" : "KEGEL")
                     .font(.system(size: 9, weight: .black, design: .rounded))
                     .foregroundColor(.white.opacity(0.6))
@@ -159,14 +163,6 @@ struct LockScreenLiveActivityView: View {
 }
 
 // MARK: - Helpers & Color Palette Chuẩn PC Flex
-@available(iOS 16.1, *)
-func formatCountdown(_ seconds: Int) -> String {
-    let s = max(0, seconds)
-    let m = s / 60
-    let sec = s % 60
-    return String(format: "%d:%02d", m, sec)
-}
-
 @available(iOS 16.1, *)
 func actionIcon(for state: String) -> String {
     switch state {

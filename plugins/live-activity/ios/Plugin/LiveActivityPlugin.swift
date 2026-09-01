@@ -29,6 +29,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
     private var currentRelaxDuration: Int = 2
     private var currentStageLabel: String = "Siết cơ PC"
     private var totalTicksExecuted: Int = 0
+    private var phaseStartTime: Date = Date()
 
     private var lastInterruptionEvent: String = "None"
     private var lastRouteChangeEvent: String = "Default"
@@ -109,15 +110,16 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         #endif
     }
 
-    // MARK: - Native Swift Autonomous Workout Engine (Không bao giờ bị iOS dừng)
+    // MARK: - Native Swift Autonomous Workout Engine (Tiết kiệm ngân sách ActivityKit, không bao giờ bị iOS chặn)
     private func startNativeEngine() {
         stopNativeEngine()
         isWorkoutRunning = true
         totalTicksExecuted = 0
+        phaseStartTime = Date()
         startNativeAudioKeeper()
 
         DispatchQueue.main.async {
-            self.nativeWorkoutTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self.nativeWorkoutTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
                 self?.handleNativeEngineTick()
             }
             RunLoop.current.add(self.nativeWorkoutTimer!, forMode: .common)
@@ -137,32 +139,36 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         guard isWorkoutRunning else { return }
         totalTicksExecuted += 1
 
-        if currentTimeRemaining > 1 {
-            currentTimeRemaining -= 1
-        } else {
-            // Hết nhịp -> Tự động chuyển đổi Siết <-> Thả lỏng ở tầng Swift Native
+        let now = Date()
+        let elapsedInPhase = Int(now.timeIntervalSince(phaseStartTime))
+        let targetDuration = (currentActionState == "squeezing" || currentActionState == "reverse") ? currentSqueezeDuration : currentRelaxDuration
+
+        if elapsedInPhase >= targetDuration {
+            // Hết nhịp -> Chuyển đổi trạng thái Siết <-> Thả lỏng & Gửi 1 bản cập nhật duy nhất tới Dynamic Island
+            phaseStartTime = now
             if currentActionState == "squeezing" || currentActionState == "reverse" {
                 currentActionState = "relaxing"
                 currentTimeRemaining = currentRelaxDuration
                 currentStageLabel = "Thả lỏng"
+                updateActivityKitContent()
             } else if currentActionState == "relaxing" {
                 if currentRepNum < totalRepsNum {
                     currentRepNum += 1
                     currentActionState = "squeezing"
                     currentTimeRemaining = currentSqueezeDuration
                     currentStageLabel = "Siết cơ PC"
+                    updateActivityKitContent()
                 } else {
-                    // Hoàn thành bài tập
                     currentActionState = "complete"
                     currentTimeRemaining = 0
                     currentStageLabel = "Hoàn thành 🎉"
+                    updateActivityKitContent()
                     stopNativeEngine()
                 }
             }
+        } else {
+            currentTimeRemaining = max(1, targetDuration - elapsedInPhase)
         }
-
-        // Cập nhật Dynamic Island & Lock Screen ngay lập tức
-        updateActivityKitContent()
 
         // Phát tín hiệu về JavaScript để đồng bộ giao diện trong app
         notifyListeners("nativeWorkoutTick", data: [
@@ -380,6 +386,7 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         if let squeeze = call.getInt("squeezeTime") { currentSqueezeDuration = squeeze }
         if let relax = call.getInt("relaxTime") { currentRelaxDuration = relax }
 
+        phaseStartTime = Date()
         updateActivityKitContent()
         call.resolve()
     }
