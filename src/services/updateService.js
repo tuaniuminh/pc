@@ -1,10 +1,12 @@
 /**
  * PC Flex - In-App OTA Update Service
- * Tự động kiểm tra bản cập nhật mới trên GitHub Releases & Hỗ trợ 1-Click Update qua TrollStore
+ * Tự động kiểm tra bản cập nhật mới trên GitHub Releases & Hỗ trợ tải trực tiếp IPA ngay trong app để cài qua TrollStore
  */
 
+import { registerPlugin, Capacitor } from '@capacitor/core';
 import { addAppLog } from '../components/UI/DebugLogger';
 
+const LiveActivityPlugin = registerPlugin('LiveActivityPlugin');
 const GITHUB_REPO = 'tuaniuminh/pc';
 const GITHUB_LATEST_RELEASE_API = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
 const UPDATE_CHECK_KEY = 'pcflex_last_update_check_time';
@@ -94,20 +96,49 @@ export const checkForUpdate = async (currentAppVersion) => {
 };
 
 /**
- * Mở trực tiếp link cài đặt qua TrollStore URL Scheme
+ * Tải trực tiếp file IPA ngay trong app và mở bảng chọn TrollStore (Không cần Safari, Không cần URL Scheme)
+ */
+export const downloadIPAInApp = async (ipaDownloadUrl, onProgress) => {
+  if (!ipaDownloadUrl) return;
+
+  addAppLog('info', `[Updater] Bắt đầu tải file IPA trong ứng dụng: ${ipaDownloadUrl}`);
+
+  if (Capacitor.getPlatform() === 'ios' && LiveActivityPlugin?.downloadAndOpenIPA) {
+    let progressListener = null;
+    if (onProgress) {
+      progressListener = LiveActivityPlugin.addListener?.('ipaDownloadProgress', (data) => {
+        onProgress(data);
+      });
+    }
+
+    try {
+      const result = await LiveActivityPlugin.downloadAndOpenIPA({ url: ipaDownloadUrl });
+      addAppLog('success', `[Updater] Đã tải xong file IPA! Đang mở bảng chọn TrollStore...`);
+      return result;
+    } catch (e) {
+      addAppLog('error', `[Updater] Lỗi tải IPA trong app: ${e.message || e}`);
+      throw e;
+    } finally {
+      if (progressListener) progressListener.remove?.();
+    }
+  } else {
+    // Fallback mở trình duyệt
+    window.open(ipaDownloadUrl, '_blank');
+  }
+};
+
+/**
+ * Mở trực tiếp link cài đặt qua TrollStore URL Scheme (nếu người dùng bật URL Scheme)
  */
 export const installViaTrollStore = (ipaDownloadUrl) => {
   if (!ipaDownloadUrl) return;
 
   addAppLog('info', `[Updater] Đang gọi TrollStore URL Scheme: ${ipaDownloadUrl}`);
 
-  // URL Scheme chuẩn xác 100% của TrollStore 2
   const trollStoreUrl = `trollstore://install?url=${encodeURIComponent(ipaDownloadUrl)}`;
-
   try {
     window.location.href = trollStoreUrl;
   } catch (e) {
-    addAppLog('warn', `[Updater] Không thể mở URL Scheme, chuyển sang tải trực tiếp`);
     window.open(ipaDownloadUrl, '_blank');
   }
 };

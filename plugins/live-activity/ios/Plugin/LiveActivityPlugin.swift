@@ -2,6 +2,7 @@ import Foundation
 import Capacitor
 import ActivityKit
 import AVFoundation
+import UIKit
 
 @objc(LiveActivityPlugin)
 public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
@@ -11,12 +12,14 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "startActivity", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "updateActivity", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "stopActivity", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "getDiagnosticInfo", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "getDiagnosticInfo", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "downloadAndOpenIPA", returnType: CAPPluginReturnPromise)
     ]
 
     private var _currentActivity: Any?
     private var silentAudioKeeper: AVAudioPlayer?
     private var nativeWorkoutTimer: Timer?
+    private var activeDownloader: IPADownloadManager?
 
     // Native Autonomous State (Động cơ độc lập tầng Swift)
     private var isWorkoutRunning: Bool = false
@@ -108,6 +111,78 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
             }
         }
         #endif
+    }
+
+    // MARK: - Native In-App IPA Downloader & TrollStore Sharer
+    @objc public func downloadAndOpenIPA(_ call: CAPPluginCall) {
+        guard let urlString = call.getString("url"), let url = URL(string: urlString) else {
+            call.reject("URL tải file IPA không hợp lệ")
+            return
+        }
+
+        let fileName = url.lastPathComponent.isEmpty ? "PCFlex-Update.ipa" : url.lastPathComponent
+        let destinationUrl = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        try? FileManager.default.removeItem(at: destinationUrl)
+
+        self.activeDownloader = IPADownloadManager()
+        self.activeDownloader?.onProgress = { [weak self] progress, downloaded, total in
+            self?.notifyListeners("ipaDownloadProgress", data: [
+                "progress": progress,
+                "downloadedBytes": downloaded,
+                "totalBytes": total,
+                "downloadedMB": String(format: "%.1f", Double(downloaded) / 1024.0 / 1024.0),
+                "totalMB": String(format: "%.1f", Double(total) / 1024.0 / 1024.0)
+            ])
+        }
+
+        self.activeDownloader?.onCompletion = { [weak self] localUrl, error in
+            if let error = error {
+                DispatchQueue.main.async {
+                    call.reject("Lỗi tải file IPA: \(error.localizedDescription)")
+                }
+                return
+            }
+
+            guard let localUrl = localUrl else {
+                DispatchQueue.main.async {
+                    call.reject("Không tìm thấy file IPA đã tải")
+                }
+                return
+            }
+
+            do {
+                try FileManager.default.moveItem(at: localUrl, to: destinationUrl)
+
+                DispatchQueue.main.async {
+                    guard let self = self, let viewController = self.bridge?.viewController else {
+                        call.resolve(["success": true, "path": destinationUrl.path])
+                        return
+                    }
+
+                    // Mở bảng chia sẻ trực tiếp sang TrollStore
+                    let activityVC = UIActivityViewController(activityItems: [destinationUrl], applicationActivities: nil)
+                    
+                    if let popover = activityVC.popoverPresentationController {
+                        popover.sourceView = viewController.view
+                        popover.sourceRect = CGRect(x: viewController.view.bounds.midX, y: viewController.view.bounds.midY, width: 0, height: 0)
+                        popover.permittedArrowDirections = []
+                    }
+
+                    viewController.present(activityVC, animated: true) {
+                        call.resolve([
+                            "success": true,
+                            "path": destinationUrl.path
+                        ])
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    call.reject("Lỗi lưu file IPA: \(error.localizedDescription)")
+                }
+            }
+        }
+
+        self.activeDownloader?.startDownload(from: url)
     }
 
     // MARK: - Native Swift Autonomous Workout Engine (Tiết kiệm ngân sách ActivityKit, không bao giờ bị iOS chặn)
@@ -410,5 +485,34 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         #else
         call.resolve()
         #endif
+    }
+}
+
+// MARK: - IPADownloadManager (Hỗ trợ theo dõi tiến trình tải % và chia sẻ sang TrollStore)
+class IPADownloadManager: NSObject, URLSessionDownloadDelegate {
+    var onProgress: ((Double, Int64, Int64) -> Void)?
+    var onCompletion: ((URL?, Error?) -> Void)?
+    private var downloadSession: URLSession?
+
+    func startDownload(from url: URL) {
+        let config = URLSessionConfiguration.default
+        downloadSession = URLSession(configuration: config, delegate: self, delegateQueue: nil)
+        let task = downloadSession?.downloadTask(with: url)
+        task?.resume()
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        onCompletion?(location, nil)
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        let progress = totalBytesExpectedToWrite > 0 ? Double(totalBytesWritten) / Double(totalBytesExpectedToWrite) : 0.0
+        onProgress?(progress, totalBytesWritten, totalBytesExpectedToWrite)
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        if let error = error {
+            onCompletion?(nil, error)
+        }
     }
 }
