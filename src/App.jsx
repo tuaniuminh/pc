@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
-const APP_VERSION = 'v2.2.0';
+const APP_VERSION = 'v2.2.1';
 
 function App() {
   const [activeTab, setActiveTab] = useState('timer'); // 'timer' | 'history' | 'plans' | 'settings'
@@ -237,8 +237,8 @@ function App() {
         </div>
       </nav>
 
-      {/* 4. Con Bọ Log Nổi Chẩn Đoán Lỗi (Floating Debug Logger) */}
-      <DebugLogger />
+      {/* 4. Con Bọ Log Nổi Chẩn Đoán Lỗi (Floating Debug Logger - Có thể bật/tắt trong Cài đặt) */}
+      {settings.debugLoggerEnabled !== false && <DebugLogger />}
 
       {/* 5. Modal Cập Nhật Phiên Bản Mới OTA (TrollStore 1-Click Update) */}
       <UpdateModal updateInfo={updateInfo} onClose={() => setUpdateInfo(null)} />
