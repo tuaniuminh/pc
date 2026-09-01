@@ -456,9 +456,9 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
   };
 
   return (
-    <div className="p-4 sm:p-5 space-y-5 max-w-lg mx-auto">
+    <div className="p-3.5 sm:p-4 space-y-4 max-w-lg mx-auto">
       {/* 1. KHU VỰC ĐỒNG HỒ & BÀI TẬP CHÍNH (TRAINER CARD ĐỒNG BỘ SÁNG / TỐI) */}
-      <div className="glass-panel rounded-[32px] p-5 border border-slate-200 dark:border-white/10 space-y-4 shadow-md dark:shadow-xl transition-colors duration-300">
+      <div className="glass-panel rounded-[28px] sm:rounded-[32px] p-4 sm:p-5 border border-slate-200 dark:border-white/10 space-y-3 sm:space-y-3.5 shadow-md dark:shadow-xl transition-colors duration-300">
         {/* TÊN BÀI TẬP & SỐ PHÚT HOÀN THÀNH PHÍA TRÊN QUẢ CẦU */}
         <div className="flex items-center justify-center pt-1">
           <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-xs">
@@ -565,23 +565,7 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
           )}
         </div>
 
-        {/* Lời khuyên bàng quang (Nổi bật chuẩn y khoa với viền phát sáng & icon nổi) */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-amber-500/10 dark:from-amber-950/40 dark:via-rose-950/30 dark:to-amber-950/40 border border-amber-500/30 dark:border-amber-500/40 rounded-2xl p-3.5 flex items-center space-x-3 text-xs shadow-xs">
-          <div className="w-9 h-9 rounded-xl bg-amber-500/20 dark:bg-amber-500/30 border border-amber-500/40 flex items-center justify-center text-lg shrink-0 shadow-inner">
-            🚽
-          </div>
-          <div className="text-[11px] leading-relaxed flex-1">
-            <div className="font-black text-amber-700 dark:text-amber-300 flex items-center space-x-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
-              <span>KHUYẾN CÁO Y KHOA QUAN TRỌNG:</span>
-            </div>
-            <div className="text-slate-700 dark:text-amber-100/90 font-medium mt-0.5">
-              Nên <strong className="text-amber-800 dark:text-amber-200 font-bold underline decoration-amber-500/40">đi tiểu sạch bàng quang</strong> trước khi tập để tránh áp lực niệu đạo và đạt hiệu quả co thắt sàn chậu tối đa.
-            </div>
-          </div>
-        </div>
-
-        {/* Cụm Nút Điều Khiển Chính (Đặt lại + Bắt đầu dạng Pill) */}
+        {/* Cụm Nút Điều Khiển Chính (Đặt lại + Bắt đầu dạng Pill) - Hiển thị ngay dưới thanh tiến trình */}
         <div className="flex items-center space-x-3 pt-1">
           <button
             onClick={handleResetWorkout}
@@ -609,6 +593,22 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
               <span>Tạm dừng</span>
             </button>
           )}
+        </div>
+
+        {/* Lời khuyên bàng quang (Nổi bật chuẩn y khoa với viền phát sáng & icon nổi) */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-amber-500/10 dark:from-amber-950/40 dark:via-rose-950/30 dark:to-amber-950/40 border border-amber-500/30 dark:border-amber-500/40 rounded-2xl p-3 flex items-center space-x-2.5 text-xs shadow-xs">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/20 dark:bg-amber-500/30 border border-amber-500/40 flex items-center justify-center text-base shrink-0 shadow-inner">
+            🚽
+          </div>
+          <div className="text-[11px] leading-relaxed flex-1">
+            <div className="font-black text-amber-700 dark:text-amber-300 flex items-center space-x-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+              <span>KHUYẾN CÁO Y KHOA:</span>
+            </div>
+            <div className="text-slate-700 dark:text-amber-100/90 font-medium mt-0.5">
+              Nên <strong className="text-amber-800 dark:text-amber-200 font-bold underline decoration-amber-500/40">đi tiểu sạch bàng quang</strong> trước khi tập để bảo vệ sức khỏe và tối ưu hiệu quả.
+            </div>
+          </div>
         </div>
       </div>
 
