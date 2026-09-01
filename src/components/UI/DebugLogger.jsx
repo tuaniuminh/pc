@@ -4,7 +4,7 @@ import { liveActivityService } from '../../services/liveActivityService';
 import { audioEngine, SOUND_ACTIONS, SOUND_PRESETS } from '../../utils/audioEngine';
 import { Capacitor } from '@capacitor/core';
 
-const APP_VERSION = 'v1.9.4';
+const APP_VERSION = 'v1.9.5';
 const LOG_STORAGE_KEY = 'pcflex_debug_logs_v2';
 
 const getStoredLogs = () => {

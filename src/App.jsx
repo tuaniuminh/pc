@@ -5,6 +5,8 @@ import History from './components/History';
 import PlanManager from './components/PlanManager';
 import Settings from './components/Settings';
 import DebugLogger from './components/UI/DebugLogger';
+import UpdateModal from './components/UI/UpdateModal';
+import { checkForUpdate } from './services/updateService';
 import { 
   getSettings, 
   saveSettings, 
@@ -22,12 +24,27 @@ import {
 } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
+const APP_VERSION = 'v1.9.5';
+
 function App() {
   const [activeTab, setActiveTab] = useState('timer'); // 'timer' | 'history' | 'plans' | 'settings'
   const [settings, setSettingsState] = useState(getSettings());
   const [userProfile, setUserProfile] = useState(getUserProfile());
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [lockToast, setLockToast] = useState(null);
+  const [updateInfo, setUpdateInfo] = useState(null);
+
+  // Tự động kiểm tra bản cập nhật mới trên GitHub khi khởi động
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkForUpdate(APP_VERSION).then(res => {
+        if (res && res.hasUpdate) {
+          setUpdateInfo(res);
+        }
+      });
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Kích hoạt cân chỉnh dữ liệu, phản hồi rung và Dark Mode / Status Bar
   useEffect(() => {
@@ -222,6 +239,9 @@ function App() {
 
       {/* 4. Con Bọ Log Nổi Chẩn Đoán Lỗi (Floating Debug Logger) */}
       <DebugLogger />
+
+      {/* 5. Modal Cập Nhật Phiên Bản Mới OTA (TrollStore 1-Click Update) */}
+      <UpdateModal updateInfo={updateInfo} onClose={() => setUpdateInfo(null)} />
     </div>
   );
 }

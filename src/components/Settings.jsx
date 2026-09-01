@@ -27,12 +27,42 @@ import {
 } from '../utils/audioEngine';
 import { exportBackupJSON, importBackupJSON } from '../services/storageService';
 import { triggerHapticMedium, triggerHapticLight } from '../utils/hapticsUtils';
+import { checkForUpdate, installViaTrollStore, openDirectDownload } from '../services/updateService';
+
+const SETTINGS_APP_VERSION = 'v1.9.5';
 
 const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
   const [showKey, setShowKey] = useState(false);
   const [testingKey, setTestingKey] = useState(false);
   const [testResult, setTestResult] = useState(null);
   const [backupMessage, setBackupMessage] = useState(null);
+
+  // In-App Update State
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateCheckState, setUpdateCheckState] = useState(null);
+
+  const handleCheckUpdateManual = async () => {
+    setIsCheckingUpdate(true);
+    setUpdateCheckState(null);
+    try {
+      const res = await checkForUpdate(SETTINGS_APP_VERSION);
+      if (res && res.hasUpdate) {
+        setUpdateCheckState(res);
+      } else {
+        setUpdateCheckState({
+          hasUpdate: false,
+          message: res?.error ? `Lỗi: ${res.error}` : `🎉 Bạn đang sử dụng phiên bản mới nhất (${SETTINGS_APP_VERSION})!`
+        });
+      }
+    } catch (e) {
+      setUpdateCheckState({
+        hasUpdate: false,
+        message: `Lỗi kết nối: ${e.message || e}`
+      });
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
 
   // Sound Studio State
   const [activeActionKey, setActiveActionKey] = useState('squeeze'); // 'squeeze' | 'relax' | 'reverse' | 'transition' | 'complete'
@@ -450,40 +480,68 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
         </div>
       </div>
 
-      {/* SECTION 5: SAO LƯU & KHÔI PHỤC DỮ LIỆU (JSON) */}
-      <div className="glass-panel p-5 rounded-3xl space-y-4 border border-slate-300 dark:border-white/10">
+      {/* SECTION 6: CẬP NHẬT ỨNG DỤNG (TROLLSTORE OTA UPDATE) */}
+      <div className="glass-panel p-5 rounded-3xl space-y-4 border border-cyan-500/30">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-gray-300 flex items-center justify-center">
-            <Download size={16} />
+          <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+            <Smartphone size={16} />
           </div>
           <div>
-            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Sao Lưu & Khôi Phục Dữ Liệu</h3>
-            <p className="text-[11px] text-slate-500 dark:text-gray-400">Xuất/nhập toàn bộ lịch sử, streak và giáo án AI bằng JSON</p>
+            <div className="flex items-center space-x-2">
+              <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Cập Nhật Ứng Dụng</h3>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 font-bold">
+                v1.9.5
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-gray-400">Kiểm tra bản mới trên GitHub & cài đặt 1 chạm qua TrollStore</p>
           </div>
         </div>
 
-        {backupMessage && (
-          <div className={`p-3 rounded-2xl text-xs ${backupMessage.success ? 'bg-emerald-500/15 text-emerald-600' : 'bg-red-500/15 text-red-500'}`}>
-            {backupMessage.text}
+        {updateCheckState && (
+          <div className={`p-3 rounded-2xl text-xs ${updateCheckState.hasUpdate ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-gray-400'}`}>
+            {updateCheckState.hasUpdate ? (
+              <div className="space-y-2">
+                <div className="font-bold flex items-center space-x-1">
+                  <Sparkles size={14} className="text-emerald-500" />
+                  <span>Đã có phiên bản mới: {updateCheckState.tagName}!</span>
+                </div>
+                <p className="text-[11px] opacity-90">{updateCheckState.releaseName}</p>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => installViaTrollStore(updateCheckState.ipaDownloadUrl)}
+                    className="flex-1 py-2 px-3 rounded-xl bg-emerald-500 text-white font-black text-xs shadow-md active:scale-95 transition-all"
+                  >
+                    ⚡ Cài Qua TrollStore
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openDirectDownload(updateCheckState.ipaDownloadUrl)}
+                    className="py-2 px-3 rounded-xl bg-slate-200 dark:bg-white/10 text-slate-800 dark:text-white font-bold text-xs active:scale-95 transition-all"
+                  >
+                    Tải IPA
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <span>{updateCheckState.message || "Bạn đang sử dụng phiên bản mới nhất!"}</span>
+            )}
           </div>
         )}
 
-        <div className="flex gap-2 pt-1">
-          <button
-            type="button"
-            onClick={exportBackupJSON}
-            className="flex-1 py-3 rounded-2xl bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-white font-bold text-xs flex items-center justify-center space-x-1.5 active:scale-95 transition-all"
-          >
-            <Download size={14} />
-            <span>Xuất Dữ Liệu</span>
-          </button>
-
-          <label className="flex-1 py-3 rounded-2xl bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-white font-bold text-xs flex items-center justify-center space-x-1.5 active:scale-95 transition-all cursor-pointer">
-            <Upload size={14} />
-            <span>Nhập File JSON</span>
-            <input type="file" accept=".json" onChange={handleFileImport} className="hidden" />
-          </label>
-        </div>
+        <button
+          type="button"
+          disabled={isCheckingUpdate}
+          onClick={handleCheckUpdateManual}
+          className="w-full py-3 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 hover:bg-cyan-500/25 text-cyan-600 dark:text-cyan-400 font-black text-xs flex items-center justify-center space-x-1.5 active:scale-95 transition-all"
+        >
+          {isCheckingUpdate ? (
+            <div className="w-3.5 h-3.5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Sparkles size={14} />
+          )}
+          <span>{isCheckingUpdate ? "Đang kiểm tra GitHub Releases..." : "🔍 Kiểm Tra Bản Cập Nhật Mới"}</span>
+        </button>
       </div>
     </div>
   );
