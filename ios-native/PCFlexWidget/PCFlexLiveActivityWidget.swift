@@ -42,7 +42,7 @@ public struct PCFlexLiveActivityWidget: Widget {
 
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
+                        Text(timerInterval: context.state.startDate...context.state.endDate, countsDown: true)
                             .font(.system(size: 26, weight: .black, design: .rounded))
                             .monospacedDigit()
                             .foregroundColor(actionColor(for: context.state.actionState))
@@ -82,12 +82,12 @@ public struct PCFlexLiveActivityWidget: Widget {
                 }
                 .padding(.leading, 2)
             } compactTrailing: {
-                // MARK: - Compact Trailing (Đếm ngược phần cứng iOS tự động không bao giờ đứng)
-                Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
+                // MARK: - Compact Trailing (Đếm ngược phần cứng tuyệt đối không bao giờ lỗi range)
+                Text(timerInterval: context.state.startDate...context.state.endDate, countsDown: true)
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .foregroundColor(actionColor(for: context.state.actionState))
-                    .frame(minWidth: 26, alignment: .trailing)
+                    .frame(minWidth: 28, alignment: .trailing)
                     .lineLimit(1)
                     .padding(.trailing, 2)
             } minimal: {
@@ -140,7 +140,7 @@ struct LockScreenLiveActivityView: View {
 
             // Cột bên phải: Đồng hồ đếm lùi lớn tự động của iOS
             VStack(alignment: .trailing, spacing: 0) {
-                Text(timerInterval: Date()...max(Date().addingTimeInterval(1), context.state.targetDate), countsDown: true)
+                Text(timerInterval: context.state.startDate...context.state.endDate, countsDown: true)
                     .font(.system(size: 36, weight: .black, design: .rounded))
                     .monospacedDigit()
                     .foregroundColor(actionColor(for: context.state.actionState))
