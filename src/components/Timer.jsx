@@ -465,8 +465,8 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
         <div className="flex items-center space-x-3 pt-1">
           <button
             onClick={handleResetWorkout}
-            disabled={!isActive && actionState === 'idle'}
-            className="w-1/2 py-3.5 rounded-2xl bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/15 text-slate-800 dark:text-white font-extrabold text-sm flex items-center justify-center space-x-2 border border-slate-300 dark:border-white/10 transition-all active:scale-95 disabled:opacity-40"
+            disabled={isActive || actionState === 'idle'}
+            className="w-1/2 py-3.5 rounded-2xl bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/15 text-slate-800 dark:text-white font-extrabold text-sm flex items-center justify-center space-x-2 border border-slate-300 dark:border-white/10 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <RotateCcw size={16} />
             <span>Đặt lại</span>
