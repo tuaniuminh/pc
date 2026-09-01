@@ -743,12 +743,57 @@ export const checkAndUnlockBadges = () => {
   return newlyUnlocked;
 };
 
+export const getRoutineEstimatedSeconds = (level, gender, routineType, routineName) => {
+  try {
+    const lvlNum = Number(level) || 1;
+    const g = gender === 'female' ? 'female' : 'male';
+    const lvlObj = CLINICAL_LEVELS[lvlNum]?.[g] || CLINICAL_LEVELS[1].male;
+    
+    let preset = lvlObj[routineType];
+    if (!preset && routineName) {
+      preset = Object.values(lvlObj).find(p => p.name === routineName || routineName.includes(p.name));
+    }
+    if (!preset) {
+      for (const l of [1, 2, 3, 4, 5]) {
+        for (const gen of ['male', 'female']) {
+          const lo = CLINICAL_LEVELS[l]?.[gen];
+          if (lo) {
+            const found = Object.values(lo).find(p => p.name === routineName || (routineType && p.id?.includes(routineType)));
+            if (found) {
+              preset = found;
+              break;
+            }
+          }
+        }
+        if (preset) break;
+      }
+    }
+
+    if (preset && preset.stages) {
+      return preset.stages.reduce((sum, st) => {
+        if (st.type === 'transition') return sum + (st.relax || 10);
+        const perRep = (st.squeeze || 0) + (st.relax || 0);
+        return sum + (perRep * (st.reps || 1));
+      }, 0);
+    }
+  } catch (e) {}
+  return 180;
+};
+
 export const recalibrateAndSyncAllData = () => {
   try {
     const history = getHistory();
     let changed = false;
     history.forEach(item => {
-      const sec = item.duration || item.durationSeconds || 0;
+      let sec = item.duration || item.durationSeconds || 0;
+      // Khôi phục chính xác thời gian các buổi tập cũ bị lỗi lưu 0s/1p
+      if (sec <= 30) {
+        const estSec = getRoutineEstimatedSeconds(item.level, item.gender, item.routineType, item.routineName);
+        if (estSec > 30) {
+          sec = estSec;
+          changed = true;
+        }
+      }
       if (item.duration !== sec || item.durationSeconds !== sec) {
         item.duration = sec;
         item.durationSeconds = sec;
