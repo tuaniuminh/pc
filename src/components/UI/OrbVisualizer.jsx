@@ -140,20 +140,9 @@ const OrbVisualizer = ({
         </div>
 
         {/* Hướng dẫn hành động ngắn gọn */}
-        <span className="text-xs text-slate-700 dark:text-gray-200 font-extrabold max-w-[170px] truncate px-1">
+        <span className="text-xs text-slate-700 dark:text-gray-200 font-extrabold max-w-[170px] truncate px-1 mt-1">
           {stageLabel || config.subText}
         </span>
-
-        {/* Huy hiệu Thông tin Hiệp tập & Bài tập */}
-        <div className="mt-1.5 flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[10px] font-bold text-slate-600 dark:text-gray-400">
-          <span 
-            className="w-2 h-2 rounded-full" 
-            style={{ backgroundColor: config.themeColor }}
-          />
-          <span className="truncate max-w-[110px]">{routineName}</span>
-          <span>•</span>
-          <span className="text-cyan-600 dark:text-cyan-400 font-mono font-extrabold">{totalRoutineReps} lượt</span>
-        </div>
       </div>
     </div>
   );

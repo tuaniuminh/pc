@@ -31,7 +31,7 @@ import { exportBackupJSON, importBackupJSON } from '../services/storageService';
 import { triggerHapticMedium, triggerHapticLight } from '../utils/hapticsUtils';
 import { checkForUpdate, installViaTrollStore, openDirectDownload, downloadIPAInApp } from '../services/updateService';
 
-const SETTINGS_APP_VERSION = 'v2.2.4';
+const SETTINGS_APP_VERSION = 'v2.2.5';
 
 const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
   const [showKey, setShowKey] = useState(false);
@@ -408,6 +408,64 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
             onChange={handleVolumeChange}
             className="w-full accent-violet-500 h-1.5 bg-slate-300 dark:bg-white/10 rounded-lg cursor-pointer"
           />
+        </div>
+
+        {/* TÙY CHỌN BẬT/TẮT ÂM BÁO & NHẠC NỀN TRONG CÀI ĐẶT */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+          {/* 1. Bật/Tắt Âm báo hiệu */}
+          <div className="p-3 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Volume2 size={15} className="text-violet-500" />
+              <div>
+                <div className="text-xs font-bold text-slate-900 dark:text-white">Âm Báo Hiệu (SFX)</div>
+                <div className="text-[10px] text-slate-500 dark:text-gray-400">Âm thanh chuông nhịp tập</div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const next = settings.sfxEnabled === false ? true : false;
+                onUpdateSettings({ ...settings, sfxEnabled: next, soundEnabled: next });
+                if (next) {
+                  triggerHapticMedium();
+                  audioEngine.playBeep(880, 0.1, 0.3);
+                }
+              }}
+              className={`w-11 h-6 rounded-full p-0.5 transition-all ${
+                settings.sfxEnabled !== false && settings.soundEnabled !== false ? 'bg-violet-500' : 'bg-slate-300 dark:bg-white/20'
+              }`}
+            >
+              <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform ${
+                settings.sfxEnabled !== false && settings.soundEnabled !== false ? 'translate-x-5' : 'translate-x-0'
+              }`} />
+            </button>
+          </div>
+
+          {/* 2. Bật/Tắt Nhạc nền thiền */}
+          <div className="p-3 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Music size={15} className="text-cyan-500" />
+              <div>
+                <div className="text-xs font-bold text-slate-900 dark:text-white">Nhạc Nền Thiền (BGM)</div>
+                <div className="text-[10px] text-slate-500 dark:text-gray-400">Nhạc nền êm dịu khi tập</div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const next = settings.bgmActive === true ? false : true;
+                onUpdateSettings({ ...settings, bgmActive: next, bgmEnabled: next });
+                if (next) triggerHapticMedium();
+              }}
+              className={`w-11 h-6 rounded-full p-0.5 transition-all ${
+                settings.bgmActive === true || settings.bgmEnabled === true ? 'bg-cyan-500' : 'bg-slate-300 dark:bg-white/20'
+              }`}
+            >
+              <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform ${
+                settings.bgmActive === true || settings.bgmEnabled === true ? 'translate-x-5' : 'translate-x-0'
+              }`} />
+            </button>
+          </div>
         </div>
 
         {/* Bộ Selector 5 Nhịp Tập Cần Gán Âm Thanh */}

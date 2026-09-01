@@ -67,9 +67,9 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
   const [showCelebration, setShowCelebration] = useState(false);
   const [completedSummary, setCompletedSummary] = useState(null);
 
-  // Quick sound toggles
-  const [sfxEnabled, setSfxEnabled] = useState(settings.soundEnabled ?? true);
-  const [bgmActive, setBgmActive] = useState(settings.bgmEnabled ?? false);
+  // Âm báo & Nhạc nền đồng bộ trực tiếp từ Cài đặt
+  const sfxEnabled = settings.sfxEnabled !== false && settings.soundEnabled !== false;
+  const bgmActive = settings.bgmActive === true || settings.bgmEnabled === true;
 
   // Lấy cấu hình các stages của bài tập hiện tại
   const getCurrentStages = () => {
@@ -363,40 +363,18 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
     <div className="p-4 sm:p-5 space-y-5 max-w-lg mx-auto">
       {/* 1. KHU VỰC ĐỒNG HỒ & BÀI TẬP CHÍNH (TRAINER CARD ĐỒNG BỘ SÁNG / TỐI) */}
       <div className="glass-panel rounded-[32px] p-5 border border-slate-200 dark:border-white/10 space-y-4 shadow-md dark:shadow-xl transition-colors duration-300">
-        {/* Nút bật/tắt nhanh âm thanh (Âm báo & Nhạc nền dạng Pill) */}
-        <div className="flex items-center justify-center space-x-3">
-          <button
-            onClick={() => {
-              const next = !sfxEnabled;
-              setSfxEnabled(next);
-              if (next) audioEngine.playBeep(880, 0.1, 0.3);
-            }}
-            className={`flex items-center space-x-2 py-2 px-5 rounded-full border text-xs font-bold transition-all active:scale-95 ${
-              sfxEnabled 
-                ? 'bg-slate-200/90 dark:bg-white/10 border-slate-300 dark:border-white/15 text-slate-900 dark:text-white shadow-xs'
-                : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 dark:text-gray-500'
-            }`}
-          >
-            {sfxEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
-            <span>Âm báo</span>
-          </button>
-
-          <button
-            onClick={() => {
-              const next = !bgmActive;
-              setBgmActive(next);
-              if (next && isActive) audioEngine.startBGM();
-              else if (!next) audioEngine.stopBGM();
-            }}
-            className={`flex items-center space-x-2 py-2 px-5 rounded-full border text-xs font-bold transition-all active:scale-95 ${
-              bgmActive 
-                ? 'bg-slate-200/90 dark:bg-white/10 border-slate-300 dark:border-white/15 text-slate-900 dark:text-white shadow-xs'
-                : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400 dark:text-gray-500'
-            }`}
-          >
-            <Music size={15} />
-            <span>Nhạc nền</span>
-          </button>
+        {/* TÊN BÀI TẬP & TỔNG SỐ LƯỢT NỔI BẬT PHÍA TRÊN QUẢ CẦU */}
+        <div className="flex items-center justify-center pt-1">
+          <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
+            <span className="text-xs font-black text-slate-800 dark:text-gray-100 tracking-wide truncate max-w-[200px]">
+              {currentRoutine.name}
+            </span>
+            <span className="text-slate-400 dark:text-gray-500">•</span>
+            <span className="text-xs font-mono font-extrabold text-cyan-600 dark:text-cyan-400">
+              {totalRoutineReps} lượt
+            </span>
+          </div>
         </div>
 
         {/* Quả Cầu Visualizer 3D Sinh Học (Sáng & Tối) */}

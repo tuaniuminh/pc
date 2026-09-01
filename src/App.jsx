@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
-const APP_VERSION = 'v2.2.4';
+const APP_VERSION = 'v2.2.5';
 
 function App() {
   const [activeTab, setActiveTab] = useState('timer'); // 'timer' | 'history' | 'plans' | 'settings'
@@ -99,10 +99,6 @@ function App() {
     handleUpdateSettings({ ...settings, theme: newTheme });
   };
 
-  const handleToggleSound = () => {
-    handleUpdateSettings({ ...settings, soundEnabled: !settings.soundEnabled });
-  };
-
   const handleSelectAIPlan = (plan) => {
     setActiveTab('timer'); // Chuyển về tab Tập Luyện khi chọn giáo án
   };
@@ -121,7 +117,6 @@ function App() {
       <Header 
         settings={settings}
         onToggleTheme={handleToggleTheme}
-        onToggleSound={handleToggleSound}
         activeRoutineName={activeTab === 'timer' ? 'Sàn Chậu & Kegel AI' : null}
       />
 
