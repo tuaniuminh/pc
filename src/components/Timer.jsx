@@ -467,31 +467,59 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
             })}
           </div>
 
-          {/* Nhãn Giai Đoạn Chi Tiết (Chỉ hiển thị các chặng chưa và đang tập để không bị dồn chữ) */}
-          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-gray-400 font-semibold pt-0.5">
-            {currentStages.map((st, idx) => {
-              if (idx < currentStageIndex) return null; // Ẩn nhãn của chặng đã qua
-
-              const isCurrent = idx === currentStageIndex;
-              return (
-                <span 
-                  key={idx}
-                  className={`flex-1 text-center transition-all duration-300 line-clamp-1 px-1 ${
-                    isCurrent ? 'text-cyan-600 dark:text-cyan-400 font-extrabold scale-105' : 'text-slate-400 dark:text-gray-500'
-                  }`}
-                >
-                  {st.label || (st.type === 'reverse' ? `Kegel ngược ${st.squeeze}s` : st.type === 'breathing' ? 'Thở bụng' : `Siết ${st.squeeze}s`)}
+          {/* GIẢI PHÁP HIỂN THỊ CHẶNG THÔNG MINH CHO CẢ BÀI ÍT CHẶNG & NHIỀU CHẶNG */}
+          {currentStages.length <= 3 ? (
+            /* Với bài <= 3 chặng: Hiển thị đầy đủ các cột nhãn */
+            <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-gray-400 font-semibold pt-0.5">
+              {currentStages.map((st, idx) => {
+                if (idx < currentStageIndex) return null;
+                const isCurrent = idx === currentStageIndex;
+                return (
+                  <span 
+                    key={idx}
+                    className={`flex-1 text-center transition-all duration-300 line-clamp-1 px-1 ${
+                      isCurrent ? 'text-cyan-600 dark:text-cyan-400 font-extrabold scale-105' : 'text-slate-400 dark:text-gray-500'
+                    }`}
+                  >
+                    {st.label || (st.type === 'reverse' ? `Kegel ngược ${st.squeeze}s` : st.type === 'breathing' ? 'Thở bụng' : `Siết ${st.squeeze}s`)}
+                  </span>
+                );
+              })}
+            </div>
+          ) : (
+            /* Với bài nhiều chặng (> 3 chặng): Thẻ Spotlight Chặng Trọng Tâm rõ nét, không bao giờ bị cắt chữ */
+            <div className="pt-0.5 flex items-center justify-between text-xs font-bold text-slate-700 dark:text-gray-300">
+              <div className="flex items-center space-x-1.5 min-w-0">
+                <span className="w-2 h-2 rounded-full bg-cyan-500 shrink-0 animate-pulse" />
+                <span className="font-extrabold text-cyan-600 dark:text-cyan-400 truncate">
+                  Chặng {currentStageIndex + 1}/{currentStages.length}: {currentStage?.label}
                 </span>
-              );
-            })}
-          </div>
+                <span className="text-[11px] text-slate-400 dark:text-gray-500 font-mono shrink-0">
+                  ({actionState === 'idle' ? 0 : currentRep}/{currentStage?.reps || 1} hiệp)
+                </span>
+              </div>
+              {currentStageIndex < currentStages.length - 1 && (
+                <div className="text-[10px] text-slate-400 dark:text-gray-500 truncate max-w-[130px] shrink-0 text-right pl-2">
+                  Tiếp: {currentStages[currentStageIndex + 1]?.label}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Lời khuyên bàng quang (Hộp Lưu ý màu sắc rõ nét trên cả nền sáng và tối) */}
-        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-500/30 rounded-2xl p-3.5 flex items-start space-x-3 text-xs text-red-900 dark:text-red-200">
-          <span className="text-lg shrink-0 mt-0.5">🚽</span>
-          <div className="text-[11px] leading-relaxed">
-            <strong className="text-red-700 dark:text-red-400">Lưu ý:</strong> Nên đi tiểu sạch bàng quang trước khi tập để bảo vệ sức khỏe và đạt hiệu quả tốt nhất.
+        {/* Lời khuyên bàng quang (Nổi bật chuẩn y khoa với viền phát sáng & icon nổi) */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-amber-500/10 dark:from-amber-950/40 dark:via-rose-950/30 dark:to-amber-950/40 border border-amber-500/30 dark:border-amber-500/40 rounded-2xl p-3.5 flex items-center space-x-3 text-xs shadow-xs">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/20 dark:bg-amber-500/30 border border-amber-500/40 flex items-center justify-center text-lg shrink-0 shadow-inner">
+            🚽
+          </div>
+          <div className="text-[11px] leading-relaxed flex-1">
+            <div className="font-black text-amber-700 dark:text-amber-300 flex items-center space-x-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+              <span>KHUYẾN CÁO Y KHOA QUAN TRỌNG:</span>
+            </div>
+            <div className="text-slate-700 dark:text-amber-100/90 font-medium mt-0.5">
+              Nên <strong className="text-amber-800 dark:text-amber-200 font-bold underline decoration-amber-500/40">đi tiểu sạch bàng quang</strong> trước khi tập để tránh áp lực niệu đạo và đạt hiệu quả co thắt sàn chậu tối đa.
+            </div>
           </div>
         </div>
 
