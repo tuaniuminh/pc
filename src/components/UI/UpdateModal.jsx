@@ -150,35 +150,25 @@ const UpdateModal = ({ updateInfo, onClose }) => {
 
         {/* Cụm Nút Hành Động */}
         <div className="space-y-2 pt-1">
-          {/* Nút chính: Tải trực tiếp trong ứng dụng */}
+          {/* Nút chính: Cập nhật phiên bản mới */}
           {!isDownloading && (
             <button
               onClick={handleInAppDownload}
               className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-lg shadow-cyan-500/25 active:scale-95 transition-all"
             >
               <Zap size={16} fill="currentColor" />
-              <span>⚡ Tải & Cài Đặt Trực Tiếp Trong App</span>
+              <span>Cập nhật phiên bản mới</span>
             </button>
           )}
 
-          {/* Nút phụ: Mở Safari hoặc Để sau */}
+          {/* Nút phụ: Để sau */}
           {!isDownloading && (
-            <div className="flex gap-2">
-              <button
-                onClick={handleDirectDownload}
-                className="flex-1 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-gray-300 font-bold text-[11px] flex items-center justify-center space-x-1.5 active:scale-95 transition-all"
-              >
-                <Download size={13} />
-                <span>Tải Safari</span>
-              </button>
-
-              <button
-                onClick={onClose}
-                className="py-2.5 px-4 rounded-xl bg-transparent hover:bg-white/5 text-gray-400 hover:text-white font-bold text-[11px] active:scale-95 transition-all"
-              >
-                Để sau
-              </button>
-            </div>
+            <button
+              onClick={onClose}
+              className="w-full py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white font-bold text-xs active:scale-95 transition-all text-center"
+            >
+              Để sau
+            </button>
           )}
         </div>
       </div>

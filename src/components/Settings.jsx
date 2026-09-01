@@ -31,7 +31,7 @@ import { exportBackupJSON, importBackupJSON } from '../services/storageService';
 import { triggerHapticMedium, triggerHapticLight } from '../utils/hapticsUtils';
 import { checkForUpdate, installViaTrollStore, openDirectDownload, downloadIPAInApp } from '../services/updateService';
 
-const SETTINGS_APP_VERSION = 'v2.2.18';
+const SETTINGS_APP_VERSION = 'v2.2.19';
 
 const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
   const [showKey, setShowKey] = useState(false);
@@ -238,21 +238,14 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex gap-2 pt-1">
+                  <div className="pt-1">
                     <button
                       type="button"
                       onClick={() => handleInAppDownloadInSettings(updateCheckState.ipaDownloadUrl)}
-                      className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-950 font-black text-xs shadow-md active:scale-95 transition-all flex items-center justify-center space-x-1"
+                      className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-950 font-black text-xs shadow-md active:scale-95 transition-all flex items-center justify-center space-x-1.5"
                     >
-                      <Zap size={13} fill="currentColor" />
-                      <span>⚡ Tải & Cài Đặt Trực Tiếp</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openDirectDownload(updateCheckState.ipaDownloadUrl)}
-                      className="py-2.5 px-3 rounded-xl bg-slate-200 dark:bg-white/10 text-slate-800 dark:text-white font-bold text-xs active:scale-95 transition-all"
-                    >
-                      Tải Safari
+                      <Zap size={14} fill="currentColor" />
+                      <span>Cập nhật phiên bản mới</span>
                     </button>
                   </div>
                 )}

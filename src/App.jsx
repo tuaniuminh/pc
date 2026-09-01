@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
-const APP_VERSION = 'v2.2.18';
+const APP_VERSION = 'v2.2.19';
 
 function App() {
   const [activeTab, setActiveTab] = useState('timer'); // 'timer' | 'history' | 'plans' | 'settings'
