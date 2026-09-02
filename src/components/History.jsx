@@ -93,6 +93,25 @@ const History = ({ onStartWorkout, activeTab }) => {
     return `${mins}p ${remSec}s`;
   };
 
+  const formatWorkoutDate = (dateVal) => {
+    if (!dateVal) return '';
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return '';
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const formatWorkoutTime = (dateVal) => {
+    if (!dateVal) return '';
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return '';
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
   // Gom nhóm lịch sử theo ngày YYYY-MM-DD
   const workoutsMap = {};
   historyList.forEach((item) => {
@@ -343,8 +362,8 @@ const History = ({ onStartWorkout, activeTab }) => {
                           {sess.totalSqueezes} lượt siết • {sess.totalReverseKegels} lượt ngược • {formatDurationText(sess.duration || sess.durationSeconds)}
                         </div>
                       </div>
-                      <span className="text-[10px] font-mono text-slate-400">
-                        {new Date(sess.date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                      <span className="text-[10px] font-mono text-slate-400 dark:text-gray-400">
+                        {formatWorkoutTime(sess.date)}
                       </span>
                     </div>
                   ))}
@@ -421,8 +440,9 @@ const History = ({ onStartWorkout, activeTab }) => {
                       </div>
                     </div>
 
-                    <div className="text-right text-[10px] text-slate-400 font-mono">
-                      {item.date ? new Date(item.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}
+                    <div className="text-right text-[10px] text-slate-400 dark:text-gray-400 font-mono shrink-0 pl-2">
+                      <div className="font-bold text-slate-700 dark:text-gray-200">{formatWorkoutTime(item.date)}</div>
+                      <div className="text-slate-500 dark:text-gray-400">{formatWorkoutDate(item.date)}</div>
                     </div>
                   </div>
                 ))}
