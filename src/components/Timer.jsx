@@ -552,12 +552,9 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
                 <span className="font-extrabold text-cyan-600 dark:text-cyan-400 truncate">
                   Chặng {currentStageIndex + 1}/{currentStages.length}: {currentStage?.label}
                 </span>
-                <span className="text-[11px] text-slate-400 dark:text-gray-500 font-mono shrink-0">
-                  ({actionState === 'idle' ? 0 : currentRep}/{currentStage?.reps || 1} hiệp)
-                </span>
               </div>
               {currentStageIndex < currentStages.length - 1 && (
-                <div className="text-[10px] text-slate-400 dark:text-gray-500 truncate max-w-[130px] shrink-0 text-right pl-2">
+                <div className="text-[10px] text-slate-400 dark:text-gray-500 truncate max-w-[140px] shrink-0 text-right pl-2">
                   Tiếp: {currentStages[currentStageIndex + 1]?.label}
                 </div>
               )}

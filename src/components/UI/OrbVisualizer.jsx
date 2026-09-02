@@ -132,6 +132,11 @@ const OrbVisualizer = ({
         <span className={`inline-flex items-center space-x-1.5 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border transition-all duration-300 ${config.badgeClass}`}>
           <span className="text-xs">{config.icon}</span>
           <span>{config.actionText}</span>
+          {totalReps > 0 && actionState !== 'idle' && actionState !== 'transition' && (
+            <span className="font-mono font-black tracking-normal text-cyan-600 dark:text-cyan-300">
+              ({currentRep}/{totalReps})
+            </span>
+          )}
         </span>
 
         {/* Đồng hồ đếm giây kỹ thuật số cỡ lớn sắc nét (Hero Typography Countdown) */}
