@@ -8,9 +8,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Cấu hình AVAudioSession để phát âm thanh nền liên tục khi ẩn app hoặc khóa màn hình
+        // Cấu hình AVAudioSession để phát âm thanh nền liên tục khi ẩn app hoặc khóa màn hình, hòa âm mượt mà với YouTube/Spotify mà không làm giảm âm lượng
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers, .duckOthers])
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
             print("Lỗi cấu hình AVAudioSession:", error)
