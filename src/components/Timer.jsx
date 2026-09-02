@@ -218,17 +218,14 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
         const now = Date.now();
         const elapsedSec = (now - phaseStartTimeRef.current) / 1000;
         const initialRemaining = phaseRemainingOnStartRef.current;
-        const currentRemaining = Math.max(0, Math.ceil(initialRemaining - elapsedSec));
-
-        setTimeRemaining(currentRemaining);
 
         if (elapsedSec >= initialRemaining) {
-          phaseStartTimeRef.current = Date.now();
-          setTimeout(() => {
-            handlePhaseTransition();
-          }, 0);
+          handlePhaseTransition();
+        } else {
+          const currentRemaining = Math.max(1, Math.ceil(initialRemaining - elapsedSec));
+          setTimeRemaining(currentRemaining);
         }
-      }, 200); // Kiểm tra 5 lần/giây để chuyển nhịp tức thì và mượt mà
+      }, 100); // Kiểm tra 10 lần/giây để chuyển pha chuẩn xác tức thì
     }
 
     return () => clearInterval(timer);
