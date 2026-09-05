@@ -16,9 +16,7 @@ import {
   Music,
   Check,
   Headphones,
-  Smartphone,
-  Bug,
-  Zap
+  Bug
 } from 'lucide-react';
 import { testGeminiApiKey } from '../services/geminiService';
 import { 
@@ -29,67 +27,14 @@ import {
 } from '../utils/audioEngine';
 import { exportBackupJSON, importBackupJSON } from '../services/storageService';
 import { triggerHapticMedium, triggerHapticLight } from '../utils/hapticsUtils';
-import { checkForUpdate, installViaTrollStore, openDirectDownload, downloadIPAInApp } from '../services/updateService';
 
-const SETTINGS_APP_VERSION = 'v2.2.25';
+const SETTINGS_APP_VERSION = 'v2.2.26';
 
 const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
   const [showKey, setShowKey] = useState(false);
   const [testingKey, setTestingKey] = useState(false);
   const [testResult, setTestResult] = useState(null);
   const [backupMessage, setBackupMessage] = useState(null);
-
-  // In-App Update State
-  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
-  const [updateCheckState, setUpdateCheckState] = useState(null);
-  const [isDownloadingIPA, setIsDownloadingIPA] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState(null);
-
-  const handleInAppDownloadInSettings = async (url) => {
-    try {
-      setIsDownloadingIPA(true);
-      triggerHapticMedium();
-      await downloadIPAInApp(url, (data) => {
-        setDownloadProgress(data);
-      });
-      triggerHapticLight();
-    } catch (e) {
-      alert(`Lỗi tải: ${e.message || e}`);
-    } finally {
-      setIsDownloadingIPA(false);
-    }
-  };
-
-  const handleCheckUpdateManual = async () => {
-    if (isCheckingUpdate) return;
-    setIsCheckingUpdate(true);
-    triggerHapticLight();
-    try {
-      const [res] = await Promise.all([
-        checkForUpdate(SETTINGS_APP_VERSION),
-        new Promise(r => setTimeout(r, 600)) // Đảm bảo độ trễ tối thiểu 600ms chống giật nháy liên tục
-      ]);
-      if (res && res.hasUpdate) {
-        setUpdateCheckState(res);
-        triggerHapticMedium();
-      } else {
-        setUpdateCheckState({
-          hasUpdate: false,
-          timestamp: Date.now(),
-          message: res?.error ? `Lỗi: ${res.error}` : `Bạn đang sử dụng phiên bản mới nhất (${SETTINGS_APP_VERSION})`
-        });
-        triggerHapticLight();
-      }
-    } catch (e) {
-      setUpdateCheckState({
-        hasUpdate: false,
-        timestamp: Date.now(),
-        message: `Lỗi kết nối: ${e.message || e}`
-      });
-    } finally {
-      setIsCheckingUpdate(false);
-    }
-  };
 
   // Sound Studio State
   const [activeActionKey, setActiveActionKey] = useState('squeeze'); // 'squeeze' | 'relax' | 'reverse' | 'transition' | 'complete'
@@ -181,117 +126,25 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
           Cài Đặt Hệ Thống
         </h2>
         <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
-          Cập nhật phần mềm, âm thanh phòng thu 50 presets, rung và AI
+          Âm thanh phòng thu 50 presets, rung xúc giác, gỡ lỗi và sao lưu
         </p>
       </div>
 
-      {/* SECTION 1: CẬP NHẬT ỨNG DỤNG & CÔNG TẮC CON BỌ CHẨN ĐOÁN (ĐƯỢC ĐƯA LÊN ĐẦU TIÊN) */}
-      <div className="glass-panel p-5 rounded-3xl space-y-4 border border-cyan-500/30">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
-            <Smartphone size={16} />
-          </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Cập Nhật Ứng Dụng</h3>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 font-bold">
-                {SETTINGS_APP_VERSION}
-              </span>
+      {/* SECTION 1: CÔNG CỤ CHẨN ĐOÁN & GỠ LỖI (DEBUG LOGGER) */}
+      <div className="glass-panel p-5 rounded-3xl border border-slate-200 dark:border-white/10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-2xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center shrink-0">
+              <Bug size={18} />
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-gray-400">Kiểm tra bản mới trên GitHub & cài đặt 1 chạm qua TrollStore</p>
-          </div>
-        </div>
-
-        {updateCheckState && (
-          <div className={`p-3.5 rounded-2xl text-xs transition-all duration-300 ${updateCheckState.hasUpdate ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-white/10'}`}>
-            {updateCheckState.hasUpdate ? (
-              <div className="space-y-2">
-                <div className="font-bold flex items-center space-x-1">
-                  <Sparkles size={14} className="text-emerald-500" />
-                  <span>Đã có phiên bản mới: {updateCheckState.tagName}!</span>
-                </div>
-                <p className="text-[11px] opacity-90">{updateCheckState.releaseName}</p>
-                {isDownloadingIPA ? (
-                  <div className="p-3 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-cyan-300">Đang tải bản cập nhật...</span>
-                      <div className="flex items-center space-x-2">
-                        {downloadProgress?.speed && (
-                          <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/20 px-1.5 py-0.5 rounded font-bold">
-                            {downloadProgress.speed}
-                          </span>
-                        )}
-                        <span className="font-mono font-bold text-emerald-400">
-                          {downloadProgress ? Math.round((downloadProgress.progress || 0) * 100) : 0}%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-white/10">
-                      <div 
-                        className="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 rounded-full transition-all duration-200"
-                        style={{ width: `${Math.max(5, Math.round((downloadProgress?.progress || 0) * 100))}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-[10px] text-gray-400 font-mono">
-                      <span>{downloadProgress?.downloadedMB ? `${downloadProgress.downloadedMB} MB` : 'Đang nạp...'}</span>
-                      <span>{downloadProgress?.totalMB ? `${downloadProgress.totalMB} MB` : ''}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="pt-1">
-                    <button
-                      type="button"
-                      onClick={() => handleInAppDownloadInSettings(updateCheckState.ipaDownloadUrl)}
-                      className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-950 font-black text-xs shadow-md active:scale-95 transition-all flex items-center justify-center space-x-1.5"
-                    >
-                      <Zap size={14} fill="currentColor" />
-                      <span>Cập nhật phiên bản mới</span>
-                    </button>
-                  </div>
-                )}
+            <div>
+              <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <span>Nút Tròn Con Bọ (Debug Logger)</span>
               </div>
-            ) : (
-              <div className="flex items-center space-x-2.5">
-                <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
-                  <CheckCircle2 size={13} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-bold text-xs text-slate-800 dark:text-gray-200">
-                    {updateCheckState.message || `Bạn đang sử dụng phiên bản mới nhất (${SETTINGS_APP_VERSION})`}
-                  </div>
-                  {updateCheckState.timestamp && (
-                    <div className="text-[10px] text-slate-400 dark:text-gray-500 mt-0.5">
-                      Đã kiểm tra lúc {new Date(updateCheckState.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                    </div>
-                  )}
-                </div>
+              <div className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">
+                Bật/tắt nút tròn chẩn đoán lỗi nổi ở góc màn hình
               </div>
-            )}
-          </div>
-        )}
-
-        <button
-          type="button"
-          disabled={isCheckingUpdate}
-          onClick={handleCheckUpdateManual}
-          className="w-full py-3 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 hover:bg-cyan-500/25 text-cyan-600 dark:text-cyan-400 font-black text-xs flex items-center justify-center space-x-1.5 active:scale-95 transition-all"
-        >
-          {isCheckingUpdate ? (
-            <div className="w-3.5 h-3.5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <Sparkles size={14} />
-          )}
-          <span>{isCheckingUpdate ? "Đang kiểm tra GitHub Releases..." : "🔍 Kiểm Tra Bản Cập Nhật Mới"}</span>
-        </button>
-
-        {/* CÔNG TẮC BẬT/TẮT HOÀN TOÀN CON BỌ CHẨN ĐOÁN (DEBUG LOGGER) */}
-        <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-white/10">
-          <div>
-            <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-              <Bug size={14} className="text-emerald-500" />
-              <span>Nút Tròn Con Bọ (Debug Logger)</span>
             </div>
-            <div className="text-[11px] text-slate-500 dark:text-gray-400">Bật/tắt nút tròn chẩn đoán lỗi nổi ở góc màn hình</div>
           </div>
           <button
             type="button"
@@ -300,7 +153,7 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
               onUpdateSettings({ ...settings, debugLoggerEnabled: newVal });
               if (newVal) triggerHapticMedium();
             }}
-            className={`w-12 h-7 rounded-full p-1 transition-all ${
+            className={`w-12 h-7 rounded-full p-1 transition-all shrink-0 ${
               settings.debugLoggerEnabled !== false ? 'bg-emerald-500 shadow-sm' : 'bg-slate-300 dark:bg-white/20'
             }`}
           >
@@ -714,6 +567,11 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
             />
           </label>
         </div>
+      </div>
+
+      {/* Thông tin phiên bản ứng dụng */}
+      <div className="text-center pt-2 pb-1 text-[11px] text-slate-400 dark:text-gray-500 font-mono">
+        PC Flex • Phiên bản {SETTINGS_APP_VERSION}
       </div>
     </div>
   );

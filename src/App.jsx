@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
-const APP_VERSION = 'v2.2.25';
+const APP_VERSION = 'v2.2.26';
 
 function App() {
   const [activeTab, setActiveTab] = useState('timer'); // 'timer' | 'history' | 'plans' | 'settings'
@@ -35,6 +35,7 @@ function App() {
   const [userProfile, setUserProfile] = useState(getUserProfile());
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [lockToast, setLockToast] = useState(null);
+  const [availableUpdate, setAvailableUpdate] = useState(null);
   const [updateInfo, setUpdateInfo] = useState(null);
   const mainScrollRef = useRef(null);
 
@@ -45,12 +46,12 @@ function App() {
     }
   }, [activeTab]);
 
-  // Tự động kiểm tra bản cập nhật mới trên GitHub khi khởi động
+  // Tự động kiểm tra bản cập nhật mới trên GitHub khi khởi động (chỉ hiển thị biểu tượng thông báo trên nút phiên bản)
   useEffect(() => {
     const timer = setTimeout(() => {
       checkForUpdate(APP_VERSION).then(res => {
         if (res && res.hasUpdate) {
-          setUpdateInfo(res);
+          setAvailableUpdate(res);
         }
       });
     }, 1500);
@@ -135,6 +136,10 @@ function App() {
         onToggleTheme={handleToggleTheme}
         onToggleSound={handleToggleSound}
         activeRoutineName={activeTab === 'timer' ? 'Sàn Chậu & Kegel AI' : null}
+        appVersion={APP_VERSION}
+        availableUpdate={availableUpdate}
+        onOpenUpdateModal={(info) => setUpdateInfo(info || availableUpdate)}
+        onUpdateDetected={(info) => setAvailableUpdate(info)}
       />
 
       {/* 2. Phần Thân Chứa 4 Tab Tính Năng (Duy trì trạng thái liên tục trong DOM, không bao giờ bị reset bài tập khi chuyển tab) */}
