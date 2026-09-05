@@ -46,7 +46,7 @@ const Header = ({
     try {
       const [res] = await Promise.all([
         checkForUpdate(appVersion),
-        new Promise(r => setTimeout(r, 700)) // Đảm bảo độ trễ tối thiểu để người dùng cảm nhận hiệu ứng mượt mà
+        new Promise(r => setTimeout(r, 400)) // Phản hồi kiểm tra nhanh chóng
       ]);
 
       if (res && res.hasUpdate) {
@@ -55,19 +55,19 @@ const Header = ({
         setCheckStatus('idle');
         triggerHapticMedium();
       } else {
-        // Đã là phiên bản mới nhất -> Hiển thị hiệu ứng đã là bản mới nhất thay vì toast thông báo
+        // Đã là phiên bản mới nhất -> Hiển thị hiệu ứng trong 1 giây theo yêu cầu
         setCheckStatus('latest');
         triggerHapticLight();
         setTimeout(() => {
           setCheckStatus('idle');
-        }, 2500);
+        }, 1000);
       }
     } catch (e) {
       setCheckStatus('idle');
     }
   };
 
-  const cleanVersion = (appVersion || packageJson.version || '2.2.26').replace(/^v/i, '');
+  const cleanVersion = (appVersion || packageJson.version || '2.2.27').replace(/^v/i, '');
 
   return (
     <header className="w-full safe-top-padding px-5 pb-3 pt-2 bg-white/95 dark:bg-oled/95 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 z-30 transition-colors duration-300">
