@@ -22,12 +22,11 @@ import {
   Smartphone,
   CheckCircle2,
   AlertCircle,
-  Zap,
-  Lock
+  Zap
 } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
-const APP_VERSION = 'v2.2.27';
+const APP_VERSION = 'v2.2.28';
 
 function App() {
   const [activeTab, setActiveTab] = useState('timer'); // 'timer' | 'history' | 'plans' | 'settings'
@@ -196,60 +195,45 @@ function App() {
           {/* Tab 2: Thành Tích (Vàng Hổ Phách / Amber Gold) */}
           <button
             onClick={() => handleTabClick('history')}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 relative ${
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 ${
               activeTab === 'history'
                 ? 'text-amber-600 dark:text-amber-400 scale-105 font-black'
                 : isWorkoutActive
-                ? 'text-slate-300 dark:text-gray-700 opacity-40 cursor-not-allowed'
+                ? 'text-slate-300 dark:text-gray-700 opacity-30 cursor-not-allowed pointer-events-none'
                 : 'text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300'
             }`}
           >
-            <div className="relative">
-              <HistoryIcon size={24} />
-              {isWorkoutActive && (
-                <Lock size={10} className="absolute -top-1 -right-1 text-amber-500" />
-              )}
-            </div>
+            <HistoryIcon size={24} />
             <span className="text-[10px] tracking-tight mt-1 font-bold">Thành Tích</span>
           </button>
 
           {/* Tab 3: Trợ Lý AI (Xanh Cyan / Electric Blue) */}
           <button
             onClick={() => handleTabClick('plans')}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 relative ${
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 ${
               activeTab === 'plans'
                 ? 'text-cyan-600 dark:text-cyan-neon scale-105 font-black'
                 : isWorkoutActive
-                ? 'text-slate-300 dark:text-gray-700 opacity-40 cursor-not-allowed'
+                ? 'text-slate-300 dark:text-gray-700 opacity-30 cursor-not-allowed pointer-events-none'
                 : 'text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300'
             }`}
           >
-            <div className="relative">
-              <Sparkles size={24} />
-              {isWorkoutActive && (
-                <Lock size={10} className="absolute -top-1 -right-1 text-cyan-500" />
-              )}
-            </div>
+            <Sparkles size={24} />
             <span className="text-[10px] tracking-tight mt-1 font-bold">Trợ Lý AI</span>
           </button>
 
           {/* Tab 4: Cài Đặt (Tím Điện Tử / Electric Purple) */}
           <button
             onClick={() => handleTabClick('settings')}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 relative ${
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-300 ${
               activeTab === 'settings'
                 ? 'text-violet-600 dark:text-violet-400 scale-105 font-black'
                 : isWorkoutActive
-                ? 'text-slate-300 dark:text-gray-700 opacity-40 cursor-not-allowed'
+                ? 'text-slate-300 dark:text-gray-700 opacity-30 cursor-not-allowed pointer-events-none'
                 : 'text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300'
             }`}
           >
-            <div className="relative">
-              <SettingsIcon size={24} />
-              {isWorkoutActive && (
-                <Lock size={10} className="absolute -top-1 -right-1 text-violet-500" />
-              )}
-            </div>
+            <SettingsIcon size={24} />
             <span className="text-[10px] tracking-tight mt-1 font-bold">Cài Đặt</span>
           </button>
         </div>

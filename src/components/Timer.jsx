@@ -450,6 +450,24 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
       newlyUnlocked
     });
     setShowCelebration(true);
+
+    // TỰ ĐỘNG ĐẶT LẠI ĐỒNG HỒ VỀ TRẠNG THÁI CHỜ ĐỂ MỞ KHÓA TOÀN BỘ CÁC BÀI TẬP VÀ CẤP ĐỘ KHÁC
+    setCurrentStageIndex(0);
+    setCurrentRep(1);
+    sessionSqueezesRef.current = 0;
+    sessionReverseKegelsRef.current = 0;
+    accumulatedWorkoutSecondsRef.current = 0;
+    setSessionSqueezes(0);
+    setSessionReverseKegels(0);
+    setSessionTotalSeconds(0);
+    const firstStage = currentStages[0];
+    if (firstStage) {
+      timeRemainingRef.current = firstStage.squeeze || 1;
+      phaseRemainingOnStartRef.current = firstStage.squeeze || 1;
+      setTimeRemaining(firstStage.squeeze || 1);
+      setStageDuration(firstStage.squeeze || 1);
+      stageDurationRef.current = firstStage.squeeze || 1;
+    }
   };
 
   return (
@@ -857,7 +875,10 @@ const Timer = ({ settings, userProfile, onOpenAIPlan, onWorkoutActiveChange }) =
             )}
 
             <button
-              onClick={() => setShowCelebration(false)}
+              onClick={() => {
+                setShowCelebration(false);
+                handleResetWorkout();
+              }}
               className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-sm uppercase tracking-wider shadow-lg active:scale-95 transition-all"
             >
               Tiếp Tục Rèn Luyện
