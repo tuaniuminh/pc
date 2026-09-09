@@ -39,7 +39,7 @@ const History = ({ onStartWorkout, activeTab }) => {
   const [unlockedBadges, setUnlockedBadges] = useState(getUnlockedBadges());
   const [isEditing, setIsEditing] = useState(false);
   const [currentViewDate, setCurrentViewDate] = useState(new Date());
-  const [selectedDayDetail, setSelectedDayDetail] = useState(null);
+  const [selectedDay, setSelectedDay] = useState(null); // null | { key: string, dateStr: string, dayNum: number }
   const [deleteTarget, setDeleteTarget] = useState(null); // null | { type: 'single', id: string } | { type: 'all' }
 
   const refreshData = () => {
@@ -60,9 +60,9 @@ const History = ({ onStartWorkout, activeTab }) => {
     } else if (deleteTarget.type === 'all') {
       clearHistory();
       setIsEditing(false);
+      setSelectedDay(null);
     }
     refreshData();
-    setSelectedDayDetail(null);
     setDeleteTarget(null);
   };
 
@@ -144,32 +144,38 @@ const History = ({ onStartWorkout, activeTab }) => {
 
   const handlePrevMonth = () => {
     setCurrentViewDate(new Date(viewYear, viewMonth - 1, 1));
-    setSelectedDayDetail(null);
+    setSelectedDay(null);
   };
 
   const handleNextMonth = () => {
     setCurrentViewDate(new Date(viewYear, viewMonth + 1, 1));
-    setSelectedDayDetail(null);
+    setSelectedDay(null);
   };
 
   const handleGoToday = () => {
     setCurrentViewDate(new Date());
-    setSelectedDayDetail(null);
+    setSelectedDay(null);
   };
 
-  const handleSelectDay = (dayNum, dayData) => {
-    setSelectedDayDetail({
-      dateStr: `${String(dayNum).padStart(2, '0')}/${String(viewMonth + 1).padStart(2, '0')}/${viewYear}`,
-      count: dayData ? dayData.count : 0,
-      totalSqueezes: dayData ? dayData.totalSqueezes : 0,
-      totalReverseKegels: dayData ? dayData.totalReverseKegels : 0,
-      totalDuration: dayData ? dayData.totalDuration : 0,
-      sessions: dayData ? dayData.sessions : []
-    });
+  const handleSelectDay = (dayNum) => {
+    const key = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+    const dateStr = `${String(dayNum).padStart(2, '0')}/${String(viewMonth + 1).padStart(2, '0')}/${viewYear}`;
+
+    if (selectedDay && selectedDay.key === key) {
+      // Nhấn lại ngày đang chọn -> Bỏ lọc để hiển thị toàn bộ
+      setSelectedDay(null);
+    } else {
+      setSelectedDay({ key, dateStr, dayNum });
+    }
   };
 
-  const displayedHistory = historyList.slice(0, visibleCount);
-  const hasMore = historyList.length > visibleCount;
+  const isFiltered = !!selectedDay;
+  const selectedDayData = isFiltered 
+    ? (workoutsMap[selectedDay.key] || { count: 0, totalSqueezes: 0, totalReverseKegels: 0, totalDuration: 0, sessions: [] }) 
+    : null;
+  const currentList = isFiltered ? selectedDayData.sessions : historyList;
+  const displayedHistory = isFiltered ? currentList : historyList.slice(0, visibleCount);
+  const hasMore = !isFiltered && historyList.length > visibleCount;
 
   return (
     <div className="p-4 sm:p-5 space-y-5 max-w-lg mx-auto">
@@ -320,12 +326,18 @@ const History = ({ onStartWorkout, activeTab }) => {
                   heatClass = 'bg-gradient-to-tr from-amber-500 to-red-500 border border-amber-400 text-white font-black shadow-amber-glow';
                 }
 
+                const isSelected = selectedDay && selectedDay.key === dateKey;
+
                 return (
                   <button
                     key={`day-${dayNum}`}
-                    onClick={() => handleSelectDay(dayNum, dayData)}
+                    onClick={() => handleSelectDay(dayNum)}
                     className={`aspect-square rounded-xl flex flex-col items-center justify-center relative transition-all active:scale-90 ${heatClass} ${
-                      isToday ? 'ring-2 ring-emerald-500' : ''
+                      isSelected
+                        ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 scale-105 z-10 font-black shadow-md'
+                        : isToday
+                        ? 'ring-2 ring-emerald-500'
+                        : ''
                     }`}
                   >
                     <span className="text-xs">{dayNum}</span>
@@ -351,45 +363,53 @@ const History = ({ onStartWorkout, activeTab }) => {
             </div>
           </div>
 
-          {/* CHI TIẾT NGÀY ĐƯỢC CHỌN */}
-          {selectedDayDetail && (
-            <div className="glass-panel p-4 rounded-2xl border border-cyan-500/30 space-y-2 animate-fade-in">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white">
-                <span>🗓️ Chi tiết ngày: {selectedDayDetail.dateStr}</span>
-                <span className="text-emerald-600 dark:text-neon">{selectedDayDetail.count} buổi tập</span>
-              </div>
-              {selectedDayDetail.count > 0 ? (
-                <div className="space-y-1.5 pt-1 text-xs">
-                  {selectedDayDetail.sessions.map((sess, idx) => (
-                    <div key={idx} className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 flex items-center justify-between">
-                      <div>
-                        <div className="font-bold text-slate-900 dark:text-white">{sess.routineName}</div>
-                        <div className="text-[11px] text-slate-500 dark:text-gray-400">
-                          {sess.totalSqueezes} lượt siết • {sess.totalReverseKegels} lượt ngược • {formatDurationText(sess.duration || sess.durationSeconds)}
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-mono text-slate-400 dark:text-gray-400">
-                        {formatWorkoutTime(sess.date)}
+          {/* DANH SÁCH CHI TIẾT CÁC BUỔI TẬP (HỖ TRỢ CHẾ ĐỘ LỌC THEO NGÀY) */}
+          <div className="space-y-3">
+            {/* Banner trạng thái lọc theo ngày */}
+            {isFiltered && (
+              <div className="glass-panel p-3.5 rounded-2xl border border-cyan-500/30 bg-cyan-500/5 flex items-center justify-between text-xs animate-fade-in">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-xl bg-cyan-500/15 text-cyan-500 flex items-center justify-center shrink-0">
+                    <Calendar size={16} />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-slate-900 dark:text-white flex items-center space-x-1.5">
+                      <span>Đang lọc: Ngày {selectedDay.dateStr}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-bold">
+                        {selectedDayData.count} buổi
                       </span>
                     </div>
-                  ))}
+                    <div className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">
+                      {selectedDayData.count > 0 
+                        ? `⚡ ${selectedDayData.totalSqueezes} siết • 🌊 ${selectedDayData.totalReverseKegels} ngược • ⏱️ ${formatDurationText(selectedDayData.totalDuration)}`
+                        : 'Chưa có buổi tập nào trong ngày này'}
+                    </div>
+                  </div>
                 </div>
-              ) : (
-                <div className="text-xs text-slate-400 py-1">Chưa có dữ liệu buổi tập nào trong ngày này.</div>
-              )}
-            </div>
-          )}
+                <button
+                  onClick={() => setSelectedDay(null)}
+                  className="py-1.5 px-3 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-700 dark:text-gray-200 text-xs font-bold transition-all flex items-center space-x-1 active:scale-95 shrink-0"
+                  title="Bỏ lọc, xem lại toàn bộ"
+                >
+                  <RotateCcw size={12} />
+                  <span>Xem tất cả</span>
+                </button>
+              </div>
+            )}
 
-          {/* DANH SÁCH CHI TIẾT CÁC BUỔI TẬP (CÓ NÚT SỬA / XÓA) */}
-          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center space-x-1.5">
-                <HistoryIcon size={16} className="text-emerald-500" />
-                <span>Chi Tiết Các Buổi Tập ({historyList.length > 10 ? `${displayedHistory.length}/${historyList.length}` : historyList.length})</span>
+                <HistoryIcon size={16} className={isFiltered ? "text-cyan-500" : "text-emerald-500"} />
+                <span>
+                  {isFiltered 
+                    ? `Buổi Tập Ngày ${selectedDay.dateStr} (${selectedDayData.count})`
+                    : `Chi Tiết Các Buổi Tập (${historyList.length > 10 ? `${displayedHistory.length}/${historyList.length}` : historyList.length})`
+                  }
+                </span>
               </h3>
 
               <div className="flex items-center space-x-2">
-                {historyList.length > 0 && (
+                {displayedHistory.length > 0 && (
                   <button
                     onClick={() => setIsEditing(!isEditing)}
                     className={`py-1 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 ${
@@ -403,7 +423,7 @@ const History = ({ onStartWorkout, activeTab }) => {
                   </button>
                 )}
 
-                {isEditing && (
+                {!isFiltered && isEditing && (
                   <button
                     onClick={() => setDeleteTarget({ type: 'all' })}
                     className="py-1 px-2.5 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30 text-xs font-bold flex items-center space-x-1"
@@ -416,7 +436,7 @@ const History = ({ onStartWorkout, activeTab }) => {
             </div>
 
             {/* Danh sách thẻ buổi tập */}
-            {historyList.length > 0 ? (
+            {displayedHistory.length > 0 ? (
               <div className="space-y-2">
                 {displayedHistory.map((item) => (
                   <div
@@ -453,7 +473,7 @@ const History = ({ onStartWorkout, activeTab }) => {
                   </div>
                 ))}
 
-                {/* Nút Xem thêm / Thu gọn */}
+                {/* Nút Xem thêm / Thu gọn (khi không lọc) */}
                 {hasMore && (
                   <button
                     onClick={() => setVisibleCount((prev) => prev + 10)}
@@ -464,7 +484,7 @@ const History = ({ onStartWorkout, activeTab }) => {
                   </button>
                 )}
 
-                {visibleCount > 10 && historyList.length > 10 && (
+                {!isFiltered && visibleCount > 10 && historyList.length > 10 && (
                   <button
                     onClick={() => setVisibleCount(10)}
                     className="w-full py-2 px-4 rounded-2xl text-[11px] font-semibold text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300 flex items-center justify-center space-x-1 transition-all active:scale-95"
@@ -473,6 +493,29 @@ const History = ({ onStartWorkout, activeTab }) => {
                     <span>Thu gọn về 10 buổi gần nhất</span>
                   </button>
                 )}
+              </div>
+            ) : isFiltered ? (
+              <div className="glass-panel p-8 rounded-3xl text-center space-y-3 border border-dashed border-slate-300 dark:border-white/10 animate-fade-in">
+                <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center mx-auto">
+                  <Calendar size={24} />
+                </div>
+                <div className="text-xs text-slate-500 dark:text-gray-400">
+                  Không có dữ liệu buổi tập nào trong ngày {selectedDay.dateStr}.
+                </div>
+                <div className="flex items-center justify-center space-x-2 pt-1">
+                  <button
+                    onClick={() => setSelectedDay(null)}
+                    className="py-2 px-4 rounded-2xl bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-gray-300 font-bold text-xs active:scale-95 transition-all"
+                  >
+                    Quay lại xem tất cả
+                  </button>
+                  <button
+                    onClick={onStartWorkout}
+                    className="py-2 px-4 rounded-2xl bg-emerald-500 text-white font-bold text-xs shadow-neon active:scale-95 transition-all"
+                  >
+                    Tập Ngay
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="glass-panel p-8 rounded-3xl text-center space-y-3 border border-dashed border-slate-300 dark:border-white/10">
