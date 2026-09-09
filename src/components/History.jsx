@@ -14,6 +14,8 @@ import {
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Info,
   Edit2,
   Check,
@@ -32,6 +34,7 @@ import {
 const History = ({ onStartWorkout, activeTab }) => {
   const [activeSubtab, setActiveSubtab] = useState('calendar'); // 'calendar' | 'badges'
   const [historyList, setHistoryList] = useState(getHistory());
+  const [visibleCount, setVisibleCount] = useState(10); // Giới hạn hiển thị 10 buổi gần nhất
   const [stats, setStats] = useState(getHistoryStats());
   const [unlockedBadges, setUnlockedBadges] = useState(getUnlockedBadges());
   const [isEditing, setIsEditing] = useState(false);
@@ -164,6 +167,9 @@ const History = ({ onStartWorkout, activeTab }) => {
       sessions: dayData ? dayData.sessions : []
     });
   };
+
+  const displayedHistory = historyList.slice(0, visibleCount);
+  const hasMore = historyList.length > visibleCount;
 
   return (
     <div className="p-4 sm:p-5 space-y-5 max-w-lg mx-auto">
@@ -379,7 +385,7 @@ const History = ({ onStartWorkout, activeTab }) => {
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center space-x-1.5">
                 <HistoryIcon size={16} className="text-emerald-500" />
-                <span>Chi Tiết Các Buổi Tập ({historyList.length})</span>
+                <span>Chi Tiết Các Buổi Tập ({historyList.length > 10 ? `${displayedHistory.length}/${historyList.length}` : historyList.length})</span>
               </h3>
 
               <div className="flex items-center space-x-2">
@@ -412,7 +418,7 @@ const History = ({ onStartWorkout, activeTab }) => {
             {/* Danh sách thẻ buổi tập */}
             {historyList.length > 0 ? (
               <div className="space-y-2">
-                {historyList.map((item) => (
+                {displayedHistory.map((item) => (
                   <div
                     key={item.id}
                     className="glass-panel p-3.5 rounded-2xl border border-slate-200 dark:border-white/10 flex items-center justify-between transition-all"
@@ -446,6 +452,27 @@ const History = ({ onStartWorkout, activeTab }) => {
                     </div>
                   </div>
                 ))}
+
+                {/* Nút Xem thêm / Thu gọn */}
+                {hasMore && (
+                  <button
+                    onClick={() => setVisibleCount((prev) => prev + 10)}
+                    className="w-full py-2.5 px-4 rounded-2xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-white/10 text-xs font-bold flex items-center justify-center space-x-1.5 transition-all active:scale-95 shadow-xs mt-2"
+                  >
+                    <ChevronDown size={14} className="text-emerald-500" />
+                    <span>Xem thêm 10 buổi trước (còn {historyList.length - visibleCount} bài)</span>
+                  </button>
+                )}
+
+                {visibleCount > 10 && historyList.length > 10 && (
+                  <button
+                    onClick={() => setVisibleCount(10)}
+                    className="w-full py-2 px-4 rounded-2xl text-[11px] font-semibold text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300 flex items-center justify-center space-x-1 transition-all active:scale-95"
+                  >
+                    <ChevronUp size={13} />
+                    <span>Thu gọn về 10 buổi gần nhất</span>
+                  </button>
+                )}
               </div>
             ) : (
               <div className="glass-panel p-8 rounded-3xl text-center space-y-3 border border-dashed border-slate-300 dark:border-white/10">

@@ -28,7 +28,7 @@ import {
 import { exportBackupJSON, importBackupJSON } from '../services/storageService';
 import { triggerHapticMedium, triggerHapticLight } from '../utils/hapticsUtils';
 
-const SETTINGS_APP_VERSION = 'v2.2.28';
+const SETTINGS_APP_VERSION = 'v2.2.29';
 
 const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
   const [showKey, setShowKey] = useState(false);
