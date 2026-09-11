@@ -3,6 +3,7 @@ import Capacitor
 import ActivityKit
 import AVFoundation
 import UIKit
+import WebKit
 
 @objc(LiveActivityPlugin)
 public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
@@ -21,6 +22,13 @@ public class LiveActivityPlugin: CAPPlugin, CAPBridgedPlugin {
     public override func load() {
         super.load()
         UIDevice.current.isBatteryMonitoringEnabled = true
+        DispatchQueue.main.async { [weak self] in
+            if let webView = self?.bridge?.webView as? WKWebView {
+                webView.allowsBackForwardNavigationGestures = true
+            } else if let webView = self?.webView {
+                webView.allowsBackForwardNavigationGestures = true
+            }
+        }
     }
 
     deinit {

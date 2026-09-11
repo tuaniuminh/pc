@@ -56,8 +56,9 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes:0 string apple-magnifier" ios/App/App/Info.plist || true
           /usr/libexec/PlistBuddy -c "Add :LSApplicationQueriesSchemes:1 string trollstore" ios/App/App/Info.plist || true
 
-          echo "Đồng bộ AppDelegate.swift tùy chỉnh với AVAudioSession và xử lý dọn dẹp Live Activities"
+          echo "Đồng bộ AppDelegate.swift và MainViewController.swift tùy chỉnh với AVAudioSession và cử chỉ vuốt WKWebView"
           cp ios-native/AppDelegate.swift ios/App/App/AppDelegate.swift || true
+          cp ios-native/MainViewController.swift ios/App/App/MainViewController.swift || true
 
       - name: Tích hợp Widget Extension (Dynamic Island & Live Activities) vào Xcode
         run: |

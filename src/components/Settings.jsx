@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Key, 
   Eye, 
@@ -32,14 +32,11 @@ import {
 import { exportBackupJSON, importBackupJSON } from '../services/storageService';
 import { triggerHapticMedium, triggerHapticLight } from '../utils/hapticsUtils';
 
-const SETTINGS_APP_VERSION = 'v2.2.31';
+const SETTINGS_APP_VERSION = 'v2.2.32';
 
 const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
   // Navigation & Subpage State
   const [activeSubpage, setActiveSubpage] = useState(null); // null | 'sound_studio' | 'haptics' | 'profile' | 'gemini' | 'backup' | 'debug'
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const touchStartRef = useRef({ x: 0, y: 0, isEdge: false, isHorizontal: false });
 
   const [showKey, setShowKey] = useState(false);
   const [testingKey, setTestingKey] = useState(false);
@@ -58,67 +55,36 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
     complete: 'preset_20'
   };
 
-  // ==================== CỬ CHỈ NATIVE VUỐT MÉP TRÁI ĐỂ TRỞ VỀ ====================
-  const handleTouchStart = (e) => {
-    if (!activeSubpage) return;
-    const touch = e.touches[0];
-    const isEdge = touch.clientX <= 55;
-    touchStartRef.current = {
-      x: touch.clientX,
-      y: touch.clientY,
-      isEdge,
-      isHorizontal: false
+  // ==================== CỬ CHỈ NATIVE VUỐT MÉP TRÁI ĐỂ TRỞ VỀ (HISTORY POPSTATE) ====================
+  // Khi WKWebView bật allowsBackForwardNavigationGestures = true, cử chỉ vuốt mép trái của iOS
+  // sẽ tương tác mượt mà ở cấp độ hệ thống và kích hoạt popstate của Web History API
+  useEffect(() => {
+    const handlePopState = (e) => {
+      const targetSubpage = e.state?.subpage || null;
+      setActiveSubpage(targetSubpage);
     };
-  };
-
-  const handleTouchMove = (e) => {
-    if (!activeSubpage || !touchStartRef.current.isEdge) return;
-    const touch = e.touches[0];
-    const deltaX = touch.clientX - touchStartRef.current.x;
-    const deltaY = touch.clientY - touchStartRef.current.y;
-
-    if (deltaX < 0) return;
-
-    if (!touchStartRef.current.isHorizontal) {
-      const absX = Math.abs(deltaX);
-      const absY = Math.abs(deltaY);
-      if (absX > 8 && absX > absY * 1.2) {
-        touchStartRef.current.isHorizontal = true;
-        setIsDragging(true);
-      } else if (absY > 8) {
-        touchStartRef.current.isEdge = false;
-        return;
-      }
-    }
-
-    if (touchStartRef.current.isHorizontal) {
-      if (e.cancelable) e.preventDefault();
-      setDragOffset(deltaX);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (!activeSubpage) return;
-    if (touchStartRef.current.isEdge && touchStartRef.current.isHorizontal) {
-      if (dragOffset > 75) {
-        triggerHapticLight();
-        setActiveSubpage(null);
-      }
-    }
-    setDragOffset(0);
-    setIsDragging(false);
-    touchStartRef.current = { x: 0, y: 0, isEdge: false, isHorizontal: false };
-  };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const navigateTo = (subpage) => {
+    try {
+      window.history.pushState({ subpage }, '', `#settings-${subpage}`);
+    } catch (e) {
+      console.warn('History pushState error:', e);
+    }
     setActiveSubpage(subpage);
     triggerHapticLight();
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
   const goBack = () => {
-    setActiveSubpage(null);
     triggerHapticLight();
+    if (window.history.state && window.history.state.subpage) {
+      window.history.back();
+    } else {
+      setActiveSubpage(null);
+    }
   };
 
   const handleKeyChange = (val) => {
@@ -192,26 +158,7 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
   const currentActionObj = SOUND_ACTIONS.find(a => a.key === activeActionKey) || SOUND_ACTIONS[0];
 
   return (
-    <div 
-      className="relative min-h-[85vh] select-none"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
-    >
-      {/* CỬ CHỈ VUỐT: Biểu tượng chỉ dẫn kéo mép trái sang phải */}
-      {isDragging && dragOffset > 10 && (
-        <div 
-          className="fixed left-3 top-1/2 -translate-y-1/2 z-50 w-10 h-10 rounded-full bg-slate-900/90 text-white backdrop-blur-md flex items-center justify-center shadow-2xl border border-white/20 pointer-events-none transition-transform"
-          style={{ 
-            transform: `translateY(-50%) scale(${Math.min(1.25, 0.8 + dragOffset / 150)})`, 
-            opacity: Math.min(1, dragOffset / 40) 
-          }}
-        >
-          <ChevronLeft size={22} className="text-emerald-400" />
-        </div>
-      )}
-
+    <div className="relative min-h-[85vh] select-none">
       {/* ========================================================================= */}
       {/* 1. GIAO DIỆN CHÍNH: MENU CÀI ĐẶT PHONG CÁCH FACEBOOK / IOS                */}
       {/* ========================================================================= */}
@@ -428,17 +375,10 @@ const Settings = ({ settings, onUpdateSettings, onNavigateToAI }) => {
       )}
 
       {/* ========================================================================= */}
-      {/* 2. GIAO DIỆN CON (SUBPAGES) VỚI NATIVE VUỐT MÉP TRÁI ĐỂ TRỞ VỀ            */}
+      {/* 2. GIAO DIỆN CON (SUBPAGES) HỖ TRỢ NATIVE VUỐT MÉP TRÁI IOS              */}
       {/* ========================================================================= */}
       {activeSubpage && (
-        <div 
-          className="p-4 sm:p-5 space-y-5 max-w-lg mx-auto animate-fade-in"
-          style={{
-            transform: `translateX(${dragOffset}px)`,
-            transition: isDragging ? 'none' : 'transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1)',
-            opacity: isDragging ? Math.max(0.75, 1 - (dragOffset / 400)) : 1
-          }}
-        >
+        <div className="p-4 sm:p-5 space-y-5 max-w-lg mx-auto animate-fade-in">
           {/* Thanh Tiêu Đề Điều Hướng Quay Lại Kiểu Native iOS / Facebook */}
           <div className="flex items-center justify-between pb-1 border-b border-slate-200 dark:border-white/10">
             <button
